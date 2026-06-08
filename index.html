@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUXORA - Premium Fragrances</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800;900&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body data-theme="dark">
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo-container">
+                <span class="brand-name">DECANT ATELIER</span>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link">SHOP <i class="fas fa-chevron-down"></i></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#collection">All Perfumes</a></li>
+                        <li><a href="#collection">Best Sellers</a></li>
+                        <li><a href="#collection">New Arrivals</a></li>
+                        <li><a href="#collection">Limited Edition</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link">CATEGORIES <i class="fas fa-chevron-down"></i></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#collection">Eau de Parfum</a></li>
+                        <li><a href="#collection">Eau de Toilette</a></li>
+                        <li><a href="#collection">Luxury Fragrances</a></li>
+                        <li><a href="#collection">Niche Collections</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#collection" class="nav-link">TRACK ORDER</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#contact" class="nav-link">CONTACT US</a>
+                </li>
+            </ul>
+
+            <div class="nav-right">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search perfumes, brands, notes...">
+                    <button class="search-btn"><i class="fas fa-search"></i></button>
+                </div>
+                <a href="#" class="nav-icon"><i class="fas fa-user"></i> LOGIN</a>
+                <a href="#" class="nav-icon cart-icon"><i class="fas fa-shopping-cart"></i><span class="cart-count">0</span></a>
+            </div>
+
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section id="hero" class="hero">
+        <div class="hero-content">
+            <div class="hero-image hero-video-shell">
+                <div class="video-frame">
+                    <video class="hero-video" autoplay muted loop playsinline>
+                        <source src="hero-video.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- COLLECTION SECTION -->
+    <section id="collection" class="collection">
+        <h2 class="section-title">Our Signature Collection</h2>
+        <p class="section-subtitle">Timeless fragrances for distinguished tastes</p>
+        
+        <div class="collection-grid">
+            <!-- Card 1 -->
+            <div class="collection-card">
+                <div class="card-image">
+                    <div class="perfume-icon">
+                        <i class="fas fa-bottle"></i>
+                    </div>
+                </div>
+                <h3 class="card-title">Midnight Elegance</h3>
+                <p class="card-description">A captivating blend of oud, amber, and sandalwood. Perfect for evening sophistication.</p>
+                <p class="card-price">$185</p>
+                <button class="btn btn-secondary">Learn More</button>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="collection-card">
+                <div class="card-image">
+                    <div class="perfume-icon">
+                        <i class="fas fa-bottle"></i>
+                    </div>
+                </div>
+                <h3 class="card-title">Golden Hour</h3>
+                <p class="card-description">Warm vanilla, golden honey, and exotic florals. A luxurious daily companion.</p>
+                <p class="card-price">$165</p>
+                <button class="btn btn-secondary">Learn More</button>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="collection-card">
+                <div class="card-image">
+                    <div class="perfume-icon">
+                        <i class="fas fa-bottle"></i>
+                    </div>
+                </div>
+                <h3 class="card-title">Velvet Crown</h3>
+                <p class="card-description">Rosy petals, musk, and leather create an intoxicating and mysterious allure.</p>
+                <p class="card-price">$195</p>
+                <button class="btn btn-secondary">Learn More</button>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="collection-card">
+                <div class="card-image">
+                    <div class="perfume-icon">
+                        <i class="fas fa-bottle"></i>
+                    </div>
+                </div>
+                <h3 class="card-title">Crystal Serenity</h3>
+                <p class="card-description">Crisp citrus and aquatic notes with hints of white musk. Refreshingly elegant.</p>
+                <p class="card-price">$155</p>
+                <button class="btn btn-secondary">Learn More</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section id="about" class="about">
+        <div class="about-content">
+            <div class="about-text">
+                <h2 class="section-title">About LUXORA</h2>
+                <p class="about-description">
+                    Since 2015, LUXORA has been crafting exquisite fragrances for those who appreciate the finer things in life. Each scent is meticulously blended using the finest ingredients from around the world.
+                </p>
+                <p class="about-description">
+                    Our philosophy is simple: luxury should be timeless, elegance should be accessible, and every fragrance should tell a story.
+                </p>
+                <div class="about-features">
+                    <div class="feature">
+                        <i class="fas fa-gem"></i>
+                        <span>Premium Ingredients</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-flask"></i>
+                        <span>Expert Craftsmanship</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-leaf"></i>
+                        <span>Eco-Friendly</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT SECTION -->
+    <section id="contact" class="contact">
+        <h2 class="section-title">Get In Touch</h2>
+        <p class="section-subtitle">Connect with us for special orders and inquiries</p>
+        
+        <div class="contact-container">
+            <div class="contact-info">
+                <div class="info-item">
+                    <i class="fas fa-envelope"></i>
+                    <div>
+                        <h4>Email</h4>
+                        <p>hello@luxora.com</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-phone"></i>
+                    <div>
+                        <h4>Phone</h4>
+                        <p>+1 (555) 123-4567</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <h4>Location</h4>
+                        <p>New York, NY 10001</p>
+                    </div>
+                </div>
+            </div>
+
+            <form class="contact-form">
+                <input type="text" placeholder="Your Name" required>
+                <input type="email" placeholder="Your Email" required>
+                <textarea placeholder="Your Message" rows="5" required></textarea>
+                <button type="submit" class="btn btn-primary">Send Message</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2026 LUXORA. All rights reserved. Crafted with elegance.</p>
+            <div class="social-links">
+                <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
+                <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
