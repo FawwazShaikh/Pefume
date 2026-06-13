@@ -72,14 +72,17 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
         {/* Desktop Menu */}
         <ul className="nav-menu">
           <li className="nav-item dropdown">
-            <a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')} className="nav-link">
+            <a href="#collection" className="nav-link">
               SHOP <i className="fas fa-chevron-down nav-chevron"></i>
             </a>
             <ul className="dropdown-menu">
-              <li><a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')}>All Perfumes</a></li>
-              <li><a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')}>Best Sellers</a></li>
-              <li><a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')}>New Arrivals</a></li>
-              <li><a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')}>Limited Edition</a></li>
+              <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'all')}>Shop All</a></li>
+              <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'decants')}>Decants</a></li>
+              <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'fullbottles')}>Full Bottles</a></li>
+              <li className="dropdown-divider-item"></li>
+              <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'brands')}>Brands</a></li>
+              <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'families')}>Fragrance Families</a></li>
+              <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'newarrivals')}>New Arrivals</a></li>
             </ul>
           </li>
 

@@ -126,6 +126,17 @@
   padding-left: 1.5rem !important; /* Prevent sliding */
 }
 
+/* Dropdown Menu Divider Line style */
+.dropdown-menu li.dropdown-divider-item {
+  height: 1px;
+  background: rgba(15, 61, 62, 0.08);
+  margin: 0.5rem 1.5rem;
+}
+
+[data-theme="dark"] .dropdown-menu li.dropdown-divider-item {
+  background: rgba(226, 194, 117, 0.15);
+}
+
 /* Dropdown Menu styling (Frosted Glass) */
 .dropdown-menu {
   position: absolute;
