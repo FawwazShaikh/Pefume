@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 import './Navbar.css';
 
 // SVG outline matching the exact shopping bag in the design mockup
@@ -104,9 +105,14 @@ export default function Navbar({ onNavigate, activePage }) {
             <input type="text" className="search-input" placeholder="Search perfumes, brands, notes..." />
           </div>
           
-          <a href="#" className="nav-login-btn" onClick={(e) => e.preventDefault()}>
-            LOGIN
-          </a>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="nav-login-btn">LOGIN</button>
+            </SignInButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
           
           <a href="#" className="nav-icon cart-icon" onClick={(e) => e.preventDefault()}>
             <ShoppingBagIcon className="w-5 h-5 nav-bag-icon" />
