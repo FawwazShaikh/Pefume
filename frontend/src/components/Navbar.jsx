@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import './Navbar.css';
 
+// SVG outline matching the exact shopping bag in the design mockup
+const ShoppingBagIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+  </svg>
+);
+
 export default function Navbar({ onNavigate, activePage }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isThemeDark, setIsThemeDark] = useState(true);
@@ -14,7 +21,6 @@ export default function Navbar({ onNavigate, activePage }) {
     e.preventDefault();
     setIsMobileMenuOpen(false);
     
-    // Check if the hash corresponds to a policy page
     const policies = ['authenticity', 'about', 'shipping', 'returns', 'terms', 'privacy'];
     if (policies.includes(hash)) {
       window.location.hash = hash;
@@ -22,7 +28,6 @@ export default function Navbar({ onNavigate, activePage }) {
     } else {
       window.location.hash = hash;
       if (onNavigate) onNavigate('home');
-      // Scroll to target if on homepage
       setTimeout(() => {
         const element = document.getElementById(hash);
         if (element) {
@@ -46,7 +51,7 @@ export default function Navbar({ onNavigate, activePage }) {
         <ul className="nav-menu">
           <li className="nav-item dropdown">
             <a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')} className="nav-link">
-              SHOP <i className="fas fa-chevron-down"></i>
+              SHOP <i className="fas fa-chevron-down nav-chevron"></i>
             </a>
             <ul className="dropdown-menu">
               <li><a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')}>All Perfumes</a></li>
@@ -68,10 +73,20 @@ export default function Navbar({ onNavigate, activePage }) {
             </ul>
           </li>
 
-          {/* Gifting added right after Categories */}
-          <li className="nav-item">
+          {/* Gifting Dropdown */}
+          <li className="nav-item dropdown">
             <a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')} className="nav-link">
-              GIFTING
+              GIFTING <i className="fas fa-chevron-down"></i>
+            </a>
+            <ul className="dropdown-menu">
+              <li><a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')}>Shop For Him</a></li>
+              <li><a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')}>Shop For Her</a></li>
+            </ul>
+          </li>
+
+          <li className="nav-item">
+            <a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')} className="nav-link">
+              CREATORS
             </a>
           </li>
 
@@ -80,27 +95,21 @@ export default function Navbar({ onNavigate, activePage }) {
               TRACK ORDER
             </a>
           </li>
-
-          <li className="nav-item">
-            <a href="#contact" onClick={(e) => handleLinkClick(e, 'contact')} className="nav-link">
-              CONTACT US
-            </a>
-          </li>
         </ul>
 
-        {/* Right Nav Icons */}
+        {/* Right Nav Icons / Search */}
         <div className="nav-right">
           <div className="search-container">
+            <i className="fas fa-search search-icon"></i>
             <input type="text" className="search-input" placeholder="Search perfumes, brands, notes..." />
-            <button className="search-btn"><i class="fas fa-search"></i></button>
           </div>
           
-          <a href="#" className="nav-icon" onClick={(e) => e.preventDefault()}>
-            <i className="fas fa-user"></i> LOGIN
+          <a href="#" className="nav-login-btn" onClick={(e) => e.preventDefault()}>
+            LOGIN
           </a>
           
           <a href="#" className="nav-icon cart-icon" onClick={(e) => e.preventDefault()}>
-            <i className="fas fa-shopping-cart"></i>
+            <ShoppingBagIcon className="w-5 h-5 nav-bag-icon" />
             <span className="cart-count">0</span>
           </a>
 
@@ -141,12 +150,12 @@ export default function Navbar({ onNavigate, activePage }) {
           </li>
           <li>
             <a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')}>
-              TRACK ORDER
+              CREATORS
             </a>
           </li>
           <li>
-            <a href="#contact" onClick={(e) => handleLinkClick(e, 'contact')}>
-              CONTACT US
+            <a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')}>
+              TRACK ORDER
             </a>
           </li>
           <li>
