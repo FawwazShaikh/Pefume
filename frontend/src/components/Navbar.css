@@ -8,27 +8,7 @@
   width: 100%;
 }
 
-/* 1. Announcement Banner */
-.announcement-banner {
-  background: var(--color-teal, #0F3D3E);
-  color: var(--color-champagne, #E2C275);
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  text-align: center;
-  padding: 0 1rem;
-  overflow: hidden;
-}
 
-[data-theme="dark"] .announcement-banner {
-  background: var(--color-champagne, #E2C275);
-  color: var(--color-teal-deep, #072227);
-}
 
 /* 2. Secondary Top Bar */
 .secondary-top-bar {

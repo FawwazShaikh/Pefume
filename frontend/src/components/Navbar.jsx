@@ -114,10 +114,6 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
 
   return (
     <header className="navbar-wrapper">
-      {/* Top Banner (Lavender in light theme, Deep in dark theme) */}
-      <div className="announcement-banner">
-        <span>FATHER'S DAY SPECIAL — EXTRA 10% OFF ON ALL DECANTS. USE CODE: <strong>FRESH10</strong></span>
-      </div>
 
       {/* Secondary Top Bar */}
       <div className="secondary-top-bar">
