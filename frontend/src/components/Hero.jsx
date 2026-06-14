@@ -9,62 +9,38 @@ export default function Hero() {
       <div className="hero-content">
         {/* Left Side Text Content */}
         <div className="hero-text">
-          <p className="hero-tagline">Est. 2026 &nbsp;·&nbsp; Luxury Fragrances</p>
-          <h1 className="hero-title">
-            Rare Fragrances
-            <span>Perfectly Yours</span>
-          </h1>
-          <p className="hero-subtitle">
-            Discover our curated collection of niche and luxury fragrances — each bottle a story, each note a memory waiting to be made.
-          </p>
-          <div className="hero-divider"></div>
-          
-          <div className="hero-stats">
-            <div className="stat-item">
-              <span className="stat-number">100%</span>
-              <span className="stat-label">Verified Originals</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">5 / 8 / 10 ml</span>
-              <span className="stat-label">Trial Sizes</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">Pan-India</span>
-              <span className="stat-label">Delivery</span>
-            </div>
+          <div className="hero-monogram">
+            <svg width="44" height="44" viewBox="0 0 100 100" fill="none" className="monogram-svg">
+              <path d="M50 5 L95 80 L5 80 Z" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
+              <path d="M50 22 L80 72 L20 72 Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+              <text x="50" y="65" fontSize="24" fontFamily="var(--font-heading)" fill="currentColor" textAnchor="middle" fontWeight="bold">V</text>
+            </svg>
           </div>
+          
+          <h1 className="hero-title">
+            Fragrance in <br />
+            every bottle
+          </h1>
+          
+          <p className="hero-subtitle">
+            Decant Atelier transcends time, offering a timeless charm. Each scent is designed to create a classic feel that remains relevant in every era.
+          </p>
           
           <div className="hero-buttons">
             <button className="btn btn-primary" onClick={() => document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' })}>
-              <i className="fas fa-shopping-bag" style={{ marginRight: '0.5rem' }}></i>Shop Now
+              Explore <span className="btn-arrow">↗</span>
             </button>
             <button className="btn btn-secondary" onClick={() => document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' })}>
-              <i className="fas fa-play-circle" style={{ marginRight: '0.5rem' }}></i>Explore
+              Best Seller
             </button>
           </div>
         </div>
 
-        {/* Right Side Video/Image Content */}
+        {/* Right Side Product Showcase */}
         <div className="hero-image">
-          <div className="video-wrapper">
-            <div className="video-frame">
-              <video className="hero-video" autoPlay muted loop playsInline>
-                <source src="/F1.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-              
-              {/* Badge inside video */}
-              <div className="video-badge">
-                <span className="badge-dot"></span>
-                <div className="badge-text">
-                  <strong>New Arrivals</strong>
-                  Summer 2026 Collection
-                </div>
-              </div>
-            </div>
-            
-            {/* Side floating tag */}
-            <div className="video-tag">Premium &nbsp; Niche</div>
+          <div className="product-stage-wrapper">
+            <div className="product-stage-glow"></div>
+            <img src="/valentino_hero.png" alt="Valentino Born In Roma" className="stage-product-img" />
           </div>
         </div>
       </div>

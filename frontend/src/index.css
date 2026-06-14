@@ -2,19 +2,19 @@
 
 /* Decant Atelier Custom Design Tokens */
 @theme {
-  --color-ivory: #FFF8E7;
-  --color-ivory-warm: #FFFEF5;
-  --color-ivory-deep: #F5ECD7;
-  --color-champagne: #E2C275;
-  --color-champagne-light: #ECD9A3;
-  --color-champagne-muted: #F5E6B3;
-  --color-bronze: #C4A85A;
-  --color-bronze-deep: #9B8A47;
-  --color-teal: #0F3D3E;
-  --color-teal-deep: #072227;
-  --color-teal-mid: #1A5F60;
-  --color-emerald-brand: #009966;
-  --color-charcoal: #2C2C2C;
+  --color-ivory: #FAF6F0;
+  --color-ivory-warm: #FCFAF7;
+  --color-ivory-deep: #F0E5D8;
+  --color-champagne: #E07A5F;
+  --color-champagne-light: #EFC0B3;
+  --color-champagne-muted: #F6EAE7;
+  --color-bronze: #B58A7A;
+  --color-bronze-deep: #9E6F5F;
+  --color-teal: #241E1C;
+  --color-teal-deep: #120E0D;
+  --color-teal-mid: #3E3532;
+  --color-emerald-brand: #E07A5F;
+  --color-charcoal: #1A1A1A;
 
   --font-heading: 'Playfair Display', 'Georgia', serif;
   --font-body: 'Inter', 'Segoe UI', sans-serif;
