@@ -128,21 +128,14 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             <a href="#reviews" onClick={(e) => handleLinkClick(e, 'reviews')}>Reviews</a>
           </div>
           <div className="top-bar-right">
-            <div className="top-bar-action-group">
-              <div className="top-bar-action-item">
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="top-bar-social" title="Instagram">
-                  <i className="fab fa-instagram"></i>
-                </a>
-              </div>
-              <div className="top-bar-action-item">
-                <a href="https://wa.me/yournumber" target="_blank" rel="noopener noreferrer" className="top-bar-social" title="WhatsApp">
-                  <i className="fab fa-whatsapp"></i>
-                </a>
-              </div>
-              <div className="top-bar-action-item">
-                <a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')} className="gifting-link">Gifting</a>
-              </div>
-            </div>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="top-bar-social" title="Instagram">
+              <i className="fab fa-instagram"></i>
+            </a>
+            <a href="https://wa.me/yournumber" target="_blank" rel="noopener noreferrer" className="top-bar-social" title="WhatsApp">
+              <i className="fab fa-whatsapp"></i>
+            </a>
+            <span className="top-bar-divider">|</span>
+            <a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')} className="gifting-link">Gifting</a>
           </div>
         </div>
       </div>
@@ -198,8 +191,27 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             <span className="brand-name">DECANT ATELIER</span>
           </div>
 
-          {/* Right Action Icons (Profile, Search Trigger, Shopping Bag, Theme Toggle) */}
           <div className="nav-right">
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button className="nav-profile-btn" title="Login">
+                  <i className="far fa-user-circle"></i>
+                </button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+
+            <button className="nav-icon-btn search-trigger-btn" onClick={() => setIsSearchOpen(true)} title="Search">
+              <i className="fas fa-search"></i>
+            </button>
+            
+            <a href="#" className="nav-icon cart-icon" onClick={(e) => e.preventDefault()}>
+              <ShoppingBagIcon className="nav-bag-icon" />
+              <span className="cart-count">1</span>
+            </a>
+
             <button 
               className="theme-toggle" 
               onClick={() => setIsThemeDark(!isThemeDark)} 
@@ -207,34 +219,6 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             >
               <i className={isThemeDark ? "fas fa-sun" : "fas fa-moon"}></i>
             </button>
-
-            <div className="nav-action-group">
-              <div className="nav-action-item">
-                <SignedOut>
-                  <SignInButton mode="modal">
-                    <button className="nav-profile-btn" title="Login">
-                      <i className="far fa-user-circle"></i>
-                    </button>
-                  </SignInButton>
-                </SignedOut>
-                <SignedIn>
-                  <UserButton />
-                </SignedIn>
-              </div>
-
-              <div className="nav-action-item">
-                <button className="nav-icon-btn search-trigger-btn" onClick={() => setIsSearchOpen(true)} title="Search">
-                  <i className="fas fa-search"></i>
-                </button>
-              </div>
-              
-              <div className="nav-action-item">
-                <a href="#" className="nav-icon cart-icon" onClick={(e) => e.preventDefault()}>
-                  <ShoppingBagIcon className="nav-bag-icon" />
-                  <span className="cart-count">1</span>
-                </a>
-              </div>
-            </div>
           </div>
 
           {/* Hamburger Icon for Mobile */}

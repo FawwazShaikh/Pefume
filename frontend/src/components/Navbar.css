@@ -63,19 +63,7 @@
 .top-bar-right {
   display: flex;
   align-items: center;
-}
-
-.top-bar-action-group {
-  display: grid;
-  grid-template-columns: 24px 24px 80px;
-  gap: 1.5rem;
-  align-items: center;
-  justify-items: start;
-}
-
-.top-bar-action-item {
-  display: flex;
-  align-items: center;
+  gap: 1.25rem;
 }
 
 .secondary-top-bar a {
@@ -229,18 +217,7 @@
   justify-self: end;
 }
 
-.nav-action-group {
-  display: grid;
-  grid-template-columns: 24px 24px 80px;
-  gap: 1.5rem;
-  align-items: center;
-  justify-items: start;
-}
 
-.nav-action-item {
-  display: flex;
-  align-items: center;
-}
 
 .nav-profile-btn, 
 .nav-icon-btn {
