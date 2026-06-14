@@ -1,256 +1,329 @@
-/* ==========================================================================
-   EDITORIAL SPLIT-SCREEN HERO STYLES (Ikira Skincare Reference Inspired)
-   ========================================================================== */
+/* ═══════════════════════════════════════════════════════════
+   HERO SECTION — Ikira-Inspired Editorial Layout
+   Large horizontal title words + flowing product image + ingredient circle
+   ═══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
 
 .hero {
-  min-height: 100vh;
-  background: var(--color-ivory, #FAF6F0);
-  display: flex;
-  align-items: center;
   position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 680px;
+  max-height: 1100px;
   overflow: hidden;
-  padding: 60px 0;
+  background: #f5f0ea;
 }
 
-/* Subtle background grid overlay */
-.hero::after {
-  content: '';
+/* ─── Product Image (full-bleed, flows across right ~60%) ─── */
+.hero-product-layer {
   position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(to right, rgba(224, 122, 95, 0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(224, 122, 95, 0.02) 1px, transparent 1px);
-  background-size: 100px 100px;
-  pointer-events: none;
+  top: 0;
+  right: 0;
+  width: 62%;
+  height: 100%;
   z-index: 1;
 }
 
-.hero-glow {
-  position: absolute;
-  top: 50%;
-  right: 5%;
-  transform: translate(50%, -50%);
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(224, 122, 95, 0.04) 0%, transparent 70%);
-  z-index: 1;
-  pointer-events: none;
-}
-
-.hero-content {
-  max-width: 1400px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 1rem 3rem;
-  display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 3rem;
-  align-items: center;
-  z-index: 10;
-  position: relative;
-}
-
-/* ==========================================================================
-   LEFT SIDE - Typography & Cutout Collage
-   ========================================================================== */
-
-.editorial-left {
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
-  width: 100%;
-  animation: fadeInLeft 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes fadeInLeft {
-  from { opacity: 0; transform: translateX(-40px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-.editorial-collage-container {
-  position: relative;
-  height: 550px;
-  width: 100%;
-}
-
-.editorial-word {
-  display: flex;
-  flex-direction: column;
-  font-family: var(--font-heading), serif;
-  font-weight: 300;
-  color: var(--color-teal, #241E1C);
-  line-height: 0.9;
-}
-
-.word-new {
-  position: absolute;
-  left: 0;
-  top: 50px;
-  font-size: clamp(6rem, 9.5vw, 10.5rem);
-  letter-spacing: -4px;
-}
-
-.word-collection {
-  position: absolute;
-  left: clamp(150px, 17vw, 210px);
-  top: 0px;
-  font-size: clamp(6rem, 9.5vw, 10.5rem);
-  letter-spacing: -4px;
-  z-index: 2;
-}
-
-/* Shape Cutouts (Frames) */
-.editorial-frame {
-  position: absolute;
-  overflow: hidden;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.06);
-  background: var(--color-ivory-deep, #F0E5D8);
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease;
-}
-
-.frame-img {
+.hero-product-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  object-position: center center;
+  /* Soft left-edge fade so it blends into the cream background */
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 5%, rgba(0,0,0,0.6) 14%, rgba(0,0,0,1) 28%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 5%, rgba(0,0,0,0.6) 14%, rgba(0,0,0,1) 28%);
 }
 
-.editorial-frame:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 25px 55px rgba(0, 0, 0, 0.12);
-}
-
-.editorial-frame:hover .frame-img {
-  transform: scale(1.06);
-}
-
-.arch-frame {
-  right: clamp(10px, 2vw, 40px);
-  top: 10px;
-  width: clamp(140px, 16vw, 185px);
-  height: clamp(210px, 24vw, 275px);
-  border-radius: 100px 100px 0 0;
+/* ─── Left Editorial Overlay ─── */
+.hero-editorial {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
   z-index: 3;
-}
-
-.circle-frame {
-  left: clamp(80px, 10vw, 120px);
-  bottom: 30px;
-  width: clamp(110px, 12vw, 150px);
-  height: clamp(110px, 12vw, 150px);
-  border-radius: 50%;
-  z-index: 5;
-}
-
-/* Description Text Block */
-.editorial-description-container {
-  max-width: 460px;
-  padding-left: 8px;
-}
-
-.editorial-description {
-  font-family: var(--font-body), sans-serif;
-  font-size: 0.88rem;
-  line-height: 1.65;
-  color: var(--color-teal-mid, #3E3532);
-  opacity: 0.85;
-}
-
-/* ==========================================================================
-   RIGHT SIDE - Valentino & Golden Blossom Showcase
-   ========================================================================== */
-
-.editorial-right {
-  width: 100%;
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  animation: fadeInRight 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
-}
-
-@keyframes fadeInRight {
-  from { opacity: 0; transform: translateX(40px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-.main-product-showcase {
-  width: 100%;
-  max-width: 560px;
-  aspect-ratio: 1.1 / 1;
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
+  padding-left: 5vw;
+  padding-right: 2vw;
+  padding-top: 2vh;
+  padding-bottom: 2vh;
 }
 
-.showcase-product-img {
+/* ─── Title Block ─── */
+.hero-title-block {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.hero-title {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.title-line {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-weight: 800;
+  color: #1a1714;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+.title-new {
+  font-size: clamp(4rem, 8.5vw, 9.5rem);
+  animation: titleReveal 0.8s ease 0.1s both;
+}
+
+.title-collection {
+  font-size: clamp(2.5rem, 5.2vw, 6rem);
+  margin-top: -0.05em;
+  animation: titleReveal 0.8s ease 0.25s both;
+}
+
+@keyframes titleReveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Ingredient Circle (overlapping between NEW and COLLECTION) ─── */
+.ingredient-circle {
+  position: absolute;
+  /* Sits at the junction of "NEW" and "COLLECTION" — right side of title */
+  top: 50%;
+  right: -5%;
+  transform: translateY(-50%);
+  width: clamp(120px, 13vw, 200px);
+  height: clamp(120px, 13vw, 200px);
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2.5px solid rgba(180, 155, 110, 0.4);
+  box-shadow:
+    0 8px 28px rgba(42, 37, 32, 0.12),
+    0 0 0 5px rgba(245, 240, 234, 0.65);
+  z-index: 6;
+  animation: circleReveal 0.9s ease 0.45s both;
+}
+
+.ingredient-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.04));
-  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  object-fit: cover;
 }
 
-.main-product-showcase:hover .showcase-product-img {
-  transform: translateY(-5px) scale(1.01);
+@keyframes circleReveal {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
 }
 
-/* ==========================================================================
-   RESPONSIVENESS
-   ========================================================================== */
+/* ─── Description + Buttons ─── */
+.hero-info {
+  max-width: 420px;
+  animation: infoSlideUp 0.85s ease 0.55s both;
+}
 
-@media (max-width: 991px) {
+.hero-description {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(0.85rem, 0.95vw, 1.05rem);
+  font-weight: 400;
+  color: #5a524a;
+  line-height: 1.65;
+  margin: 0 0 1.2rem 0;
+  letter-spacing: 0.01em;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* ─── Buttons ─── */
+.btn {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-explore {
+  background: #1a1714;
+  color: #f5f0ea;
+  padding: 14px 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-explore:hover {
+  background: #353129;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(26, 23, 20, 0.28);
+}
+
+.btn-explore .btn-arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  font-size: 1rem;
+}
+
+.btn-explore:hover .btn-arrow {
+  transform: translate(3px, -3px);
+}
+
+.btn-bestseller {
+  background: transparent;
+  color: #1a1714;
+  padding: 14px 36px;
+  border: 1.5px solid #1a1714;
+}
+
+.btn-bestseller:hover {
+  background: #1a1714;
+  color: #f5f0ea;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(26, 23, 20, 0.18);
+}
+
+@keyframes infoSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 1200px) {
+  .hero-editorial {
+    width: 55%;
+  }
+
+  .hero-product-layer {
+    width: 55%;
+  }
+
+  .title-new {
+    font-size: clamp(4rem, 9vw, 8rem);
+  }
+
+  .title-collection {
+    font-size: clamp(2.5rem, 5.5vw, 5rem);
+  }
+
+  .ingredient-circle {
+    width: clamp(100px, 11vw, 160px);
+    height: clamp(100px, 11vw, 160px);
+    right: -2%;
+  }
+}
+
+@media (max-width: 900px) {
   .hero {
-    padding: 60px 0;
-    min-height: auto;
+    height: auto;
+    min-height: 100vh;
   }
 
-  .hero-content {
-    grid-template-columns: 1fr;
-    gap: 4rem;
-    padding: 1.5rem;
+  .hero-product-layer {
+    position: relative;
+    width: 100%;
+    height: 50vh;
+    order: 1;
   }
 
-  .editorial-left {
-    gap: 2rem;
+  .hero-product-img {
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 65%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 65%, transparent 100%);
   }
 
-  .editorial-collage-container {
-    height: 420px;
+  .hero-editorial {
+    position: relative;
+    width: 100%;
+    height: auto;
+    padding: 2rem 1.5rem 3rem;
+    order: 2;
+    justify-content: flex-start;
   }
 
-  .word-new {
-    font-size: 5.8rem;
-    top: 40px;
+  .title-new {
+    font-size: clamp(3.5rem, 12vw, 6rem);
   }
 
-  .word-collection {
-    font-size: 5.8rem;
-    left: 120px;
+  .title-collection {
+    font-size: clamp(2rem, 7vw, 4rem);
   }
 
-  .arch-frame {
-    width: 125px;
-    height: 185px;
-    right: 0;
+  .ingredient-circle {
+    width: 90px;
+    height: 90px;
+    right: 5%;
+    top: 45%;
   }
 
-  .circle-frame {
-    width: 100px;
-    height: 100px;
-    left: 60px;
-    bottom: 20px;
-  }
-
-  .editorial-description-container {
+  .hero-info {
     max-width: 100%;
-    padding-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-editorial {
+    padding: 1.5rem 1rem 2.5rem;
   }
 
-  .editorial-right {
-    justify-content: center;
+  .title-new {
+    font-size: clamp(2.8rem, 14vw, 5rem);
   }
 
-  .main-product-showcase {
-    max-width: 440px;
+  .title-collection {
+    font-size: clamp(1.6rem, 8vw, 3rem);
+  }
+
+  .ingredient-circle {
+    width: 72px;
+    height: 72px;
+    right: 2%;
+  }
+
+  .hero-description {
+    font-size: 0.88rem;
+  }
+
+  .btn-explore,
+  .btn-bestseller {
+    padding: 12px 24px;
+    font-size: 0.75rem;
+  }
+
+  .hero-actions {
+    flex-wrap: wrap;
   }
 }
