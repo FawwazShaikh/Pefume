@@ -13,7 +13,7 @@ const ShoppingBagIcon = ({ className }) => (
 
 export default function Navbar({ onNavigate, activePage, onSelectCategory, activeCategory }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isThemeDark, setIsThemeDark] = useState(true);
+  const [isThemeDark, setIsThemeDark] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileShopOpen, setIsMobileShopOpen] = useState(false);
@@ -122,6 +122,8 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             <a href="#about" onClick={(e) => handleLinkClick(e, 'about')}>About</a>
             <span className="top-bar-divider">|</span>
             <a href="#reviews" onClick={(e) => handleLinkClick(e, 'reviews')}>Reviews</a>
+            <span className="top-bar-divider">|</span>
+            <a href="#contact" onClick={(e) => handleLinkClick(e, 'contact')}>Contact Us</a>
           </div>
           <div className="top-bar-right">
             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="top-bar-social" title="Instagram">
@@ -130,8 +132,6 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             <a href="https://wa.me/yournumber" target="_blank" rel="noopener noreferrer" className="top-bar-social" title="WhatsApp">
               <i className="fab fa-whatsapp"></i>
             </a>
-            <span className="top-bar-divider">|</span>
-            <a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')} className="gifting-link">Gifting</a>
           </div>
         </div>
       </div>
@@ -178,6 +178,12 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             <li className="nav-item">
               <a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')} className="nav-link">
                 TRACK ORDER
+              </a>
+            </li>
+
+            <li className="nav-item">
+              <a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')} className="nav-link">
+                GIFTING
               </a>
             </li>
           </ul>
@@ -276,13 +282,16 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
               <a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')}>TRACK ORDER</a>
             </li>
             <li>
+              <a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')}>GIFTING</a>
+            </li>
+            <li>
               <a href="#about" onClick={(e) => handleLinkClick(e, 'about')}>ABOUT</a>
             </li>
             <li>
               <a href="#reviews" onClick={(e) => handleLinkClick(e, 'reviews')}>REVIEWS</a>
             </li>
             <li>
-              <a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')}>GIFTING</a>
+              <a href="#contact" onClick={(e) => handleLinkClick(e, 'contact')}>CONTACT US</a>
             </li>
           </ul>
         </div>
