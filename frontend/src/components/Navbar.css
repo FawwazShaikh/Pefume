@@ -319,9 +319,9 @@
 
 .cart-count {
   position: absolute;
-  top: -6px;
-  right: -8px;
-  background: var(--color-teal, #0F3D3E);
+  top: -5px;
+  right: -7px;
+  background: var(--color-emerald-brand, #009966);
   color: #ffffff;
   width: 16px;
   height: 16px;
@@ -331,11 +331,13 @@
   justify-content: center;
   font-size: 0.62rem;
   font-weight: 700;
+  border: 1.5px solid var(--color-ivory-warm, #FFFEF5);
 }
 
 [data-theme="dark"] .cart-count {
-  background: var(--color-champagne, #E2C275);
-  color: var(--color-teal-deep, #072227);
+  background: var(--color-emerald-brand, #009966);
+  color: #ffffff;
+  border-color: var(--color-teal-deep, #072227);
 }
 
 /* Theme Toggle Button */

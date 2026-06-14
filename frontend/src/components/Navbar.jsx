@@ -2,13 +2,11 @@ import { useState, useEffect } from 'react';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 import './Navbar.css';
 
-// SVG outline matching the exact custom tapered shopping bag from user's mockup
 const ShoppingBagIcon = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth="2.6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-    {/* Tapered and rounded bag body */}
-    <path d="M 6.5,5.5 H 17.5 A 2,2 0 0,1 19.5,7.5 L 21,17.5 A 3.5,3.5 0 0,1 17.5,21 H 6.5 A 3.5,3.5 0 0,1 3,17.5 L 4.5,7.5 A 2,2 0 0,1 6.5,5.5 Z" />
-    {/* Hanging handle */}
-    <path d="M 8.5,5.5 A 3.5,3.5 0 0,0 15.5,5.5" />
+  <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <path d="M16 10a4 4 0 0 1-8 0" />
   </svg>
 );
 
@@ -150,7 +148,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
           
           <a href="#" className="nav-icon cart-icon" onClick={(e) => e.preventDefault()}>
             <ShoppingBagIcon className="w-5 h-5 nav-bag-icon" />
-            <span className="cart-count">0</span>
+            <span className="cart-count">1</span>
           </a>
 
           <button 
