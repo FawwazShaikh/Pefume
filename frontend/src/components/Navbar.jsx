@@ -19,10 +19,25 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   const [isMobileShopOpen, setIsMobileShopOpen] = useState(false);
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
 
+  const [cartCount, setCartCount] = useState(0);
+
   // Sync theme with HTML body attribute
   useEffect(() => {
     document.body.setAttribute('data-theme', isThemeDark ? 'dark' : 'light');
   }, [isThemeDark]);
+
+  // Sync cart count from localStorage
+  useEffect(() => {
+    const syncCart = () => {
+      const count = parseInt(localStorage.getItem('cartCount') || '0');
+      setCartCount(count);
+    };
+    syncCart();
+    window.addEventListener('cart-updated', syncCart);
+    return () => {
+      window.removeEventListener('cart-updated', syncCart);
+    };
+  }, []);
 
   const handleLinkClick = (e, hash) => {
     if (e) e.preventDefault();
@@ -30,7 +45,13 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
     setIsSearchOpen(false);
     
     const policies = ['authenticity', 'about', 'shipping', 'returns', 'terms', 'privacy', 'reviews'];
-    if (policies.includes(hash)) {
+    if (hash === 'cart') {
+      window.location.hash = 'cart';
+      if (onNavigate) onNavigate('cart');
+    } else if (hash === 'categories') {
+      window.location.hash = 'categories';
+      if (onNavigate) onNavigate('categories');
+    } else if (policies.includes(hash)) {
       window.location.hash = hash;
       if (onNavigate) onNavigate('policies');
       // Scroll to policy section
@@ -44,7 +65,13 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
       }, 100);
     } else {
       window.location.hash = hash;
-      if (onNavigate) onNavigate('home');
+      if (onNavigate) {
+        if (hash === 'collection' || hash === 'shop') {
+          onNavigate('shop');
+        } else {
+          onNavigate('home');
+        }
+      }
       setTimeout(() => {
         const element = document.getElementById(hash);
         if (element) {
@@ -66,7 +93,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
     }
     
     if (onNavigate) {
-      onNavigate('home');
+      onNavigate('shop');
     }
     window.location.hash = 'collection';
 
@@ -89,7 +116,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
     }
     
     if (onNavigate) {
-      onNavigate('home');
+      onNavigate('shop');
     }
     window.location.hash = 'collection';
 
@@ -132,6 +159,8 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             <a href="https://wa.me/yournumber" target="_blank" rel="noopener noreferrer" className="top-bar-social" title="WhatsApp">
               <i className="fab fa-whatsapp"></i>
             </a>
+            <span className="top-bar-divider">|</span>
+            <a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')}>Gifting</a>
           </div>
         </div>
       </div>
@@ -157,12 +186,12 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             </li>
 
             <li className="nav-item dropdown">
-              <a href="#collection" className="nav-link">
+              <a href="#categories" onClick={(e) => handleLinkClick(e, 'categories')} className="nav-link">
                 CATEGORIES <i className="fas fa-chevron-down nav-chevron"></i>
               </a>
               <ul className="dropdown-menu">
                 <li className="all-categories-link">
-                  <a href="#collection" onClick={(e) => handleCategoryClick(e, 'all')}>All Categories</a>
+                  <a href="#categories" onClick={(e) => handleLinkClick(e, 'categories')}>All Categories</a>
                 </li>
                 <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'summer')}>Summer Perfumes</a></li>
                 <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'winter')}>Winter Perfumes</a></li>
@@ -178,12 +207,6 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             <li className="nav-item">
               <a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')} className="nav-link">
                 TRACK ORDER
-              </a>
-            </li>
-
-            <li className="nav-item">
-              <a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')} className="nav-link">
-                GIFTING
               </a>
             </li>
           </ul>
@@ -209,9 +232,9 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
               <i className="fas fa-search"></i>
             </button>
             
-            <a href="#" className="nav-icon cart-icon" onClick={(e) => e.preventDefault()}>
+            <a href="#cart" className="nav-icon cart-icon" onClick={(e) => handleLinkClick(e, 'cart')}>
               <ShoppingBagIcon className="nav-bag-icon" />
-              <span className="cart-count">1</span>
+              {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
             </a>
 
             <button 
@@ -266,7 +289,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
                 CATEGORIES <i className="fas fa-chevron-down"></i>
               </button>
               <ul className={`mobile-accordion-content ${isMobileCategoriesOpen ? 'open' : ''}`}>
-                <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'all')}>All Categories</a></li>
+                <li><a href="#categories" onClick={(e) => handleLinkClick(e, 'categories')}>All Categories</a></li>
                 <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'summer')}>Summer Perfumes</a></li>
                 <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'winter')}>Winter Perfumes</a></li>
                 <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'office')}>Office Perfumes</a></li>
@@ -280,9 +303,6 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
 
             <li>
               <a href="#collection" onClick={(e) => handleLinkClick(e, 'collection')}>TRACK ORDER</a>
-            </li>
-            <li>
-              <a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')}>GIFTING</a>
             </li>
             <li>
               <a href="#about" onClick={(e) => handleLinkClick(e, 'about')}>ABOUT</a>

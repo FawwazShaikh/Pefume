@@ -1,6 +1,6 @@
 import './Gifting.css';
 
-export default function Gifting() {
+export default function Gifting({ onSelectCategory, onNavigate }) {
   return (
     <section id="gifting" className="gift-section">
       <div className="gift-container">
@@ -24,7 +24,22 @@ export default function Gifting() {
             <div className="gift-card-overlay"></div>
             <div className="gift-card-content">
               <h3 className="gift-card-title">Shop For Him</h3>
-              <a href="#collection" className="gift-explore-btn">EXPLORE &nbsp;→</a>
+              <a 
+                href="#collection" 
+                className="gift-explore-btn"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (onSelectCategory) onSelectCategory('him');
+                  if (onNavigate) onNavigate('shop');
+                  window.location.hash = 'collection';
+                  setTimeout(() => {
+                    const element = document.getElementById('collection');
+                    if (element) element.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }}
+              >
+                EXPLORE &nbsp;→
+              </a>
             </div>
           </div>
 
@@ -36,7 +51,22 @@ export default function Gifting() {
             <div className="gift-card-overlay"></div>
             <div className="gift-card-content">
               <h3 className="gift-card-title">Shop For Her</h3>
-              <a href="#collection" className="gift-explore-btn">EXPLORE &nbsp;→</a>
+              <a 
+                href="#collection" 
+                className="gift-explore-btn"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (onSelectCategory) onSelectCategory('her');
+                  if (onNavigate) onNavigate('shop');
+                  window.location.hash = 'collection';
+                  setTimeout(() => {
+                    const element = document.getElementById('collection');
+                    if (element) element.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }}
+              >
+                EXPLORE &nbsp;→
+              </a>
             </div>
           </div>
         </div>

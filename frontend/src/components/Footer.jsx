@@ -11,13 +11,18 @@ export default function Footer({ onNavigate }) {
   const handleHomeLinkClick = (e, id) => {
     e.preventDefault();
     window.location.hash = id;
-    if (onNavigate) onNavigate('home');
-    setTimeout(() => {
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
+    if (id === 'collection' || id === 'shop') {
+      if (onNavigate) onNavigate('shop');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      if (onNavigate) onNavigate('home');
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
   };
 
   return (

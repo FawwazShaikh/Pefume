@@ -7,24 +7,53 @@ import Pricing from './components/Pricing';
 import Authenticity from './components/Authenticity';
 import PoliciesPage from './components/Policies';
 import Footer from './components/Footer';
+import ProductPage from './components/ProductPage';
+import CartPage from './components/CartPage';
+import CategoriesPage from './components/CategoriesPage';
+import { collectionsData } from './components/SignatureCollection/CollectionData';
 
 function App() {
   const getPageFromHash = () => {
     const hash = window.location.hash.replace('#', '');
     const policies = ['authenticity', 'about', 'shipping', 'returns', 'terms', 'privacy'];
-    return policies.includes(hash) ? 'policies' : 'home';
+    if (policies.includes(hash)) return 'policies';
+    if (hash === 'shop' || hash === 'collection') return 'shop';
+    if (hash === 'cart') return 'cart';
+    if (hash === 'categories') return 'categories';
+    if (hash.startsWith('product-')) return 'product';
+    return 'home';
   };
 
   const [activePage, setActivePage] = useState(getPageFromHash);
   const [activeCategory, setActiveCategory] = useState('all');
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
     const handleHashChange = () => {
-      setActivePage(getPageFromHash());
+      const page = getPageFromHash();
+      setActivePage(page);
+
+      // Parse selected product if hash is product-
+      const hash = window.location.hash.replace('#', '');
+      if (hash.startsWith('product-')) {
+        const id = hash.replace('product-', '');
+        const foundProduct = collectionsData.find(p => p.id === id);
+        if (foundProduct) {
+          setSelectedProduct(foundProduct);
+        }
+      }
     };
+
+    // Initialize on load
+    handleHashChange();
+
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activePage]);
 
   return (
     <div className="flex flex-col gap-0 min-h-screen">
@@ -35,21 +64,54 @@ function App() {
         activeCategory={activeCategory} 
       />
       
-      {activePage === 'home' ? (
+      {activePage === 'home' && (
         <>
           <Hero />
-          <div id="collection">
-            <SignatureCollection 
-              activeCategory={activeCategory} 
-              onSelectCategory={setActiveCategory} 
-            />
-          </div>
-          <Gifting />
+          <Gifting 
+            onSelectCategory={setActiveCategory} 
+            onNavigate={setActivePage} 
+          />
           <Pricing />
           <Authenticity />
         </>
-      ) : (
+      )}
+
+      {activePage === 'shop' && (
+        <SignatureCollection 
+          activeCategory={activeCategory} 
+          onSelectCategory={setActiveCategory} 
+        />
+      )}
+
+      {activePage === 'product' && (
+        <ProductPage 
+          product={selectedProduct} 
+          onBackToShop={() => {
+            window.location.hash = 'shop';
+          }}
+        />
+      )}
+
+      {activePage === 'cart' && (
+        <CartPage 
+          onBackToShop={() => {
+            window.location.hash = 'shop';
+          }}
+        />
+      )}
+
+      {activePage === 'policies' && (
         <PoliciesPage />
+      )}
+
+      {activePage === 'categories' && (
+        <CategoriesPage 
+          onSelectCategory={(categoryKey) => {
+            setActiveCategory(categoryKey);
+            setActivePage('shop');
+            window.location.hash = 'collection';
+          }}
+        />
       )}
       
       <Footer onNavigate={setActivePage} />
