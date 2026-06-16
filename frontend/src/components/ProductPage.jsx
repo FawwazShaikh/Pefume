@@ -65,7 +65,6 @@ export default function ProductPage({ product, onBackToShop }) {
   const savingsAmount = competitorPriceForSize - selectedSizePrice;
   const savingsPercent = Math.round((savingsAmount / competitorPriceForSize) * 100);
 
-  const extraImages = product.images ? product.images.slice(2, 5) : [];
 
   return (
     <div className="relative bg-[#FCFAF7] min-h-screen pb-14 font-body select-none">
@@ -86,7 +85,7 @@ export default function ProductPage({ product, onBackToShop }) {
           {/* LEFT: Sticky Images (stacked vertically, sticks directly below navbar) */}
           <div className="lg:sticky lg:top-[55px] flex flex-col gap-4 self-start w-full">
             {product.images && product.images.length > 0 ? (
-              product.images.slice(0, 2).map((imgUrl, idx) => (
+              product.images.slice(0, 1).map((imgUrl, idx) => (
                 <div key={idx} className="rounded-xl overflow-hidden bg-white border border-[#E2C275]/12 shadow-sm p-4 flex items-center justify-center transition-all duration-500 hover:shadow-md">
                   <img
                     src={imgUrl}
@@ -256,25 +255,6 @@ export default function ProductPage({ product, onBackToShop }) {
         {/* Divider line */}
         <div className="h-px w-full bg-[#E2C275]/15 mb-12" />
 
-        {/* SECTION 2.5: Gallery Shots (Images 3-4-5) */}
-        {extraImages.length > 0 && (
-          <div className="mb-12">
-            <h3 className="font-heading text-base font-bold text-[#0F3D3E] uppercase tracking-[3px] mb-6 pb-2 border-b border-[#E2C275]/15">
-              Detailed Views
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {extraImages.map((imgUrl, idx) => (
-                <div key={idx} className="rounded-xl overflow-hidden bg-white border border-[#E2C275]/12 shadow-sm p-4 flex items-center justify-center hover:scale-103 transition-transform duration-300">
-                  <img
-                    src={imgUrl}
-                    alt={`${product.name} detail shot ${idx + 3}`}
-                    className="w-full h-auto max-h-[280px] object-contain"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* SECTION 3: Fragrance Description */}
         <div className="mb-12">
