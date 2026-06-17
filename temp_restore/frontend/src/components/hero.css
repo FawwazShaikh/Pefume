@@ -1,0 +1,53 @@
+"/* ═══════════════════════════════════════════════════════════\n   HERO SECTION — Redesigned Luxury Editorial Layout\n   ═══════════════════════════════════════════════════════════ */\n\n.hero {\n  position: relative;\n  width: 100%;\n  height: 100vh;\n  min-height: 750px;\n  max-height: 1100px;\n  overflow: hidden;\n  background: #F5F1E8; /* Soft luxury cream */\n}\n\n/* ─── Product Image Layer (Flows across right ~60%) ─── */\n.hero-product-layer {\n  position: absolute;\n  top: 0;\n  right: 0;\n  width: 60%;\n  height: 100%;\n  z-index: 1;\n}\n\n.hero-product-img {\n  width: 100%;\n  height: 100%;\n  object-fit: cover;\n  object-position: center center;\n  /* Soft transition blend to blend into the cream background */\n  mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.1) 4%, rgba(0,0,0,0.5) 12%, rgba(0,0,0,1) 25%);\n  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.1) 4%, rgba(0,0,0,0.5) 12%, rgba(0,0,0,1) 25%);\n}\n\n/* ─── Left Editorial Content Overlay ─── */\n.hero-editorial {\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 50%;\n  height: 100%;\n  z-index: 3;\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n  padding-left: 6rem;\n  padding-right: 2rem;\n  box-sizing: border-box;\n  animation: editorialReveal 1s cubic-bezier(0.16, 1, 0.3, 1) both;\n}\n\n@keyframes editorialReveal {\n  from {\n    opacity: 0;\n    transform: translateY(30px);\n  }\n  to {\n    opacity: 1;\n    transform: translateY(0);\n  }\n}\n\n/* ─── Top Label ─── */\n.hero-top-label {\n  font-family: 'Inter', sans-serif;\n  font-size: clamp(10px, 0.75vw, 13px);\n  letter-spacing: 2px;\n  text-transform: uppercase;\n  color: #6B6258;\n  font-weight: 500;\n  margin-bottom: 1rem;\n  display: 
+<truncated 4628 bytes>
+"/* ─── Left Editorial Content Overlay ─── */\n.hero-editorial {\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 50%;\n  height: 100%;\n  z-index: 3;\n  display: flex;\n  flex-direction: column;\n  justify-content: flex-start;\n  padding-top: 140px; /* Safe clearance for the 110px navbar */\n  padding-left: 6rem;\n  padding-right: 2rem;\n  padding-bottom: 2rem;\n  box-sizing: border-box;\n  animation: editorialReveal 1s cubic-bezier(0.16, 1, 0.3, 1) both;\n}\n\n@keyframes editorialReveal {\n  from {\n    opacity: 0;\n    transform: translateY(30px);\n  }\n  to {\n    opacity: 1;\n    transform: translateY(0);\n  }\n}\n\n/* ─── Top Label ─── */\n.hero-top-label {\n  font-family: 'Inter', sans-serif;\n  font-size: clamp(10px, 0.75vw, 13px);\n  letter-spacing: 2px;\n  text-transform: uppercase;\n  color: #6B6258;\n  font-weight: 500;\n  margin-bottom: 1rem;\n  display: block;\n}\n\n/* ─── Title Block ─── */\n.hero-title-block {\n  margin-bottom: 1.5rem;\n}\n\n.hero-title {\n  margin: 0;\n  padding: 0;\n  display: flex;\n  flex-direction: column;\n  gap: 0.2rem;\n  line-height: 0.95;\n}\n\n.title-line {\n  display: block;\n  font-family: 'Playfair Display', serif;\n  font-weight: 600;\n  color: #111111; /* Deep charcoal */\n  font-size: clamp(48px, 4.5vw, 68px); /* Redesigned scale to prevent header collision */\n  letter-spacing: -0.02em;\n}\n\n.title-accent {\n  color: #9E7D46; /* WCAG compliant bronze gold (passes contrast ratio checks) */\n  font-family: 'Cormorant Garamond', serif;\n  font-style: italic;\n  font-weight: 400;\n}\n\n/* ─── Description & Stats Container ─── */\n.hero-info {\n  max-width: 480px;\n}\n\n.hero-description {\n  font-family: 'Cormorant Garamond', serif;\n  font-size: clamp(16px, 1.2vw, 20px);\n  color: #6B6258;\n  line-height: 1.65;\n  margin: 0 0 2rem 0;\n  letter-spacing: 0.01em;\n}\n\n/* ─── Statistics Section ─── */\n.hero-stats {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 1.5rem;\n  margin-b
+<truncated 1215 bytes>
+  .title-line {
+    font-size: clamp(38px, 5.5vw, 48px); /* Compact tablet scale to prevent overlap */
+  }
+}
+
+/* Tablets (768px–1023px) */
+@media (max-width: 1023px) {
+  .hero-editorial {
+    padding-left: 3rem;
+  }
+  .hero-stats {
+    gap: 1rem;
+    padding: 1.5rem 0;
+  }
+}
+
+/* Mobile Screens (<768px) */
+@media (max-width: 767px) {
+  .hero {
+    height: auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-product-layer {
+    position: relative;
+    width: 100%;
+    height: 45vh;
+    order: 1;
+  }
+
+  .hero-product-img {
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 70%, transparent 100%);
+  }
+
+  .hero-editorial {
+    position: relative;
+    width: 100%;
+    height: auto;
+    padding: 3rem 1.5rem 4rem;
+    order: 2;
+    justify-content: flex-start;
+  }
+
+  .title-line {
+    font-size: clamp(28px, 7vw, 36px); /* Compact mobile scale to prevent overlap */
+  }

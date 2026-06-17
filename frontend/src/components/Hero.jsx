@@ -28,9 +28,9 @@ export default function Hero() {
 
             {/* Headline */}
             <div className="hero-headline">
-              <h1>
-                <span className="headline-line">Rare</span>
-                <span className="headline-line">Fragrances</span>
+              <h1 >
+                <span className="headline-line" style={{ color: "black" }}>Rare Fragrances</span>
+                {/* <span className="headline-line"></span> */}
               </h1>
               <p className="headline-sub">Perfectly Yours</p>
             </div>
