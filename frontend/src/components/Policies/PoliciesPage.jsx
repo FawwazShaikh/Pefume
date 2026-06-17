@@ -50,56 +50,56 @@ export default function PoliciesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FFF8E7]">
+    <div className="min-h-screen bg-[#F7F3ED]">
       {/* Google Fonts */}
       <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet"
       />
 
       {/* ===== HEADER ===== */}
-      <header className="relative overflow-hidden bg-gradient-to-br from-[#0F3D3E] via-[#0a2c2d] to-[#072227]">
+      <header className="relative overflow-hidden bg-[#1C1B18]">
         {/* Subtle grid pattern */}
         <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage:
-              'linear-gradient(to right, #E2C275 1px, transparent 1px), linear-gradient(to bottom, #E2C275 1px, transparent 1px)',
-            backgroundSize: '60px 60px',
+              'linear-gradient(to right, #B08A50 1px, transparent 1px), linear-gradient(to bottom, #B08A50 1px, transparent 1px)',
+            backgroundSize: '80px 80px',
           }}
         />
 
         {/* Radial glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(226,194,117,0.06)_0%,transparent_65%)] rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(176,138,80,0.04)_0%,transparent_65%)] rounded-full" />
 
-        <div className="relative z-10 max-w-6xl mx-auto px-6 py-16 lg:py-24 text-center">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 py-20 text-center">
           {/* Eyebrow */}
-          <p className="text-[0.65rem] font-bold tracking-[5px] uppercase text-[#E2C275]/70 mb-4">
+          <p className="text-[0.65rem] font-bold tracking-[5px] uppercase text-[#B08A50] mb-4">
             Decant Atelier
           </p>
 
           {/* Title */}
-          <h1 className="font-heading text-[clamp(2rem,5vw,3.5rem)] font-bold text-[#FFF8E7] tracking-wide leading-tight mb-4">
+          <h1 className="font-heading text-[clamp(2.2rem,5vw,3.8rem)] font-light text-[#F7F3ED] tracking-wide leading-tight mb-4">
             Our Policies
           </h1>
 
           {/* Subtitle */}
-          <p className="font-body text-[0.95rem] text-[#ECD9A3]/80 max-w-lg mx-auto leading-relaxed font-normal">
+          <p className="font-body text-[0.88rem] text-white/70 max-w-md mx-auto leading-relaxed font-light">
             Transparency, integrity, and care — the pillars of every interaction with Decant Atelier.
           </p>
 
           {/* Gold divider */}
-          <div className="mt-8 mx-auto h-px w-16 bg-gradient-to-r from-transparent via-[#E2C275]/50 to-transparent" />
+          <div className="mt-8 mx-auto h-px w-16 bg-[#B08A50]" />
         </div>
       </header>
 
       {/* ===== MAIN CONTENT ===== */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
         {/* Desktop + Tablet landscape: sidebar layout */}
-        <div className="hidden lg:grid lg:grid-cols-[320px_1fr] gap-0 -mt-8 relative z-20">
+        <div className="hidden lg:grid lg:grid-cols-[300px_1fr] gap-0 -mt-10 relative z-20">
           {/* Sidebar */}
           <aside className="pt-0">
-            <div className="sticky top-8 bg-white/70 backdrop-blur-md rounded-3xl border border-[#E2C275]/12 shadow-xl shadow-black/[0.03] p-3">
+            <div className="sticky top-28 bg-[#FEFCF9] rounded-none border border-black/8 shadow-md p-4">
               <PolicyNav
                 policies={policiesData}
                 activeId={activeId}
@@ -109,18 +109,18 @@ export default function PoliciesPage() {
           </aside>
 
           {/* Content */}
-          <div className="pl-10 xl:pl-14 pt-4 pb-20">
-            <div className="bg-white/60 backdrop-blur-sm rounded-3xl border border-[#E2C275]/10 shadow-lg shadow-black/[0.02] p-8 lg:p-12 xl:p-14">
+          <div className="pl-12 pt-4 pb-24">
+            <div className="bg-[#FEFCF9] rounded-none border border-black/6 shadow-md p-12 lg:p-16">
               <PolicyContent policy={activePolicy} />
             </div>
           </div>
         </div>
 
         {/* Mobile + Tablet portrait: card grid or detail view */}
-        <div className="lg:hidden -mt-6 relative z-20 pb-12">
+        <div className="lg:hidden -mt-8 relative z-20 pb-16">
           {mobileView === 'grid' ? (
             /* Policy card grid */
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fadeIn">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
               {policiesData.map((policy) => {
                 const Icon = policy.icon;
                 return (
@@ -128,26 +128,26 @@ export default function PoliciesPage() {
                     key={policy.id}
                     onClick={() => handleSelect(policy.id)}
                     className="
-                      group bg-white/70 backdrop-blur-sm rounded-2xl
-                      border border-[#E2C275]/10 p-5 text-left
-                      transition-all duration-300 hover:shadow-lg hover:shadow-[#0F3D3E]/5
-                      hover:border-[#E2C275]/25 hover:-translate-y-0.5
+                      group bg-[#FEFCF9] rounded-none
+                      border border-black/6 p-6 text-left
+                      transition-all duration-300 hover:shadow-md
+                      hover:border-black/20 hover:-translate-y-0.5
                       cursor-pointer
                     "
                   >
                     <div className="flex items-center gap-4">
-                      <span className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0F3D3E] to-[#072227] flex items-center justify-center flex-shrink-0 shadow-md shadow-[#0F3D3E]/10 group-hover:shadow-lg group-hover:shadow-[#0F3D3E]/15 transition-shadow duration-300">
-                        <Icon className="w-5 h-5 text-[#E2C275]" />
+                      <span className="w-12 h-12 rounded-none bg-[#1C1B18] flex items-center justify-center flex-shrink-0 shadow-sm transition-shadow duration-300">
+                        <Icon className="w-5 h-5 text-[#B08A50]" />
                       </span>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-[0.88rem] font-semibold text-[#0F3D3E] tracking-wide">
+                        <h3 className="text-[0.88rem] font-bold text-[#1C1B18] tracking-wide font-body">
                           {policy.title}
                         </h3>
-                        <p className="text-[0.7rem] text-[#0F3D3E]/40 mt-0.5">
+                        <p className="text-[0.7rem] text-black/45 mt-1">
                           {policy.tagline}
                         </p>
                       </div>
-                      <svg className="w-4 h-4 text-[#C4A85A]/40 group-hover:text-[#C4A85A] group-hover:translate-x-0.5 transition-all duration-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <svg className="w-4 h-4 text-[#B08A50]/40 group-hover:text-[#B08A50] group-hover:translate-x-0.5 transition-all duration-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                       </svg>
                     </div>
@@ -162,9 +162,9 @@ export default function PoliciesPage() {
               <button
                 onClick={handleBack}
                 className="
-                  flex items-center gap-2 mb-6 text-[0.78rem] font-medium
-                  text-[#0F3D3E]/50 hover:text-[#0F3D3E] transition-colors duration-300
-                  cursor-pointer
+                  flex items-center gap-2 mb-6 text-[0.78rem] font-bold
+                  text-black/50 hover:text-[#1C1B18] transition-colors duration-300
+                  cursor-pointer uppercase tracking-wider
                 "
               >
                 <ArrowLeftIcon className="w-4 h-4" />
@@ -181,7 +181,7 @@ export default function PoliciesPage() {
               </div>
 
               {/* Content card */}
-              <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[#E2C275]/10 shadow-lg shadow-black/[0.02] p-6 sm:p-8">
+              <div className="bg-[#FEFCF9] rounded-none border border-black/6 shadow-md p-6 sm:p-10">
                 <PolicyContent policy={activePolicy} />
               </div>
             </div>

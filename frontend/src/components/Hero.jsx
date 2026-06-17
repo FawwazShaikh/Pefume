@@ -1,39 +1,72 @@
 import './Hero.css';
 
 export default function Hero() {
+  const handleScrollToCollection = () => {
+    document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <section id="hero" className="hero">
-      {/* Full-bleed product image layer */}
-      <div className="hero-product-layer">
-        <img src="/valentino_tree.png" alt="Valentino Born In Roma" className="hero-product-img" />
+      {/* Full-bleed product image (background layer) */}
+      <div className="hero-image-layer">
+        <img
+          src="/valentino_tree.png"
+          alt="Valentino Born In Roma — luxury fragrance"
+          className="hero-product-img"
+          loading="eager"
+        />
+        <div className="hero-image-vignette" />
       </div>
 
-      {/* Left editorial overlay */}
-      <div className="hero-editorial">
-        {/* Large stacked title */}
-        <div className="hero-title-block">
-          <h1 className="hero-title">
-            <span className="title-line title-new">NEW</span>
-            <span className="title-line title-collection">COLLECTION</span>
-          </h1>
+      {/* Container to align left edge with the navbar grid */}
+      <div className="hero-container">
+        {/* Left editorial content overlay */}
+        <div className="hero-content">
+          <div className="hero-content-inner">
+            {/* Eyebrow */}
+            <span className="hero-eyebrow">EST. 2026 &bull; LUXURY FRAGRANCES</span>
 
-        </div>
+            {/* Headline */}
+            <div className="hero-headline">
+              <h1>
+                <span className="headline-line">Rare</span>
+                <span className="headline-line">Fragrances</span>
+              </h1>
+              <p className="headline-sub">Perfectly Yours</p>
+            </div>
 
-        {/* Description + action buttons */}
-        <div className="hero-info">
-          <p className="hero-description">
-            Born In Roma is a refined fragrance where the delicate touch
-            of jasmine and the juiciness of blackcurrant blend with the warm depth
-            of woody vetiver, creating a harmonious and memorable trail that
-            embodies elegance and the power of nature.
-          </p>
-          <div className="hero-actions">
-            <button className="btn btn-explore" onClick={() => document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' })}>
-              Explore <span className="btn-arrow">↗</span>
-            </button>
-            <button className="btn btn-bestseller" onClick={() => document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' })}>
-              Best Seller
-            </button>
+            {/* Description */}
+            <p className="hero-description">
+              Discover our curated collection of niche and luxury fragrances — each bottle a story, each note a memory waiting to be made.
+            </p>
+
+            {/* Trust indicators */}
+            <div className="hero-trust">
+              <div className="trust-item">
+                <span className="trust-value">100%</span>
+                <span className="trust-label">Verified Originals</span>
+              </div>
+              <div className="trust-divider" />
+              <div className="trust-item">
+                <span className="trust-value">5 / 8 / 10 ml</span>
+                <span className="trust-label">Trial Sizes</span>
+              </div>
+              <div className="trust-divider" />
+              <div className="trust-item">
+                <span className="trust-value">Pan-India</span>
+                <span className="trust-label">Delivery</span>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="hero-cta">
+              <button className="cta-primary" onClick={handleScrollToCollection}>
+                Shop Collection
+              </button>
+              <button className="cta-secondary" onClick={handleScrollToCollection}>
+                Explore
+              </button>
+            </div>
           </div>
         </div>
       </div>

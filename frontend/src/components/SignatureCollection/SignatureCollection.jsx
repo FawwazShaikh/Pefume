@@ -216,41 +216,41 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
   }, [currentCategory]);
 
   return (
-    <section className="relative bg-[#FFF8E7] py-10 lg:py-16 overflow-hidden select-none">
+    <section className="relative bg-[#F7F3ED] py-16 lg:py-24 overflow-hidden select-none font-body">
       {/* Background visual graphics */}
       <div
-        className="absolute inset-0 opacity-[0.02] pointer-events-none"
+        className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
           backgroundImage:
-            'linear-gradient(to right, #E2C275 1px, transparent 1px), linear-gradient(to bottom, #E2C275 1px, transparent 1px)',
-          backgroundSize: '80px 80px',
+            'linear-gradient(to right, #B08A50 1px, transparent 1px), linear-gradient(to bottom, #B08A50 1px, transparent 1px)',
+          backgroundSize: '120px 120px',
         }}
       />
-      <div className="absolute -top-40 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(226,194,117,0.05)_0%,transparent_70%)] rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 left-0 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(15,61,62,0.03)_0%,transparent_70%)] rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-40 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(176,138,80,0.03)_0%,transparent_70%)] rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 left-0 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(28,27,24,0.02)_0%,transparent_70%)] rounded-full blur-3xl pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 relative z-10">
         {/* Category Banner or normal breadcrumbs */}
         {(() => {
           const activeBanner = categoryBanners[currentCategory];
           if (activeBanner) {
             return (
               <div 
-                className="w-full relative overflow-hidden mb-8 rounded-2xl bg-cover bg-center h-[180px] sm:h-[200px] md:h-[220px] flex items-center shadow-md border border-[#E2C275]/15"
+                className="w-full relative overflow-hidden mb-12 rounded bg-cover bg-center h-[200px] sm:h-[240px] flex items-center shadow-sm border border-black/5"
                 style={{ backgroundImage: `url(${activeBanner.image})` }}
               >
                 {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent z-0" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#1C1B18]/90 via-[#1C1B18]/60 to-transparent z-0" />
                 
                 {/* Content */}
-                <div className="relative z-10 px-6 sm:px-10 max-w-4xl text-left font-body">
-                  <div className="text-[0.6rem] font-bold tracking-[3px] text-white/70 uppercase mb-2">
+                <div className="relative z-10 px-8 sm:px-12 max-w-4xl text-left">
+                  <div className="text-[0.6rem] font-bold tracking-[3px] text-white/70 uppercase mb-3">
                     HOME / CATEGORIES / {activeBanner.title.toUpperCase()}
                   </div>
-                  <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-2 leading-tight tracking-wide">
+                  <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-light text-white mb-3 leading-tight tracking-wide">
                     {activeBanner.title}
                   </h2>
-                  <p className="text-[0.72rem] sm:text-xs text-white/85 max-w-xl leading-relaxed font-normal">
+                  <p className="text-[0.72rem] sm:text-xs text-white/80 max-w-lg leading-relaxed font-light">
                     {activeBanner.desc}
                   </p>
                 </div>
@@ -260,21 +260,21 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
           
           return (
             /* Normal Breadcrumbs */
-            <div className="text-[0.6rem] font-bold tracking-[3px] text-[#C4A85A] uppercase mb-1 font-body">
+            <div className="text-[0.6rem] font-bold tracking-[3px] text-[#B08A50] uppercase mb-3">
               HOME / {breadcrumbText}
             </div>
           );
         })()}
 
         {/* Title and Search Row */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
             {!categoryBanners[currentCategory] && (
               <>
-                <h2 className="font-heading text-2xl lg:text-3xl font-extrabold text-[#072227] tracking-wide">
+                <h2 className="font-heading text-3xl lg:text-4xl font-light text-[#1C1B18] tracking-wide">
                   Fragrance Collection
                 </h2>
-                <div className="mt-2 h-0.5 w-16 bg-gradient-to-r from-[#E2C275] to-transparent" />
+                <div className="mt-3 h-px w-16 bg-[#B08A50]" />
               </>
             )}
           </div>
@@ -284,16 +284,16 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
               placeholder="Search fragrances..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full md:w-64 pl-4 pr-10 py-2.5 rounded-full border border-[#E2C275]/25 bg-white/60 focus:bg-white focus:border-[#0F3D3E] outline-none text-xs font-body text-[#0F3D3E] transition-all duration-300 shadow-sm"
+              className="w-full md:w-72 pl-4 pr-10 py-3 rounded-none border border-black/8 bg-white/60 focus:bg-white focus:border-[#1C1B18] outline-none text-xs text-[#1C1B18] transition-all duration-300 shadow-sm"
             />
-            <i className="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-[#0F3D3E]/40 text-xs"></i>
+            <i className="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-[#1C1B18]/40 text-xs"></i>
           </div>
         </div>
 
         {/* Filter pills & Sort selector row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E2C275]/15 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-black/8 mb-10">
           {/* Left: pills */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
             {[
               { id: 'all', label: 'All' },
               { id: 'sets', label: 'Sets' },
@@ -306,11 +306,11 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                   key={pill.id}
                   onClick={() => setCategory(pill.id)}
                   className={`
-                    px-4 py-1.5 rounded-full text-[0.62rem] font-bold tracking-wider uppercase
+                    px-5 py-2 rounded-none text-[0.62rem] font-bold tracking-wider uppercase
                     transition-all duration-300 ease-out whitespace-nowrap cursor-pointer border
                     ${isActive
-                      ? 'bg-[#0F3D3E] border-[#0F3D3E] text-[#FFF8E7] shadow-md shadow-[#0F3D3E]/10 hover:scale-102'
-                      : 'bg-white/60 border-[#E2C275]/15 text-[#0F3D3E] hover:bg-[#E2C275]/10 hover:border-[#E2C275]/35'
+                      ? 'bg-[#1C1B18] border-[#1C1B18] text-[#FEFCF9] shadow-sm'
+                      : 'bg-transparent border-black/8 text-[#1C1B18] hover:bg-[#EFE8DD] hover:border-[#1C1B18]/50'
                     }
                   `}
                 >
@@ -323,7 +323,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
             {(currentCategory !== 'all' || searchQuery !== '' || sortBy !== 'recommended') && (
               <button
                 onClick={handleClearFilters}
-                className="ml-2 text-[0.7rem] font-bold tracking-widest text-[#0F3D3E] hover:text-[#9B8A47] transition-colors duration-300 underline underline-offset-4 uppercase cursor-pointer"
+                className="ml-3 text-[0.65rem] font-bold tracking-widest text-[#1C1B18] hover:text-[#B08A50] transition-colors duration-300 underline underline-offset-4 uppercase cursor-pointer"
               >
                 Clear Filters
               </button>
@@ -331,12 +331,12 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
           </div>
 
           {/* Right: sorting */}
-          <div className="flex items-center gap-2.5">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-[#2C2C2C]/50 font-body">Sort by:</span>
+          <div className="flex items-center gap-3">
+            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-black/40">Sort by:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-white/60 border border-[#E2C275]/15 rounded-lg px-3.5 py-2 text-[0.7rem] font-bold text-[#0F3D3E] outline-none focus:border-[#0F3D3E] cursor-pointer font-body shadow-sm uppercase tracking-wider"
+              className="bg-[#FEFCF9] border border-black/8 rounded-none px-4 py-2.5 text-[0.68rem] font-bold text-[#1C1B18] outline-none focus:border-[#1C1B18] cursor-pointer shadow-sm uppercase tracking-wider"
             >
               <option value="recommended">Recommended</option>
               <option value="price-low">Price: Low to High</option>
@@ -347,19 +347,19 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
 
         {/* Dynamic Products Grid */}
         {filteredAndSortedItems.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-8">
             {filteredAndSortedItems.map((item) => (
               <div
                 key={item.id}
                 onClick={() => handleProductClick(item.id)}
                 className="
-                  group h-full flex flex-col bg-white/80 backdrop-blur-sm rounded-xl
-                  border border-[#E2C275]/12 shadow-sm hover:shadow-lg shadow-[#0F3D3E]/[0.01] hover:shadow-[#0F3D3E]/[0.05]
+                  group h-full flex flex-col bg-[#FEFCF9] rounded-none
+                  border border-black/6 shadow-sm hover:shadow-md
                   transition-all duration-500 ease-out hover:-translate-y-1 overflow-hidden cursor-pointer
                 "
               >
                 {/* Product Image and Badges */}
-                <div className="relative aspect-square overflow-hidden bg-[#FFF8E7]/30 border-b border-[#E2C275]/10">
+                <div className="relative aspect-square overflow-hidden bg-[#F7F3ED]/30 border-b border-black/5">
                   <img
                     src={item.image}
                     alt={item.name}
@@ -368,19 +368,19 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                   />
 
                   {/* Overlays Badges */}
-                  <div className="absolute top-2.5 left-2.5 right-2.5 z-10 flex flex-col gap-1 pointer-events-none items-start">
+                  <div className="absolute top-3 left-3 right-3 z-10 flex flex-col gap-1 pointer-events-none items-start">
                     {item.tags && item.tags.includes('featured') && (
-                      <span className="text-[0.45rem] font-extrabold tracking-widest uppercase bg-[#033B31] text-white px-2 py-0.5 rounded-full shadow-sm">
+                      <span className="text-[0.45rem] font-bold tracking-widest uppercase bg-[#B08A50] text-[#FEFCF9] px-2.5 py-1 rounded-none shadow-sm">
                         FEATURED
                       </span>
                     )}
                     {item.tags && item.tags.includes('new-arrival') && (
-                      <span className="text-[0.45rem] font-extrabold tracking-widest uppercase bg-[#0F3D3E] text-[#FFF8E7] px-2 py-0.5 rounded-full shadow-sm border border-[#E2C275]/20">
+                      <span className="text-[0.45rem] font-bold tracking-widest uppercase bg-[#1C1B18] text-[#FEFCF9] px-2.5 py-1 rounded-none shadow-sm border border-white/10">
                         NEW ARRIVAL
                       </span>
                     )}
                     {item.tags && item.tags.includes('out-of-stock') && (
-                      <span className="text-[0.45rem] font-extrabold tracking-widest uppercase bg-[#FF003C] text-white px-2 py-0.5 rounded-full shadow-sm">
+                      <span className="text-[0.45rem] font-bold tracking-widest uppercase bg-[#FF003C] text-white px-2.5 py-1 rounded-none shadow-sm">
                         OUT OF STOCK
                       </span>
                     )}
@@ -388,19 +388,19 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                 </div>
 
                 {/* Info block */}
-                <div className="p-3 font-body flex flex-col flex-1">
+                <div className="p-5 flex flex-col flex-1">
                   {/* Brand / Category Badge */}
-                  <span className="text-[0.52rem] font-extrabold tracking-[1.5px] text-[#2C2C2C]/50 block mb-0.5 uppercase">
+                  <span className="text-[0.55rem] font-bold tracking-[2px] text-black/40 block mb-1 uppercase">
                     {item.category === 'sets' ? 'CURATED SET' : (item.brand || 'FRAGRANCE')}
                   </span>
 
                   {/* Product Title */}
-                  <h3 className="font-heading text-xs font-extrabold text-[#0F3D3E] mb-1 tracking-wide leading-tight group-hover:text-[#9B8A47] transition-colors duration-300 truncate">
+                  <h3 className="font-heading text-base font-normal text-[#1C1B18] mb-1.5 tracking-wide leading-tight group-hover:text-[#B08A50] transition-colors duration-300 truncate">
                     {item.name}
                   </h3>
 
                   {/* Selected size price */}
-                  <div className="text-xs font-bold text-[#0F3D3E] mb-2 font-body">
+                  <div className="text-xs font-semibold text-[#B08A50] mb-3">
                     ₹{(() => {
                       const idx = getCardSizeIndex(item.id);
                       const priceVal = item.sizes && item.sizes[idx] ? item.sizes[idx].price : item.price;
@@ -410,7 +410,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
 
                   {/* Size selectors */}
                   {item.sizes && item.sizes.length > 0 && (
-                    <div className="flex flex-nowrap gap-1 mb-2.5 overflow-x-auto scrollbar-hide py-0.5 whitespace-nowrap">
+                    <div className="flex flex-nowrap gap-1 mb-4 overflow-x-auto scrollbar-hide py-0.5 whitespace-nowrap">
                       {item.sizes.map((sz, idx) => {
                         const isSelected = getCardSizeIndex(item.id) === idx;
                         const sizeLabel = sz.size.split(' ')[0].toUpperCase();
@@ -422,15 +422,15 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                               key={idx}
                               disabled
                               className={`
-                                px-2 py-1 rounded border text-[0.6rem] font-medium select-none cursor-not-allowed transition-all duration-200
+                                px-2.5 py-1.5 rounded-none border text-[0.6rem] font-medium select-none cursor-not-allowed transition-all duration-200
                                 ${isSelected 
-                                  ? 'border-[#0F3D3E] text-gray-400 bg-gray-50' 
-                                  : 'border-gray-200 text-gray-300 bg-gray-50/50'
+                                  ? 'border-black/20 text-black/40 bg-black/5' 
+                                  : 'border-black/8 text-black/30 bg-black/2'
                                 }
                               `}
                               style={{ textDecoration: 'line-through' }}
                             >
-                              {sizeLabel} (Out)
+                              {sizeLabel}
                             </button>
                           );
                         }
@@ -440,10 +440,10 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                             key={idx}
                             onClick={(e) => handleSelectCardSize(item.id, idx, e)}
                             className={`
-                              px-2 py-1 rounded text-[0.6rem] font-bold uppercase transition-all duration-200 cursor-pointer select-none border
+                              px-2.5 py-1.5 rounded-none text-[0.6rem] font-semibold uppercase transition-all duration-200 cursor-pointer select-none border
                               ${isSelected
-                                ? 'bg-[#0F3D3E] border-[#0F3D3E] text-white shadow-sm font-black'
-                                : 'bg-white border-gray-200 text-[#0F3D3E] hover:bg-[#E2C275]/15 hover:border-[#E2C275]/40'
+                                ? 'bg-[#1C1B18] border-[#1C1B18] text-white'
+                                : 'bg-transparent border-black/8 text-[#1C1B18] hover:border-black/30'
                               }
                             `}
                           >
@@ -465,7 +465,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                       return (
                         <button
                           disabled
-                          className="w-full py-1.5 rounded border border-gray-200 bg-gray-50 text-gray-300 text-[0.65rem] font-bold tracking-widest uppercase text-center cursor-not-allowed mt-auto"
+                          className="w-full py-2.5 rounded-none border border-black/5 bg-black/5 text-black/30 text-[0.65rem] font-bold tracking-widest uppercase text-center cursor-not-allowed mt-auto"
                         >
                           SOLD OUT
                         </button>
@@ -477,15 +477,15 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                         onClick={(e) => handleCardAddToCart(item, selectedOption, e)}
                         disabled={isAdding}
                         className={`
-                          w-full py-1.5 rounded border border-[#0F3D3E] text-[0.65rem] font-bold tracking-widest uppercase transition-all duration-300 mt-auto cursor-pointer
+                          w-full py-2.5 rounded-none border text-[0.65rem] font-bold tracking-widest uppercase transition-all duration-300 mt-auto cursor-pointer
                           ${isAdding
-                            ? 'bg-[#0F3D3E] text-[#FFF8E7] border-[#0F3D3E]'
-                            : 'bg-white text-[#0F3D3E] hover:bg-[#0F3D3E] hover:text-[#FFF8E7]'
+                            ? 'bg-[#1C1B18] text-white border-[#1C1B18]'
+                            : 'bg-transparent border-[#1C1B18] text-[#1C1B18] hover:bg-[#1C1B18] hover:text-white'
                           }
                         `}
                       >
                         {isAdding ? (
-                          <span className="flex items-center justify-center gap-1">
+                          <span className="flex items-center justify-center gap-1.5">
                             <i className="fas fa-spinner animate-spin"></i>
                             ADDING...
                           </span>
@@ -500,15 +500,15 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 bg-white/40 border border-[#E2C275]/12 rounded-3xl p-8 shadow-sm">
-            <i className="fas fa-search text-[#0F3D3E]/20 text-4xl mb-4"></i>
-            <h4 className="font-heading text-lg font-bold text-[#0F3D3E] mb-1">No Scents Found</h4>
-            <p className="text-xs text-[#2C2C2C]/50 font-body">
+          <div className="text-center py-24 bg-white/40 border border-black/5 rounded-none p-10 shadow-sm">
+            <i className="fas fa-search text-black/10 text-5xl mb-4"></i>
+            <h4 className="font-heading text-xl font-light text-[#1C1B18] mb-2">No Scents Found</h4>
+            <p className="text-xs text-black/40 font-body">
               Try adjusting your filters, search term, or sorting option.
             </p>
             <button
               onClick={handleClearFilters}
-              className="mt-4 px-5 py-2.5 rounded-full bg-[#0F3D3E] text-[#FFF8E7] hover:bg-[#E2C275] hover:text-[#0F3D3E] text-[0.7rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer shadow-sm"
+              className="mt-6 px-6 py-3 rounded-none bg-[#1C1B18] text-white hover:bg-[#B08A50] text-[0.7rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer shadow-sm"
             >
               Reset Filters
             </button>
@@ -526,7 +526,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closeQuickView}
-              className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-end justify-center lg:justify-end"
+              className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-end justify-center lg:justify-end"
             />
 
             {/* Slide-over Drawer Panel */}
@@ -534,25 +534,25 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 200 }}
               className="
-                fixed top-0 bottom-0 right-0 w-full lg:max-w-2xl bg-[#FFF8E7] z-50
-                shadow-2xl flex flex-col h-full border-l border-[#E2C275]/15
+                fixed top-0 bottom-0 right-0 w-full lg:max-w-2xl bg-[#F7F3ED] z-50
+                shadow-2xl flex flex-col h-full border-l border-black/8
               "
             >
               {/* Drawer Content */}
-              <div className="flex-1 overflow-y-auto scrollbar-hide p-6 sm:p-8 lg:p-10 pb-32">
+              <div className="flex-1 overflow-y-auto scrollbar-hide p-8 sm:p-10 lg:p-12 pb-32">
                 {/* Header panel controls */}
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#E2C275]/15">
-                  <span className="text-[0.62rem] font-bold tracking-[4px] uppercase text-[#C4A85A]">
+                <div className="flex items-center justify-between mb-10 pb-4 border-b border-black/8">
+                  <span className="text-[0.62rem] font-bold tracking-[3px] uppercase text-[#B08A50]">
                     Interactive Concierge Sizing
                   </span>
                   <button
                     onClick={closeQuickView}
                     aria-label="Close panel"
                     className="
-                      group w-9 h-9 rounded-full bg-[#0F3D3E]/5 hover:bg-[#0F3D3E]
-                      flex items-center justify-center text-[#0F3D3E] hover:text-[#FFF8E7]
+                      group w-9 h-9 rounded-full bg-black/5 hover:bg-[#1C1B18]
+                      flex items-center justify-center text-[#1C1B18] hover:text-white
                       transition-all duration-300 hover:rotate-90 cursor-pointer
                     "
                   >
@@ -564,7 +564,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                 <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8">
                   {/* Left Column: Image & Details */}
                   <div>
-                    <div className="aspect-square rounded-2xl overflow-hidden bg-[#FFF8E7]/30 border border-[#E2C275]/15 shadow-md">
+                    <div className="aspect-square rounded overflow-hidden bg-white border border-black/5 shadow-md">
                       <img
                         src={selectedItem.image}
                         alt={selectedItem.name}
@@ -573,14 +573,14 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                     </div>
 
                     {/* Sourcing certificate box */}
-                    <div className="mt-5 p-4 rounded-xl bg-[#0F3D3E]/[0.03] border border-[#E2C275]/10">
-                      <div className="flex gap-2 items-start">
-                        <ShieldCheckIcon className="w-4 h-4 text-[#C4A85A] mt-0.5 flex-shrink-0" />
+                    <div className="mt-6 p-4 rounded-none bg-[#EFE8DD] border border-black/5">
+                      <div className="flex gap-2.5 items-start">
+                        <ShieldCheckIcon className="w-4 h-4 text-[#B08A50] mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-[0.68rem] font-semibold text-[#0F3D3E] uppercase tracking-wider">
+                          <p className="text-[0.68rem] font-bold text-[#1C1B18] uppercase tracking-wider">
                             Authenticity Promise
                           </p>
-                          <p className="text-[0.65rem] text-[#0F3D3E]/60 leading-relaxed mt-1 font-body">
+                          <p className="text-[0.65rem] text-[#1C1B18]/70 leading-relaxed mt-1 font-body">
                             Sourced directly from batch-tracked original retail bottles. Hand-decanted to order.
                           </p>
                         </div>
@@ -591,67 +591,67 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                   {/* Right Column: Descriptions, Pyramids, and Size Selector */}
                   <div className="flex flex-col justify-between">
                     <div>
-                      <span className="text-[0.62rem] font-bold tracking-widest uppercase text-[#9B8A47] bg-[#9B8A47]/[0.06] px-2.5 py-1 rounded-md inline-block mb-3">
+                      <span className="text-[0.62rem] font-bold tracking-widest uppercase text-[#B08A50] bg-[#B08A50]/[0.08] px-3 py-1 rounded-none inline-block mb-4">
                         {selectedItem.category === 'decants' ? 'Decant Scent' : selectedItem.category === 'sets' ? 'Collection Set' : 'Retail Bottle'}
                       </span>
-                      <h3 className="font-heading text-2xl lg:text-3xl font-bold text-[#0F3D3E] mb-2 tracking-wide leading-tight">
+                      <h3 className="font-heading text-3xl font-light text-[#1C1B18] mb-2 tracking-wide leading-tight">
                         {selectedItem.name}
                       </h3>
-                      <p className="text-[0.78rem] text-[#9B8A47] italic tracking-wide mb-4">
+                      <p className="text-[0.78rem] text-[#B08A50] italic tracking-wide mb-4">
                         {selectedItem.tagline}
                       </p>
-                      <p className="text-[0.85rem] text-[#2C2C2C]/80 leading-relaxed font-body font-normal mb-6">
+                      <p className="text-[0.82rem] text-[#1C1B18]/70 leading-relaxed font-body mb-6">
                         {selectedItem.description}
                       </p>
 
                       {/* Olfactory Pyramid Accordion */}
-                      <div className="mb-8 p-5 rounded-2xl bg-white/70 border border-[#E2C275]/12 shadow-sm">
-                        <h4 className="text-[0.72rem] font-bold uppercase tracking-wider text-[#0F3D3E] mb-4 pb-2 border-b border-[#E2C275]/10">
+                      <div className="mb-8 p-5 bg-[#FEFCF9] border border-black/5">
+                        <h4 className="text-[0.72rem] font-bold uppercase tracking-wider text-[#1C1B18] mb-4 pb-2 border-b border-black/5">
                           Olfactory Pyramid
                         </h4>
                         <div className="space-y-3">
-                          <div className="grid grid-cols-[80px_1fr] text-[0.72rem] leading-normal font-body">
-                            <span className="font-bold text-[#9B8A47] uppercase tracking-wide">Top notes:</span>
-                            <span className="text-[#2C2C2C]">{selectedItem.pyramid.top}</span>
+                          <div className="grid grid-cols-[85px_1fr] text-[0.72rem] leading-normal font-body">
+                            <span className="font-bold text-[#B08A50] uppercase tracking-wide">Top notes:</span>
+                            <span className="text-[#1C1B18]">{selectedItem.pyramid.top}</span>
                           </div>
-                          <div className="grid grid-cols-[80px_1fr] text-[0.72rem] leading-normal font-body">
-                            <span className="font-bold text-[#9B8A47] uppercase tracking-wide">Heart notes:</span>
-                            <span className="text-[#2C2C2C]">{selectedItem.pyramid.heart}</span>
+                          <div className="grid grid-cols-[85px_1fr] text-[0.72rem] leading-normal font-body">
+                            <span className="font-bold text-[#B08A50] uppercase tracking-wide">Heart notes:</span>
+                            <span className="text-[#1C1B18]">{selectedItem.pyramid.heart}</span>
                           </div>
-                          <div className="grid grid-cols-[80px_1fr] text-[0.72rem] leading-normal font-body">
-                            <span className="font-bold text-[#9B8A47] uppercase tracking-wide">Base notes:</span>
-                            <span className="text-[#2C2C2C]">{selectedItem.pyramid.base}</span>
+                          <div className="grid grid-cols-[85px_1fr] text-[0.72rem] leading-normal font-body">
+                            <span className="font-bold text-[#B08A50] uppercase tracking-wide">Base notes:</span>
+                            <span className="text-[#1C1B18]">{selectedItem.pyramid.base}</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Size Selector */}
                       <div className="mb-6">
-                        <h4 className="text-[0.72rem] font-bold uppercase tracking-wider text-[#0F3D3E] mb-3">
+                        <h4 className="text-[0.72rem] font-bold uppercase tracking-wider text-[#1C1B18] mb-3">
                           Select Product Option
                         </h4>
-                        <div className="grid grid-cols-2 gap-2.5">
+                        <div className="grid grid-cols-2 gap-3">
                           {selectedItem.sizes.map((sz, idx) => (
                             <button
                               key={idx}
                               onClick={() => setSelectedSizeIndex(idx)}
                               className={`
-                                p-3 rounded-xl border text-left cursor-pointer transition-all duration-300
+                                p-3.5 rounded-none border text-left cursor-pointer transition-all duration-300
                                 ${selectedSizeIndex === idx
-                                  ? 'bg-[#0F3D3E] border-[#0F3D3E] text-[#FFF8E7] shadow-md shadow-[#0F3D3E]/10'
-                                  : 'bg-white/50 border-[#E2C275]/15 text-[#2C2C2C] hover:bg-[#F5ECD7]/40 hover:border-[#E2C275]/30'
+                                  ? 'bg-[#1C1B18] border-[#1C1B18] text-white shadow-sm'
+                                  : 'bg-[#FEFCF9] border-black/8 text-[#1C1B18] hover:border-black/20'
                                 }
                               `}
                             >
                               <div className="flex justify-between items-center mb-1">
-                                <span className={`text-[0.72rem] font-semibold ${selectedSizeIndex === idx ? 'text-[#E2C275]' : 'text-[#0F3D3E]'}`}>
+                                <span className={`text-[0.72rem] font-bold ${selectedSizeIndex === idx ? 'text-[#B08A50]' : 'text-[#1C1B18]'}`}>
                                   {sz.size}
                                 </span>
                                 <span className="text-[0.8rem] font-bold">
                                   ₹{sz.price.toLocaleString('en-IN')}
                                 </span>
                               </div>
-                              <span className={`text-[0.58rem] block ${selectedSizeIndex === idx ? 'text-[#ECD9A3]/80' : 'text-[#2C2C2C]/50'}`}>
+                              <span className={`text-[0.58rem] block ${selectedSizeIndex === idx ? 'text-white/60' : 'text-black/40'}`}>
                                 {sz.label}
                               </span>
                             </button>
@@ -664,24 +664,24 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
               </div>
 
               {/* Drawer Footer Purchase Strip */}
-              <div className="absolute bottom-0 left-0 right-0 bg-[#FFF8E7]/90 backdrop-blur-md border-t border-[#E2C275]/15 p-6 sm:p-8 flex items-center justify-between gap-6 z-20">
+              <div className="absolute bottom-0 left-0 right-0 bg-[#F7F3ED]/95 backdrop-blur-md border-t border-black/8 p-8 flex items-center justify-between gap-6 z-20">
                 <div>
-                  <span className="text-[0.62rem] uppercase tracking-wider text-[#2C2C2C]/50 block">Selected Option Price</span>
-                  <span className="text-2xl font-bold text-[#0F3D3E] font-heading tracking-wide">
+                  <span className="text-[0.62rem] uppercase tracking-wider text-black/40 block">Selected Option Price</span>
+                  <span className="text-2xl font-semibold text-[#1C1B18] font-heading tracking-wide">
                     ₹{selectedItem.sizes[selectedSizeIndex]?.price.toLocaleString('en-IN')}
                   </span>
                 </div>
 
-                <div className="flex gap-2.5 flex-1 max-w-xs justify-end">
+                <div className="flex gap-3 flex-1 max-w-xs justify-end">
                   <button
                     onClick={() => {
                       alert(`Concierge: Selected ${selectedItem.name} (${selectedItem.sizes[selectedSizeIndex]?.size}) for ₹${selectedItem.sizes[selectedSizeIndex]?.price.toLocaleString('en-IN')}`);
                       closeQuickView();
                     }}
                     className="
-                      flex-1 px-6 py-3.5 rounded-xl bg-[#0F3D3E] text-[#FFF8E7]
-                      hover:bg-[#E2C275] hover:text-[#0F3D3E] border border-[#0F3D3E] hover:border-[#E2C275]
-                      text-[0.76rem] font-bold tracking-widest uppercase shadow-md hover:shadow-lg
+                      flex-1 px-6 py-4 rounded-none bg-[#1C1B18] text-white
+                      hover:bg-[#B08A50] border border-[#1C1B18] hover:border-[#B08A50]
+                      text-[0.74rem] font-bold tracking-widest uppercase shadow-sm
                       transition-all duration-300 hover:scale-102 flex items-center justify-center gap-2 cursor-pointer
                     "
                   >

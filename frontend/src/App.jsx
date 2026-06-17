@@ -62,6 +62,7 @@ function App() {
     window.scrollTo(0, 0);
   }, [activePage]);
 
+
   return (
     <div className="flex flex-col gap-0 min-h-screen">
       <Navbar

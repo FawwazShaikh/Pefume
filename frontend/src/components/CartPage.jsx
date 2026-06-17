@@ -68,17 +68,17 @@ export default function CartPage({ onBackToShop }) {
   }
 
   return (
-    <div className="cart-page-wrapper bg-[#FCFAF7] min-h-screen py-10 font-body select-none">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="cart-page-wrapper bg-[#F7F3ED] min-h-screen py-16 font-body select-none">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
         
         {/* Breadcrumb */}
-        <div className="text-[0.6rem] font-bold tracking-[3px] text-[#C4A85A] uppercase mb-8">
-          <span className="cursor-pointer text-[#C4A85A]/60 hover:text-[#0F3D3E] transition-colors" onClick={handleBackToShop}>HOME</span>
-          <span className="mx-2 text-[#C4A85A]/40">&gt;</span>
-          <span className="text-[#0F3D3E]">YOUR SHOPPING BAG</span>
+        <div className="text-[0.6rem] font-bold tracking-[3px] text-[#B08A50] uppercase mb-8">
+          <span className="cursor-pointer text-[#B08A50]/60 hover:text-[#1C1B18] transition-colors" onClick={handleBackToShop}>HOME</span>
+          <span className="mx-2 text-[#B08A50]/40">&gt;</span>
+          <span className="text-[#1C1B18]">YOUR SHOPPING BAG</span>
         </div>
 
-        <h1 className="cart-page-title font-heading mb-10 text-3xl font-extrabold text-[#0F3D3E] tracking-wide">
+        <h1 className="cart-page-title font-heading mb-12 text-3xl sm:text-4xl font-light text-[#1C1B18] tracking-wide">
           Your Shopping Bag
         </h1>
 
@@ -91,7 +91,7 @@ export default function CartPage({ onBackToShop }) {
               return (
                 <div key={`${item.id}-${item.size}`} className="cart-item-card">
                   {/* Square Image */}
-                  <div className="cart-item-img-container bg-[#FFF8E7]/30">
+                  <div className="cart-item-img-container bg-white">
                     <img src={item.image} alt={item.name} className="cart-item-img" />
                   </div>
 
@@ -154,17 +154,17 @@ export default function CartPage({ onBackToShop }) {
           {/* RIGHT COLUMN: Order Summary */}
           <div className="cart-summary-column">
             <div className="cart-summary-card">
-              <h2 className="cart-summary-title font-heading">ORDER SUMMARY</h2>
+              <h2 className="cart-summary-title font-body">ORDER SUMMARY</h2>
               
               <div className="cart-summary-rows">
                 <div className="cart-summary-row">
                   <span>SUBTOTAL</span>
-                  <span className="font-bold text-[#0F3D3E]">₹{subtotal.toLocaleString('en-IN')}</span>
+                  <span className="font-bold text-[#1C1B18]">₹{subtotal.toLocaleString('en-IN')}</span>
                 </div>
                 
                 <div className="cart-summary-row">
                   <span>SHIPPING</span>
-                  <span className="font-bold text-[#0F3D3E]">
+                  <span className="font-bold text-[#1C1B18]">
                     {shipping === 0 ? 'FREE' : `₹${shipping.toLocaleString('en-IN')}`}
                   </span>
                 </div>
@@ -174,17 +174,17 @@ export default function CartPage({ onBackToShop }) {
               {subtotal > 0 && (
                 <div className={`cart-shipping-banner ${subtotal >= FREE_SHIPPING_THRESHOLD ? 'free-unlocked' : ''}`}>
                   {subtotal >= FREE_SHIPPING_THRESHOLD ? (
-                    <div className="shipping-banner-text font-bold text-center text-xs text-[#10B981] flex items-center justify-center gap-1.5 py-1">
+                    <div className="shipping-banner-text font-bold text-center text-xs text-[#B08A50] flex items-center justify-center gap-1.5 py-1">
                       <i className="fas fa-circle-check"></i>
                       <span>CONGRATULATIONS! FREE SHIPPING UNLOCKED</span>
                     </div>
                   ) : (
                     <div className="shipping-banner-inner">
                       <span className="shipping-banner-text">
-                        ADD ₹{neededForFreeShipping.toLocaleString('en-IN')} MORE TO UNLOCK FREE DELIVERY
+                        ADD ₹{neededForFreeShipping.toLocaleString('en-IN')} MORE FOR FREE DELIVERY
                       </span>
                       <button onClick={handleBackToShop} className="shipping-add-more-btn">
-                        ADD MORE
+                        ADD
                       </button>
                     </div>
                   )}

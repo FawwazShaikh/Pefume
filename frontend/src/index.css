@@ -1,29 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @import "tailwindcss";
 
-/* Decant Atelier Custom Design Tokens */
-@theme {
-  --color-ivory: #FAF6F0;
-  --color-ivory-warm: #FCFAF7;
-  --color-ivory-deep: #F0E5D8;
-  --color-champagne: #E2C275;
-  --color-champagne-light: #F4E7C5;
-  --color-champagne-muted: #FDFBF7;
-  --color-bronze: #C8A855;
-  --color-bronze-deep: #B09140;
-  --color-teal: #241E1C;
-  --color-teal-deep: #120E0D;
-  --color-teal-mid: #3E3532;
-  --color-emerald-brand: #E2C275;
-  --color-charcoal: #1A1A1A;
 
-  --font-heading: 'Playfair Display', 'Georgia', serif;
+/* Decant Atelier Custom Luxury Design Tokens */
+@theme {
+  --color-ivory: #F7F3ED;
+  --color-ivory-warm: #FEFCF9;
+  --color-ivory-deep: #EFE8DD;
+  --color-champagne: #B08A50;
+  --color-champagne-light: #C5A066;
+  --color-champagne-muted: #F9F7F3;
+  --color-bronze: #B08A50;
+  --color-bronze-deep: #95723C;
+  --color-teal: #1C1B18;
+  --color-teal-deep: #121110;
+  --color-teal-mid: #2C2A26;
+  --color-emerald-brand: #B08A50;
+  --color-charcoal: #1C1B18;
+  
+  --color-lux-bg: #F7F3ED;
+  --color-lux-secondary: #EFE8DD;
+  --color-lux-text: #1C1B18;
+  --color-lux-accent: #B08A50;
+  --color-lux-border: rgba(0, 0, 0, 0.08);
+
+  --font-heading: 'Cormorant Garamond', 'Playfair Display', 'Georgia', serif;
   --font-body: 'Inter', 'Segoe UI', sans-serif;
 }
 
 body {
   font-family: var(--font-body);
-  background-color: var(--color-ivory);
-  color: var(--color-charcoal);
+  background-color: var(--color-lux-bg);
+  color: var(--color-lux-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+[data-theme="dark"] body {
+  background-color: #1C1B18;
+  color: #F7F3ED;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reusable Luxury Button Animations & Focus */
+.btn-lux-primary {
+  background-color: #1C1B18;
+  color: #FEFCF9;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 12px 24px;
+  border: 1px solid #1C1B18;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-lux-primary:hover {
+  transform: translateY(-2px);
+  background-color: #B08A50;
+  border-color: #B08A50;
+}
+
+.btn-lux-secondary {
+  background-color: transparent;
+  color: #1C1B18;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 12px 24px;
+  border: 1px solid #1C1B18;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-lux-secondary:hover {
+  transform: translateY(-2px);
+  background-color: #1C1B18;
+  color: #FEFCF9;
 }

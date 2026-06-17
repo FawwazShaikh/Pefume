@@ -19,22 +19,22 @@ export default function PolicyNav({ policies, activeId, onSelect }) {
                 onClick={() => onSelect(policy.id)}
                 aria-current={isActive ? 'page' : undefined}
                 className={`
-                  group w-full flex items-center gap-4 px-5 py-4 rounded-2xl
+                  group w-full flex items-center gap-4 px-5 py-4 rounded-none
                   transition-all duration-300 ease-out text-left cursor-pointer
                   ${isActive
-                    ? 'bg-gradient-to-r from-[#0F3D3E] to-[#0a2c2d] shadow-lg shadow-[#0F3D3E]/10'
-                    : 'hover:bg-[#F5ECD7]/60'
+                    ? 'bg-[#1C1B18] shadow-sm'
+                    : 'hover:bg-[#EFE8DD]/60'
                   }
                 `}
               >
                 {/* Icon */}
                 <span
                   className={`
-                    flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center
+                    flex-shrink-0 w-10 h-10 rounded-none flex items-center justify-center
                     transition-all duration-300
                     ${isActive
-                      ? 'bg-[#E2C275]/20 text-[#E2C275]'
-                      : 'bg-[#0F3D3E]/5 text-[#0F3D3E]/50 group-hover:bg-[#0F3D3E]/10 group-hover:text-[#0F3D3E]/70'
+                      ? 'bg-[#B08A50]/20 text-[#B08A50]'
+                      : 'bg-black/5 text-black/50 group-hover:bg-black/8 group-hover:text-[#1C1B18]'
                     }
                   `}
                 >
@@ -45,16 +45,16 @@ export default function PolicyNav({ policies, activeId, onSelect }) {
                 <span className="flex-1 min-w-0">
                   <span
                     className={`
-                      block text-[0.82rem] font-semibold tracking-wide transition-colors duration-300
-                      ${isActive ? 'text-[#FFF8E7]' : 'text-[#0F3D3E] group-hover:text-[#0F3D3E]'}
+                      block text-[0.82rem] font-bold tracking-wide transition-colors duration-300 font-body
+                      ${isActive ? 'text-white' : 'text-[#1C1B18]'}
                     `}
                   >
                     {policy.title}
                   </span>
                   <span
                     className={`
-                      block text-[0.68rem] mt-0.5 transition-colors duration-300
-                      ${isActive ? 'text-[#ECD9A3]/70' : 'text-[#0F3D3E]/40 group-hover:text-[#0F3D3E]/55'}
+                      block text-[0.68rem] mt-0.5 transition-colors duration-300 font-body
+                      ${isActive ? 'text-[#B08A50]' : 'text-black/40 group-hover:text-black/60'}
                     `}
                   >
                     {policy.tagline}
@@ -66,8 +66,8 @@ export default function PolicyNav({ policies, activeId, onSelect }) {
                   className={`
                     w-4 h-4 flex-shrink-0 transition-all duration-300
                     ${isActive
-                      ? 'text-[#E2C275] translate-x-0 opacity-100'
-                      : 'text-[#0F3D3E]/20 -translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-60'
+                      ? 'text-[#B08A50] translate-x-0 opacity-100'
+                      : 'text-black/20 -translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-60'
                     }
                   `}
                 />
@@ -90,12 +90,12 @@ export default function PolicyNav({ policies, activeId, onSelect }) {
                   onClick={() => onSelect(policy.id)}
                   aria-current={isActive ? 'page' : undefined}
                   className={`
-                    flex items-center gap-2.5 px-4 py-2.5 rounded-full
+                    flex items-center gap-2.5 px-4 py-2.5 rounded-none
                     transition-all duration-300 whitespace-nowrap cursor-pointer
                     text-[0.78rem] font-medium tracking-wide
                     ${isActive
-                      ? 'bg-[#0F3D3E] text-[#FFF8E7] shadow-md shadow-[#0F3D3E]/15'
-                      : 'bg-[#F5ECD7]/70 text-[#0F3D3E]/70 hover:bg-[#F5ECD7] hover:text-[#0F3D3E]'
+                      ? 'bg-[#1C1B18] text-white shadow-md shadow-black/15'
+                      : 'bg-[#EFE8DD]/70 text-[#1C1B18] hover:bg-[#EFE8DD] hover:text-[#1C1B18]'
                     }
                   `}
                 >
