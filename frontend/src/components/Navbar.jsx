@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { collectionsData } from './SignatureCollection/CollectionData';
 import './Navbar.css';
 
@@ -11,6 +12,16 @@ const ShoppingBagIcon = ({ className }) => (
   </svg>
 );
 
+const collectionsMenuItems = [
+  { id: 'all', label: 'All Collections', type: 'categories', filter: 'categories' },
+  { id: 'summer', label: 'Summer', type: 'collection', filter: 'summer' },
+  { id: 'winter', label: 'Winter', type: 'collection', filter: 'winter' },
+  { id: 'office', label: 'Office', type: 'collection', filter: 'office' },
+  { id: 'datenight', label: 'Date Night', type: 'collection', filter: 'datenight' },
+  { id: 'her', label: 'For Her', type: 'collection', filter: 'her' },
+  { id: 'him', label: 'For Him', type: 'collection', filter: 'him' }
+];
+
 export default function Navbar({ onNavigate, activePage, onSelectCategory, activeCategory }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isThemeDark, setIsThemeDark] = useState(false);
@@ -20,6 +31,60 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   const [isMobileCollectionsOpen, setIsMobileCollectionsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+
+  // Luxury Collections Dropdown States & Handlers
+  const [isCollectionsHovered, setIsCollectionsHovered] = useState(false);
+  const [hoveredCollectionIndex, setHoveredCollectionIndex] = useState(null);
+  const [focusedCollectionIndex, setFocusedCollectionIndex] = useState(-1);
+
+  const handlePointerMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
+    e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
+  };
+
+  const handleCollectionsKeyDown = (e) => {
+    if (!isCollectionsHovered) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setIsCollectionsHovered(true);
+        setFocusedCollectionIndex(0);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocusedCollectionIndex((prev) => (prev + 1) % collectionsMenuItems.length);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocusedCollectionIndex((prev) => (prev - 1 + collectionsMenuItems.length) % collectionsMenuItems.length);
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setIsCollectionsHovered(false);
+        setFocusedCollectionIndex(-1);
+        document.getElementById('nav-collections-trigger')?.focus();
+        break;
+      case 'Tab':
+        setIsCollectionsHovered(false);
+        setFocusedCollectionIndex(-1);
+        break;
+      default:
+        break;
+    }
+  };
+
+  useEffect(() => {
+    if (focusedCollectionIndex >= 0 && isCollectionsHovered) {
+      const el = document.querySelector(`.lux-dropdown-item[data-index="${focusedCollectionIndex}"]`);
+      if (el) el.focus();
+    }
+  }, [focusedCollectionIndex, isCollectionsHovered]);
 
   useEffect(() => {
     document.body.setAttribute('data-theme', isThemeDark ? 'dark' : 'light');
@@ -141,19 +206,88 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
                 </ul>
               </li>
 
-              <li className="nav-item dropdown">
-                <a href="#categories" className="nav-link" onClick={(e) => handleLinkClick(e, 'categories')}>
+              <li 
+                className="nav-item dropdown"
+                onMouseEnter={() => setIsCollectionsHovered(true)}
+                onMouseLeave={() => { setIsCollectionsHovered(false); setFocusedCollectionIndex(-1); }}
+                onKeyDown={handleCollectionsKeyDown}
+              >
+                <a 
+                  id="nav-collections-trigger"
+                  href="#categories" 
+                  className="nav-link" 
+                  onClick={(e) => handleLinkClick(e, 'categories')}
+                  aria-haspopup="true"
+                  aria-expanded={isCollectionsHovered}
+                >
                   Collections <i className="fas fa-chevron-down nav-chevron" />
                 </a>
-                <ul className="dropdown-menu">
-                  <li><a href="#categories" onClick={(e) => handleLinkClick(e, 'categories')}>All Collections</a></li>
-                  <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'summer')}>Summer</a></li>
-                  <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'winter')}>Winter</a></li>
-                  <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'office')}>Office</a></li>
-                  <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'datenight')}>Date Night</a></li>
-                  <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'her')}>For Her</a></li>
-                  <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'him')}>For Him</a></li>
-                </ul>
+                
+                <AnimatePresence>
+                  {isCollectionsHovered && (
+                    <motion.div
+                      className="lux-dropdown"
+                      initial={{ opacity: 0, y: -12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -12 }}
+                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      onPointerMove={handlePointerMove}
+                      role="menu"
+                      aria-label="Collections Submenu"
+                    >
+                      <div className="lux-dropdown-inner">
+                        {/* Signature gold accent line */}
+                        <div className="lux-gold-line" />
+
+                        {/* Left column: categories list */}
+                        <div className="lux-dropdown-list">
+                          <span className="lux-dropdown-title">Collections</span>
+                          <div className="lux-dropdown-items">
+                            {collectionsMenuItems.map((item, idx) => {
+                              const isHovered = hoveredCollectionIndex === idx;
+                              return (
+                                <a
+                                  key={item.id}
+                                  href={`#${item.filter}`}
+                                  data-index={idx}
+                                  className={`lux-dropdown-item ${isHovered ? 'hovered' : ''}`}
+                                  onClick={(e) => {
+                                    if (item.type === 'categories') {
+                                      handleLinkClick(e, 'categories');
+                                    } else {
+                                      handleCategoryClick(e, item.filter);
+                                    }
+                                    setIsCollectionsHovered(false);
+                                  }}
+                                  onMouseEnter={() => {
+                                    setHoveredCollectionIndex(idx);
+                                    setFocusedCollectionIndex(idx);
+                                  }}
+                                  onMouseLeave={() => setHoveredCollectionIndex(null)}
+                                  role="menuitem"
+                                >
+                                  <span className="item-label">{item.label}</span>
+                                  <span className="item-arrow">→</span>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Right column: luxury mini-mega menu storytelling preview */}
+                        <div className="lux-dropdown-preview">
+                          <div className="preview-content">
+                            <span className="preview-subtitle">Curated Fragrance Journeys</span>
+                            <p className="preview-tagline">
+                              Discover fragrances crafted for every season, mood, and occasion.
+                            </p>
+                            <div className="preview-accent-flower" />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </li>
 
               <li className="nav-item">
@@ -230,6 +364,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
               <li><a href="#categories" onClick={(e) => handleLinkClick(e, 'categories')}>All Collections</a></li>
               <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'summer')}>Summer</a></li>
               <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'winter')}>Winter</a></li>
+              <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'office')}>Office</a></li>
               <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'datenight')}>Date Night</a></li>
               <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'her')}>For Her</a></li>
               <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'him')}>For Him</a></li>

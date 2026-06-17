@@ -69,7 +69,14 @@
   height: 550px;
   cursor: pointer;
   border: 1px solid var(--color-lux-border, rgba(0,0,0,0.08));
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 28px; /* Elegant organic corners */
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.01);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gift-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 55px rgba(28, 27, 24, 0.08), 0 8px 24px rgba(28, 27, 24, 0.02);
 }
 
 .gift-card-bg {
@@ -87,7 +94,7 @@
 }
 
 .gift-card:hover .gift-card-img {
-  transform: scale(1.05);
+  transform: scale(1.03); /* Soft luxury hover zoom */
 }
 
 /* Fallbacks */
@@ -102,13 +109,13 @@
 .gift-card-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(28, 27, 24, 0.35);
+  background: radial-gradient(circle at center, rgba(28, 27, 24, 0.2) 0%, rgba(28, 27, 24, 0.6) 100%); /* Radial vignette */
   z-index: 1;
-  transition: background-color 0.4s ease;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .gift-card:hover .gift-card-overlay {
-  background: rgba(28, 27, 24, 0.5);
+  background: radial-gradient(circle at center, rgba(28, 27, 24, 0.3) 0%, rgba(28, 27, 24, 0.75) 100%);
 }
 
 .gift-card-content {
@@ -148,14 +155,18 @@
   justify-content: center;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   padding: 12px 28px;
-  border: 1px solid rgba(254, 252, 249, 0.6);
-  background: transparent;
+  border: 1px solid rgba(176, 138, 80, 0.4); /* Elegant gold border highlight */
+  border-radius: 14px; /* Slightly rounded corners */
+  background: rgba(255, 255, 255, 0.05); /* Frosted transparent background */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .gift-explore-btn:hover {
   color: #1C1B18;
   background: #FEFCF9;
   border-color: #FEFCF9;
+  box-shadow: 0 4px 15px rgba(254, 252, 249, 0.2);
 }
 
 /* Tablet & Mobile Breakpoints */

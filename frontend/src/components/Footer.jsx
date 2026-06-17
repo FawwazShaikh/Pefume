@@ -107,23 +107,7 @@ export default function Footer({ onNavigate }) {
           </ul>
         </div>
 
-        {/* Col 5: Newsletter */}
-        <div className="footer-col footer-newsletter">
-          <h4 className="footer-col-title">NEWSLETTER</h4>
-          <p className="footer-newsletter-text">
-            Subscribe to receive updates on new arrivals, private sales, and olfactory insights.
-          </p>
-          <form className="footer-newsletter-form" onSubmit={(e) => { e.preventDefault(); alert("Thank you for subscribing!"); e.target.reset(); }}>
-            <input 
-              type="email" 
-              placeholder="ENTER YOUR EMAIL" 
-              className="footer-newsletter-input" 
-              required 
-              aria-label="Email Address"
-            />
-            <button type="submit" className="footer-newsletter-btn">SUBSCRIBE</button>
-          </form>
-        </div>
+
       </div>
 
       {/* Disclaimer */}

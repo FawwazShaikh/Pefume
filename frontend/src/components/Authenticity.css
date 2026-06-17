@@ -8,13 +8,14 @@
   margin: 0 auto;
   background: var(--color-lux-secondary, #EFE8DD);
   border: 1px solid var(--color-lux-border, rgba(0, 0, 0, 0.08));
-  padding: 4.5rem;
+  border-radius: 32px; /* Soft rounded corners */
+  padding: 5rem; /* More breathing room */
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4.5rem;
   align-items: center;
   color: #1C1B18;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.04), 0 10px 30px rgba(0, 0, 0, 0.02);
 }
 
 /* Left side */
@@ -47,27 +48,30 @@
   font-weight: 400;
 }
 
-/* Badges */
+/* Badges: styled as Luxury Pills with soft rounded corners and gold highlights */
 .auth-badges {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .auth-badge {
   background: #FEFCF9;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 1.2rem 1.5rem;
+  border: 1px solid rgba(176, 138, 80, 0.12); /* Antique gold minimal border */
+  border-radius: 32px; /* Large radius pill corners */
+  padding: 1.4rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.02);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .auth-badge:hover {
   background: #FEFCF9;
   border-color: #B08A50;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px rgba(176, 138, 80, 0.08); /* Soft gold glow */
 }
 
 .badge-name {
@@ -86,20 +90,27 @@
   color: #B08A50;
 }
 
-/* Right side Certificate card */
+/* Right side Certificate card: styled as fine textured parchment paper */
 .auth-certificate {
   background: #FEFCF9;
-  border: 1px solid rgba(176, 138, 80, 0.25);
-  padding: 2.5rem;
+  border: 1px solid rgba(176, 138, 80, 0.22); /* Antique gold frame */
+  border-radius: 20px; /* Soft rounded corners */
+  padding: 3.25rem 3rem; /* More premium spacing */
   color: #1C1B18;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.03);
+  position: relative;
+  box-shadow: 
+    inset 0 0 0 8px rgba(176, 138, 80, 0.04), /* Embossed inset frame */
+    0 25px 55px rgba(28, 27, 24, 0.05),
+    0 5px 15px rgba(0, 0, 0, 0.01);
+  background-image: radial-gradient(rgba(176, 138, 80, 0.02) 1px, transparent 0); /* Subtle paper texture */
+  background-size: 16px 16px;
 }
 
 .cert-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
 }
 
 .cert-label {
@@ -125,30 +136,30 @@
 
 .cert-title {
   font-family: var(--font-heading), serif;
-  font-size: 1.35rem;
-  font-weight: 400;
+  font-size: 1.45rem;
+  font-weight: 300;
   color: #1C1B18;
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.65rem;
   line-height: 1.3;
 }
 
 .cert-desc {
   font-family: var(--font-body);
-  font-size: 0.8rem;
-  color: rgba(28, 27, 24, 0.6);
+  font-size: 0.82rem;
+  color: rgba(28, 27, 24, 0.65);
   line-height: 1.6;
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.75rem;
 }
 
 .cert-list {
   list-style: none;
   padding: 0;
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(28, 27, 24, 0.08);
+  gap: 0.85rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid rgba(176, 138, 80, 0.08); /* Gold accent divider */
 }
 
 .cert-list li {

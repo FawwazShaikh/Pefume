@@ -57,17 +57,22 @@ html {
   text-transform: uppercase;
   padding: 12px 24px;
   border: 1px solid #1C1B18;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 14px; /* Slightly rounded corners */
+  backdrop-filter: blur(12px); /* Subtle glass effect */
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(28, 27, 24, 0.05);
 }
 
 .btn-lux-primary:hover {
   transform: translateY(-2px);
   background-color: #B08A50;
   border-color: #B08A50;
+  box-shadow: 0 6px 20px rgba(176, 138, 80, 0.25); /* Premium hover glow */
 }
 
 .btn-lux-secondary {
@@ -79,8 +84,11 @@ html {
   letter-spacing: 2px;
   text-transform: uppercase;
   padding: 12px 24px;
-  border: 1px solid #1C1B18;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(28, 27, 24, 0.15); /* Ultra-thin border */
+  border-radius: 14px; /* Slightly rounded corners */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -91,4 +99,6 @@ html {
   transform: translateY(-2px);
   background-color: #1C1B18;
   color: #FEFCF9;
+  border-color: #1C1B18;
+  box-shadow: 0 6px 20px rgba(28, 27, 24, 0.15); /* Premium hover glow */
 }

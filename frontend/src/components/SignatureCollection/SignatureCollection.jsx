@@ -236,7 +236,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
           if (activeBanner) {
             return (
               <div 
-                className="w-full relative overflow-hidden mb-12 rounded bg-cover bg-center h-[200px] sm:h-[240px] flex items-center shadow-sm border border-black/5"
+                className="w-full relative overflow-hidden mb-12 rounded-3xl bg-cover bg-center h-[200px] sm:h-[240px] flex items-center shadow-sm border border-black/5"
                 style={{ backgroundImage: `url(${activeBanner.image})` }}
               >
                 {/* Overlay */}
@@ -284,7 +284,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
               placeholder="Search fragrances..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full md:w-72 pl-4 pr-10 py-3 rounded-none border border-black/8 bg-white/60 focus:bg-white focus:border-[#1C1B18] outline-none text-xs text-[#1C1B18] transition-all duration-300 shadow-sm"
+              className="w-full md:w-72 pl-4 pr-10 py-3 rounded-xl border border-black/8 bg-white/60 focus:bg-white focus:border-[#1C1B18] outline-none text-xs text-[#1C1B18] transition-all duration-300 shadow-sm"
             />
             <i className="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-[#1C1B18]/40 text-xs"></i>
           </div>
@@ -306,7 +306,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                   key={pill.id}
                   onClick={() => setCategory(pill.id)}
                   className={`
-                    px-5 py-2 rounded-none text-[0.62rem] font-bold tracking-wider uppercase
+                    px-5 py-2 rounded-full text-[0.62rem] font-bold tracking-wider uppercase
                     transition-all duration-300 ease-out whitespace-nowrap cursor-pointer border
                     ${isActive
                       ? 'bg-[#1C1B18] border-[#1C1B18] text-[#FEFCF9] shadow-sm'
@@ -336,7 +336,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-[#FEFCF9] border border-black/8 rounded-none px-4 py-2.5 text-[0.68rem] font-bold text-[#1C1B18] outline-none focus:border-[#1C1B18] cursor-pointer shadow-sm uppercase tracking-wider"
+              className="bg-[#FEFCF9] border border-black/8 rounded-xl px-4 py-2.5 text-[0.68rem] font-bold text-[#1C1B18] outline-none focus:border-[#1C1B18] cursor-pointer shadow-sm uppercase tracking-wider"
             >
               <option value="recommended">Recommended</option>
               <option value="price-low">Price: Low to High</option>
@@ -353,7 +353,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                 key={item.id}
                 onClick={() => handleProductClick(item.id)}
                 className="
-                  group h-full flex flex-col bg-[#FEFCF9] rounded-none
+                  group h-full flex flex-col bg-[#FEFCF9] rounded-3xl
                   border border-black/6 shadow-sm hover:shadow-md
                   transition-all duration-500 ease-out hover:-translate-y-1 overflow-hidden cursor-pointer
                 "
@@ -370,17 +370,17 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                   {/* Overlays Badges */}
                   <div className="absolute top-3 left-3 right-3 z-10 flex flex-col gap-1 pointer-events-none items-start">
                     {item.tags && item.tags.includes('featured') && (
-                      <span className="text-[0.45rem] font-bold tracking-widest uppercase bg-[#B08A50] text-[#FEFCF9] px-2.5 py-1 rounded-none shadow-sm">
+                      <span className="text-[0.45rem] font-bold tracking-widest uppercase bg-[#B08A50] text-[#FEFCF9] px-2.5 py-1 rounded-md shadow-sm">
                         FEATURED
                       </span>
                     )}
                     {item.tags && item.tags.includes('new-arrival') && (
-                      <span className="text-[0.45rem] font-bold tracking-widest uppercase bg-[#1C1B18] text-[#FEFCF9] px-2.5 py-1 rounded-none shadow-sm border border-white/10">
+                      <span className="text-[0.45rem] font-bold tracking-widest uppercase bg-[#1C1B18] text-[#FEFCF9] px-2.5 py-1 rounded-md shadow-sm border border-white/10">
                         NEW ARRIVAL
                       </span>
                     )}
                     {item.tags && item.tags.includes('out-of-stock') && (
-                      <span className="text-[0.45rem] font-bold tracking-widest uppercase bg-[#FF003C] text-white px-2.5 py-1 rounded-none shadow-sm">
+                      <span className="text-[0.45rem] font-bold tracking-widest uppercase bg-[#FF003C] text-white px-2.5 py-1 rounded-md shadow-sm">
                         OUT OF STOCK
                       </span>
                     )}
@@ -422,7 +422,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                               key={idx}
                               disabled
                               className={`
-                                px-2.5 py-1.5 rounded-none border text-[0.6rem] font-medium select-none cursor-not-allowed transition-all duration-200
+                                px-2.5 py-1.5 rounded-xl border text-[0.6rem] font-medium select-none cursor-not-allowed transition-all duration-200
                                 ${isSelected 
                                   ? 'border-black/20 text-black/40 bg-black/5' 
                                   : 'border-black/8 text-black/30 bg-black/2'
@@ -440,7 +440,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                             key={idx}
                             onClick={(e) => handleSelectCardSize(item.id, idx, e)}
                             className={`
-                              px-2.5 py-1.5 rounded-none text-[0.6rem] font-semibold uppercase transition-all duration-200 cursor-pointer select-none border
+                              px-2.5 py-1.5 rounded-xl text-[0.6rem] font-semibold uppercase transition-all duration-200 cursor-pointer select-none border
                               ${isSelected
                                 ? 'bg-[#1C1B18] border-[#1C1B18] text-white'
                                 : 'bg-transparent border-black/8 text-[#1C1B18] hover:border-black/30'
@@ -465,7 +465,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                       return (
                         <button
                           disabled
-                          className="w-full py-2.5 rounded-none border border-black/5 bg-black/5 text-black/30 text-[0.65rem] font-bold tracking-widest uppercase text-center cursor-not-allowed mt-auto"
+                          className="w-full py-2.5 rounded-xl border border-black/5 bg-black/5 text-black/30 text-[0.65rem] font-bold tracking-widest uppercase text-center cursor-not-allowed mt-auto"
                         >
                           SOLD OUT
                         </button>
@@ -477,7 +477,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                         onClick={(e) => handleCardAddToCart(item, selectedOption, e)}
                         disabled={isAdding}
                         className={`
-                          w-full py-2.5 rounded-none border text-[0.65rem] font-bold tracking-widest uppercase transition-all duration-300 mt-auto cursor-pointer
+                          w-full py-2.5 rounded-xl border text-[0.65rem] font-bold tracking-widest uppercase transition-all duration-300 mt-auto cursor-pointer
                           ${isAdding
                             ? 'bg-[#1C1B18] text-white border-[#1C1B18]'
                             : 'bg-transparent border-[#1C1B18] text-[#1C1B18] hover:bg-[#1C1B18] hover:text-white'
