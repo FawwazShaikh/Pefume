@@ -52,3 +52,4 @@ frontend/public/*_inspect.html
 .env
 .env.local
 
+node_modules
