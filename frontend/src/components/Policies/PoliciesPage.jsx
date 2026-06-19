@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from 'react';
 import policiesData from './policiesData';
 import PolicyNav from './PolicyNav';
 import PolicyContent from './PolicyContent';
-import { ArrowLeftIcon } from './Icons';
 
 /**
  * PoliciesPage — Main layout component.
@@ -79,7 +78,7 @@ export default function PoliciesPage() {
           </p>
 
           {/* Title */}
-          <h1 
+          <h1
             style={{ color: '#FEFCF9' }}
             className="font-heading text-[clamp(2.2rem,5vw,3.8rem)] font-light tracking-wide leading-tight mb-4"
           >
@@ -102,7 +101,7 @@ export default function PoliciesPage() {
         <div className="hidden lg:grid lg:grid-cols-[300px_1fr] gap-0 -mt-10 relative z-20">
           {/* Sidebar */}
           <aside className="pt-0">
-            <div className="sticky top-28 bg-[#FEFCF9] rounded-2xl border border-black/8 shadow-md p-4">
+            <div className="sticky top-28 bg-[#FEFCF9] rounded-3xl border border-black/8 shadow-md p-4">
               <PolicyNav
                 policies={policiesData}
                 activeId={activeId}
@@ -113,7 +112,7 @@ export default function PoliciesPage() {
 
           {/* Content */}
           <div className="pl-12 pt-4 pb-24">
-            <div className="bg-[#FEFCF9] rounded-2xl border border-black/6 shadow-md p-12 lg:p-16">
+            <div className="bg-[#FEFCF9] rounded-3xl border border-black/6 shadow-md p-12 lg:p-16">
               <PolicyContent policy={activePolicy} />
             </div>
           </div>
@@ -131,7 +130,7 @@ export default function PoliciesPage() {
                     key={policy.id}
                     onClick={() => handleSelect(policy.id)}
                     className="
-                      group bg-[#FEFCF9] rounded-none
+                      group bg-[#FEFCF9] rounded-2xl
                       border border-black/6 p-6 text-left
                       transition-all duration-300 hover:shadow-md
                       hover:border-black/20 hover:-translate-y-0.5
@@ -139,7 +138,7 @@ export default function PoliciesPage() {
                     "
                   >
                     <div className="flex items-center gap-4">
-                      <span className="w-12 h-12 rounded-none bg-[#1C1B18] flex items-center justify-center flex-shrink-0 shadow-sm transition-shadow duration-300">
+                      <span className="w-12 h-12 rounded-xl bg-[#1C1B18] flex items-center justify-center flex-shrink-0 shadow-sm transition-shadow duration-300">
                         <Icon className="w-5 h-5 text-[#B08A50]" />
                       </span>
                       <div className="flex-1 min-w-0">
@@ -161,30 +160,16 @@ export default function PoliciesPage() {
           ) : (
             /* Detail view */
             <div className="animate-fadeIn">
-              {/* Back button */}
-              <button
-                onClick={handleBack}
-                className="
-                  flex items-center gap-2 mb-6 text-[0.78rem] font-bold
-                  text-black/50 hover:text-[#1C1B18] transition-colors duration-300
-                  cursor-pointer uppercase tracking-wider
-                "
-              >
-                <ArrowLeftIcon className="w-4 h-4" />
-                All Policies
-              </button>
-
-              {/* Horizontal policy pills */}
-              <div className="mb-6">
-                <PolicyNav
-                  policies={policiesData}
-                  activeId={activeId}
-                  onSelect={handleSelect}
-                />
-              </div>
-
               {/* Content card */}
-              <div className="bg-[#FEFCF9] rounded-2xl border border-black/6 shadow-md p-6 sm:p-10">
+              <div className="bg-[#FEFCF9] rounded-3xl border border-black/6 shadow-md p-6 sm:p-10">
+                {/* Horizontal policy pills */}
+                <div className="mb-6 border-b border-black/5 pb-4">
+                  <PolicyNav
+                    policies={policiesData}
+                    activeId={activeId}
+                    onSelect={handleSelect}
+                  />
+                </div>
                 <PolicyContent policy={activePolicy} />
               </div>
             </div>

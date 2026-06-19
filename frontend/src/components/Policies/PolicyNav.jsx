@@ -19,7 +19,7 @@ export default function PolicyNav({ policies, activeId, onSelect }) {
                 onClick={() => onSelect(policy.id)}
                 aria-current={isActive ? 'page' : undefined}
                 className={`
-                  group w-full flex items-center gap-4 px-5 py-4 rounded-none
+                  group w-full flex items-center gap-4 px-6 py-4 rounded-2xl
                   transition-all duration-300 ease-out text-left cursor-pointer
                   ${isActive
                     ? 'bg-[#1C1B18] shadow-sm'
@@ -90,7 +90,7 @@ export default function PolicyNav({ policies, activeId, onSelect }) {
                   onClick={() => onSelect(policy.id)}
                   aria-current={isActive ? 'page' : undefined}
                   className={`
-                    flex items-center gap-2.5 px-4 py-2.5 rounded-none
+                    flex items-center gap-2.5 px-5.5 py-3 rounded-2xl
                     transition-all duration-300 whitespace-nowrap cursor-pointer
                     text-[0.78rem] font-medium tracking-wide
                     ${isActive
