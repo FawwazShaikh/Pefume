@@ -1,7 +1,7 @@
 import React from 'react';
 import './ScrollingMarquee.css';
 
-export default function ScrollingMarquee() {
+export default function ScrollingMarquee({ onClose }) {
   const items = [
     "FREE SHIPPING ON ORDERS OVER ₹1999",
     "100% ORIGINAL AUTHENTIC FRAGRANCES",
@@ -14,8 +14,8 @@ export default function ScrollingMarquee() {
   const tripleItems = [...items, ...items, ...items];
 
   return (
-    <div className="scrolling-marquee-container" aria-hidden="true">
-      <div className="scrolling-marquee-track">
+    <div className="scrolling-marquee-container">
+      <div className="scrolling-marquee-track" aria-hidden="true">
         {tripleItems.map((item, idx) => (
           <div key={idx} className="scrolling-marquee-item">
             <span>{item}</span>
@@ -23,6 +23,14 @@ export default function ScrollingMarquee() {
           </div>
         ))}
       </div>
+      <button 
+        className="scrolling-marquee-close" 
+        onClick={onClose} 
+        aria-label="Close announcement bar"
+        title="Dismiss"
+      >
+        <i className="fas fa-times" />
+      </button>
     </div>
   );
 }

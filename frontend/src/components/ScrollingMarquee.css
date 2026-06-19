@@ -42,3 +42,48 @@
     transform: translate3d(-33.3333%, 0, 0);
   }
 }
+
+/* Close button and fade styling */
+.scrolling-marquee-close {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--color-accent);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #0a0a0a;
+  font-size: 0.7rem;
+  z-index: 10;
+  transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.scrolling-marquee-close:hover {
+  background-color: var(--color-accent2);
+  color: #ffffff;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.scrolling-marquee-close:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 1px;
+}
+
+/* Linear-gradient fade at right edge to hide scrolling text before close button */
+.scrolling-marquee-container::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  background: linear-gradient(to right, transparent, var(--color-accent) 60%);
+  pointer-events: none;
+  z-index: 2;
+}

@@ -22,6 +22,36 @@
   box-shadow: 0 1px 0 rgba(0,0,0,0.06);
 }
 
+/* Dynamic padding adjustment for page content based on marquee visibility and viewport */
+.main-content-padding {
+  padding-top: 115px;
+  transition: padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (max-width: 1199px) {
+  .main-content-padding {
+    padding-top: 107px;
+  }
+}
+@media (max-width: 767px) {
+  .main-content-padding {
+    padding-top: 99px;
+  }
+}
+
+body.marquee-hidden .main-content-padding {
+  padding-top: 80px;
+}
+@media (max-width: 1199px) {
+  body.marquee-hidden .main-content-padding {
+    padding-top: 72px;
+  }
+}
+@media (max-width: 767px) {
+  body.marquee-hidden .main-content-padding {
+    padding-top: 64px;
+  }
+}
+
 /* ─── Nav bar ─── */
 .navbar {
   height: 80px;
@@ -185,8 +215,19 @@
   color: #B89563;
 }
 
+.nav-icon-btn svg,
+.nav-icon-btn i {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-icon-btn:hover svg,
+.nav-icon-btn:hover i {
+  transform: scale(1.08);
+}
+
 .nav-bag-icon,
-.nav-profile-svg {
+.nav-profile-svg,
+.nav-search-svg {
   width: 20px;
   height: 20px;
   stroke-width: 1.4px;

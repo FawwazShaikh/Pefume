@@ -152,7 +152,7 @@ function App() {
       )}
 
       {activePage !== 'home' && (
-        <div style={{ paddingTop: activePage === 'admin' ? '0' : '115px' }}>
+        <div className={activePage === 'admin' ? '' : 'main-content-padding'}>
           {activePage === 'shop' && (
             <SignatureCollection
               activeCategory={activeCategory}

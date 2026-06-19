@@ -20,6 +20,13 @@ const UserIcon = ({ className }) => (
   </svg>
 );
 
+const SearchIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
 const collectionsMenuItems = [
   { id: 'all', label: 'All Collections', type: 'categories', filter: 'categories' },
   { id: 'summer', label: 'Summer', type: 'collection', filter: 'summer' },
@@ -68,6 +75,17 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   const [isMobileCollectionsOpen, setIsMobileCollectionsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [isMarqueeVisible, setIsMarqueeVisible] = useState(() => {
+    return localStorage.getItem('marquee-dismissed') !== 'true';
+  });
+
+  useEffect(() => {
+    if (!isMarqueeVisible) {
+      document.body.classList.add('marquee-hidden');
+    } else {
+      document.body.classList.remove('marquee-hidden');
+    }
+  }, [isMarqueeVisible]);
 
   // Luxury Shop Dropdown States & Handlers
   const [isShopHovered, setIsShopHovered] = useState(false);
@@ -369,7 +387,12 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
 
   return (
     <header className={`navbar-wrapper ${activePage === 'home' ? 'on-home' : ''} ${isScrolled ? 'scrolled' : ''} ${isSearchOpen ? 'search-active' : ''}`}>
-      <ScrollingMarquee />
+      {isMarqueeVisible && (
+        <ScrollingMarquee onClose={() => {
+          setIsMarqueeVisible(false);
+          localStorage.setItem('marquee-dismissed', 'true');
+        }} />
+      )}
       <nav className="navbar" role="navigation" aria-label="Main navigation">
         <div className="nav-container">
 
@@ -540,10 +563,6 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
               <li className="nav-item">
                 <a href="#gifting" className="nav-link" onClick={(e) => handleLinkClick(e, 'gifting')}>Gifting</a>
               </li>
-
-              <li className="nav-item">
-                <a href="#collection" className="nav-link" onClick={(e) => handleCategoryClick(e, 'sets')}>Discovery Sets</a>
-              </li>
             </ul>
           </div>
 
@@ -554,22 +573,22 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
 
           {/* Right: Action icons */}
           <div className="nav-right">
-            <SignedOut>
-              <SignInButton mode="modal">
-                <button className="nav-icon-btn" title="Login" aria-label="Login">
-                  <UserIcon className="nav-profile-svg" />
-                </button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <a href="#profile" onClick={(e) => handleLinkClick(e, 'profile')} className="nav-icon-btn" title="My Profile" aria-label="My Profile" style={{ display: 'flex', alignItems: 'center' }}>
-                <UserIcon className="nav-profile-svg" />
-              </a>
-            </SignedIn>
-
             <div className="nav-icons">
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="nav-icon-btn" title="Login" aria-label="Login">
+                    <UserIcon className="nav-profile-svg" />
+                  </button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <a href="#profile" onClick={(e) => handleLinkClick(e, 'profile')} className="nav-icon-btn" title="My Profile" aria-label="My Profile" style={{ display: 'flex', alignItems: 'center' }}>
+                  <UserIcon className="nav-profile-svg" />
+                </a>
+              </SignedIn>
+
               <button className="nav-icon-btn" onClick={() => setIsSearchOpen(true)} title="Search" aria-label="Search">
-                <i className="fas fa-search" />
+                <SearchIcon className="nav-search-svg" />
               </button>
 
               <a href="#cart" className="nav-icon-btn cart-icon" onClick={(e) => handleLinkClick(e, 'cart')} aria-label="Cart">
@@ -618,7 +637,6 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             </ul>
           </li>
           <li><a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')}>Gifting</a></li>
-          <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'sets')}>Discovery Sets</a></li>
           <li><a href="#about" onClick={(e) => handleLinkClick(e, 'about')}>About</a></li>
           <li><a href="#reviews" onClick={(e) => handleLinkClick(e, 'reviews')}>Reviews</a></li>
           <li><a href="#contact" onClick={(e) => handleLinkClick(e, 'contact')}>Contact</a></li>
