@@ -236,27 +236,46 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
           if (activeBanner) {
             return (
               <div 
-                className="w-full relative overflow-hidden mb-12 rounded-3xl bg-cover bg-center h-[200px] sm:h-[240px] flex items-center shadow-sm border border-black/5"
-                style={{ backgroundImage: `url(${activeBanner.image})` }}
+                className="w-full relative overflow-hidden mb-12 rounded-3xl h-[180px] md:h-[220px] lg:h-[240px] xl:h-[280px] shadow-sm border border-black/5"
               >
-                {/* Overlay with dynamic darkness matching image brightness */}
-                <div className={`absolute inset-0 z-0 ${
-                  ['summer', 'gym', 'her', 'party'].includes(currentCategory) 
-                    ? 'bg-black/65' 
-                    : 'bg-black/55'
-                }`} />
+                {/* Background image filling container */}
+                <img 
+                  src={activeBanner.image} 
+                  alt={activeBanner.title} 
+                  className="absolute inset-0 w-full h-full object-cover object-center z-0"
+                />
+
+                {/* Dark premium linear gradient overlay */}
+                <div 
+                  className="absolute inset-0 z-10" 
+                  style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.75), rgba(0,0,0,0.45), rgba(0,0,0,0.20))' }}
+                />
                 
-                {/* Content */}
-                <div className="relative z-10 px-8 sm:px-12 max-w-4xl text-left">
-                  <div className="text-[0.6rem] font-bold tracking-[3px] text-white/70 uppercase mb-3">
-                    HOME / CATEGORIES / {activeBanner.title.toUpperCase()}
+                {/* Responsive content positioning */}
+                <div className="absolute inset-0 flex items-center px-4 sm:px-6 md:px-10 lg:px-14 z-20">
+                  <div className="max-w-[700px] text-left">
+                    {/* <div className="text-[0.65rem] sm:text-xs font-medium tracking-[0.25em] text-white/90 drop-shadow-md uppercase mb-3">
+                      HOME / CATEGORIES / {activeBanner.title.toUpperCase()}
+                    </div> */}
+                    <h2 
+                      className="font-heading text-3xl md:text-5xl lg:text-6xl font-medium text-white mb-3 leading-tight tracking-wide drop-shadow-lg"
+                      style={{
+                        color: '#FFFFFF',
+                        fontWeight: 500,
+                        textShadow: '0 2px 4px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4)'
+                      }}
+                    >
+                      {activeBanner.title}
+                    </h2>
+                    <p 
+                      className="text-xs sm:text-sm text-white/95 max-w-2xl leading-relaxed"
+                      style={{
+                        textShadow: '0 1px 3px rgba(0,0,0,0.5)'
+                      }}
+                    >
+                      {activeBanner.desc}
+                    </p>
                   </div>
-                  <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-semibold text-white mb-3 leading-tight tracking-wide">
-                    {activeBanner.title}
-                  </h2>
-                  <p className="text-[0.72rem] sm:text-xs text-white max-w-lg leading-relaxed font-light">
-                    {activeBanner.desc}
-                  </p>
                 </div>
               </div>
             );
