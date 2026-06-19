@@ -11,6 +11,9 @@ import ProductPage from './components/ProductPage';
 import CartPage from './components/CartPage';
 import CategoriesPage from './components/CategoriesPage';
 import ProfilePage from './components/ProfilePage';
+import DailyOfferPopup from './components/DailyOfferPopup';
+import ScrollingMarquee from './components/ScrollingMarquee';
+import AdminPage from './components/AdminPage';
 import { collectionsData } from './components/SignatureCollection/CollectionData';
 
 function App() {
@@ -20,6 +23,7 @@ function App() {
 
     if (policies.includes(hash)) return 'policies';
     if (hash === 'profile') return 'profile';
+    if (hash === 'admin') return 'admin';
     if (hash === 'shop' || hash === 'collection') return 'shop';
     if (hash === 'cart') return 'cart';
     if (hash === 'categories') return 'categories';
@@ -67,12 +71,16 @@ function App() {
 
   return (
     <div className="flex flex-col gap-0 min-h-screen">
+      <DailyOfferPopup />
+      
       <Navbar
         onNavigate={setActivePage}
         activePage={activePage}
         onSelectCategory={setActiveCategory}
         activeCategory={activeCategory}
       />
+
+      <ScrollingMarquee />
 
       {activePage === 'home' && (
         <>
@@ -112,6 +120,10 @@ function App() {
 
       {activePage === 'profile' && (
         <ProfilePage />
+      )}
+
+      {activePage === 'admin' && (
+        <AdminPage />
       )}
 
       {activePage === 'policies' && <PoliciesPage />}

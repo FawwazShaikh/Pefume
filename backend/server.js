@@ -279,6 +279,488 @@ app.post('/api/orders', requireAuth, async (req, res) => {
   }
 });
 
+// Admin role requirement middleware
+const requireAdmin = async (req, res, next) => {
+  if (req.headers['x-mock-user-id']) {
+    req.auth = { userId: req.headers['x-mock-user-id'] };
+  }
+  
+  if (!req.auth || !req.auth.userId) {
+    return res.status(401).json({ error: 'Unauthorized: Missing token' });
+  }
+  
+  try {
+    const user = await prisma.user.findUnique({
+      where: { clerkId: req.auth.userId }
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Forbidden: Admin access required' });
+    }
+    next();
+  } catch (err) {
+    console.error('Admin check failed:', err);
+    return res.status(500).json({ error: 'Internal server error during authorization' });
+  }
+};
+
+// ============================================================
+// PRODUCT MANAGEMENT ROUTES
+// ============================================================
+
+// GET all products
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await prisma.product.findMany({
+      where: { isActive: true },
+      include: {
+        images: {
+          where: { position: 0 },
+          take: 1
+        },
+        variants: {
+          where: { isActive: true },
+          orderBy: { price: 'asc' },
+          take: 1
+        },
+        category: true
+      }
+    });
+
+    const response = products.map(p => {
+      const startingPrice = p.variants[0] ? parseFloat(p.variants[0].price) : 0;
+      const image = p.images[0] ? p.images[0].imageUrl : null;
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        brand: p.brand,
+        featured: p.featured,
+        image,
+        startingPrice,
+        category: p.category ? p.category.name : null
+      };
+    });
+
+    return res.status(200).json(response);
+  } catch (err) {
+    console.error('Failed to fetch products:', err);
+    return res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
+// GET single product by slug
+app.get('/api/products/:slug', async (req, res) => {
+  const { slug } = req.params;
+  try {
+    const product = await prisma.product.findUnique({
+      where: { slug },
+      include: {
+        images: {
+          orderBy: { position: 'asc' }
+        },
+        variants: {
+          where: { isActive: true },
+          orderBy: { price: 'asc' }
+        },
+        category: true,
+        reviews: {
+          where: { approved: true },
+          include: {
+            user: {
+              select: { name: true }
+            }
+          }
+        }
+      }
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    return res.status(200).json(product);
+  } catch (err) {
+    console.error('Failed to fetch product by slug:', err);
+    return res.status(500).json({ error: 'Failed to fetch product' });
+  }
+});
+
+// POST create product (admin only)
+app.post('/api/products', requireAuth, requireAdmin, async (req, res) => {
+  const { name, slug, description, brand, featured, categoryId, images, variants } = req.body;
+
+  if (!name || !slug || !variants || !Array.isArray(variants) || variants.length === 0) {
+    return res.status(400).json({ error: 'Missing required product fields or variants' });
+  }
+
+  try {
+    const newProduct = await prisma.$transaction(async (tx) => {
+      const product = await tx.product.create({
+        data: {
+          name,
+          slug,
+          description,
+          brand,
+          featured: !!featured,
+          categoryId: categoryId || null,
+          images: {
+            create: (images || []).map(img => ({
+              imageUrl: img.imageUrl,
+              altText: img.altText || null,
+              position: img.position || 0
+            }))
+          },
+          variants: {
+            create: variants.map(v => ({
+              size: v.size,
+              price: parseFloat(v.price),
+              stock: parseInt(v.stock) || 0,
+              sku: v.sku
+            }))
+          }
+        },
+        include: {
+          images: true,
+          variants: true
+        }
+      });
+      return product;
+    });
+
+    return res.status(201).json(newProduct);
+  } catch (err) {
+    console.error('Failed to create product:', err);
+    return res.status(500).json({ error: 'Failed to create product' });
+  }
+});
+
+// PATCH update product (admin only)
+app.patch('/api/products/:id', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { name, slug, description, brand, featured, categoryId, images, variants } = req.body;
+
+  try {
+    const updatedProduct = await prisma.$transaction(async (tx) => {
+      const product = await tx.product.update({
+        where: { id },
+        data: {
+          name,
+          slug,
+          description,
+          brand,
+          featured: featured !== undefined ? !!featured : undefined,
+          categoryId: categoryId !== undefined ? (categoryId || null) : undefined
+        }
+      });
+
+      if (images && Array.isArray(images)) {
+        await tx.productImage.deleteMany({ where: { productId: id } });
+        await tx.productImage.createMany({
+          data: images.map(img => ({
+            productId: id,
+            imageUrl: img.imageUrl,
+            altText: img.altText || null,
+            position: img.position || 0
+          }))
+        });
+      }
+
+      if (variants && Array.isArray(variants)) {
+        await tx.productVariant.deleteMany({ where: { productId: id } });
+        await tx.productVariant.createMany({
+          data: variants.map(v => ({
+            productId: id,
+            size: v.size,
+            price: parseFloat(v.price),
+            stock: parseInt(v.stock) || 0,
+            sku: v.sku
+          }))
+        });
+      }
+
+      return tx.product.findUnique({
+        where: { id },
+        include: {
+          images: true,
+          variants: true
+        }
+      });
+    });
+
+    return res.status(200).json(updatedProduct);
+  } catch (err) {
+    console.error('Failed to update product:', err);
+    return res.status(500).json({ error: 'Failed to update product' });
+  }
+});
+
+// DELETE soft delete product (admin only)
+app.delete('/api/products/:id', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const product = await prisma.product.update({
+      where: { id },
+      data: { isActive: false }
+    });
+    return res.status(200).json({ success: true, message: 'Product soft deleted', product });
+  } catch (err) {
+    console.error('Failed to delete product:', err);
+    return res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
+// ============================================================
+// CATEGORY ROUTES
+// ============================================================
+
+// GET all categories
+app.get('/api/categories', async (req, res) => {
+  try {
+    const categories = await prisma.category.findMany({
+      orderBy: { name: 'asc' }
+    });
+    return res.status(200).json(categories);
+  } catch (err) {
+    console.error('Failed to fetch categories:', err);
+    return res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
+// POST create category (admin only)
+app.post('/api/categories', requireAuth, requireAdmin, async (req, res) => {
+  const { name, slug } = req.body;
+  if (!name || !slug) {
+    return res.status(400).json({ error: 'Missing name or slug for category' });
+  }
+
+  try {
+    const newCategory = await prisma.category.create({
+      data: { name, slug }
+    });
+    return res.status(201).json(newCategory);
+  } catch (err) {
+    console.error('Failed to create category:', err);
+    return res.status(500).json({ error: 'Failed to create category' });
+  }
+});
+
+// ============================================================
+// USER PROFILE ROUTES
+// ============================================================
+
+// GET logged in user profile
+app.get('/api/user/profile', requireAuth, async (req, res) => {
+  try {
+    const dbUser = await getOrCreateDbUser(req.auth.userId);
+    const profileUser = await prisma.user.findUnique({
+      where: { id: dbUser.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        createdAt: true,
+        orders: {
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: {
+            id: true,
+            createdAt: true,
+            status: true,
+            total: true
+          }
+        }
+      }
+    });
+
+    return res.status(200).json(profileUser);
+  } catch (err) {
+    console.error('Failed to fetch user profile:', err);
+    return res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
+// PATCH update user profile
+app.patch('/api/user/profile', requireAuth, async (req, res) => {
+  const { name, phone } = req.body;
+  try {
+    const dbUser = await getOrCreateDbUser(req.auth.userId);
+    const updatedUser = await prisma.user.update({
+      where: { id: dbUser.id },
+      data: { name, phone },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        createdAt: true
+      }
+    });
+    return res.status(200).json(updatedUser);
+  } catch (err) {
+    console.error('Failed to update user profile:', err);
+    return res.status(500).json({ error: 'Failed to update user profile' });
+  }
+});
+
+// ============================================================
+// ADMIN DASHBOARD & ORDERS MANAGEMENT ROUTES
+// ============================================================
+
+// GET admin dashboard summary statistics
+app.get('/api/admin/dashboard', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const revenueRes = await prisma.order.aggregate({
+      where: { status: 'DELIVERED' },
+      _sum: { total: true }
+    });
+    const totalRevenue = revenueRes._sum.total ? parseFloat(revenueRes._sum.total) : 0;
+
+    const totalOrders = await prisma.order.count();
+    const totalUsers = await prisma.user.count();
+    const pendingOrders = await prisma.order.count({
+      where: { status: 'PENDING' }
+    });
+
+    const lowStockVariants = await prisma.productVariant.findMany({
+      where: { stock: { lte: prisma.productVariant.fields.lowStockThreshold } },
+      include: {
+        product: { select: { name: true } }
+      }
+    });
+    const formattedLowStock = lowStockVariants.map(v => ({
+      productName: v.product.name,
+      size: v.size,
+      sku: v.sku,
+      stock: v.stock,
+      lowStockThreshold: v.lowStockThreshold
+    }));
+
+    const bestSellersGroupBy = await prisma.orderItem.groupBy({
+      by: ['productId'],
+      _sum: { quantity: true },
+      orderBy: {
+        _sum: { quantity: 'desc' }
+      },
+      take: 5
+    });
+
+    const bestSellers = [];
+    for (const item of bestSellersGroupBy) {
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId },
+        select: { name: true }
+      });
+      if (product) {
+        bestSellers.push({
+          productName: product.name,
+          totalQuantity: item._sum.quantity || 0
+        });
+      }
+    }
+
+    return res.status(200).json({
+      totalRevenue,
+      totalOrders,
+      totalUsers,
+      pendingOrders,
+      lowStockVariants: formattedLowStock,
+      bestSellers
+    });
+  } catch (err) {
+    console.error('Failed to fetch admin dashboard stats:', err);
+    return res.status(500).json({ error: 'Failed to fetch admin dashboard stats' });
+  }
+});
+
+// GET all orders for admin
+app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
+  const { status } = req.query;
+  try {
+    const where = {};
+    if (status && status !== 'ALL') {
+      where.status = status;
+    }
+
+    const orders = await prisma.order.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: { name: true, email: true }
+        },
+        address: true,
+        orderItems: true
+      }
+    });
+
+    return res.status(200).json(orders);
+  } catch (err) {
+    console.error('Failed to fetch admin orders:', err);
+    return res.status(500).json({ error: 'Failed to fetch admin orders' });
+  }
+});
+
+// PATCH update order status
+app.patch('/api/admin/orders/:id', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const validStatuses = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+  if (!status || !validStatuses.includes(status)) {
+    return res.status(400).json({ error: 'Invalid or missing order status' });
+  }
+
+  try {
+    const updatedOrder = await prisma.order.update({
+      where: { id },
+      data: { status },
+      include: {
+        user: { select: { name: true, email: true } },
+        address: true,
+        orderItems: true
+      }
+    });
+
+    return res.status(200).json(updatedOrder);
+  } catch (err) {
+    console.error('Failed to update order status:', err);
+    return res.status(500).json({ error: 'Failed to update order status' });
+  }
+});
+
+// GET all users for admin
+app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        orders: {
+          select: { id: true }
+        }
+      }
+    });
+
+    const response = users.map(u => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      role: u.role,
+      createdAt: u.createdAt,
+      orderCount: u.orders.length
+    }));
+
+    return res.status(200).json(response);
+  } catch (err) {
+    console.error('Failed to fetch admin users list:', err);
+    return res.status(500).json({ error: 'Failed to fetch users list' });
+  }
+});
+
 // Default root status route
 app.get('/api/status', (req, res) => {
   return res.json({ status: 'healthy', database: 'connected' });

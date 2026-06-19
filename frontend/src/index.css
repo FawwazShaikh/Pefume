@@ -3,12 +3,41 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f8f6f2;
-  --surface: #ffffff;
-  --text: #1f1f1f;
-  --muted: #666666;
-  --border: #e8e3db;
-  --accent: #b08a56;
+  --color-bg:       #0a0a0a;
+  --color-surface:  #141414;
+  --color-surface2: #1e1e1e;
+  --color-accent:   #c9a96e;
+  --color-accent2:  #a07840;
+  --color-text:     #f0ede8;
+  --color-muted:    #6b6b6b;
+  --color-border:   #2a2a2a;
+  --color-success:  #4caf7d;
+  --color-error:    #e05c5c;
+
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body:    'Inter', sans-serif;
+
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-4xl:  2.25rem;
+  --text-6xl:  3.75rem;
+
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-4:  1rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
 }
 
 /* Decant Atelier Custom Luxury Design Tokens */
@@ -37,10 +66,22 @@
   --font-body: 'Inter', 'Segoe UI', sans-serif;
 }
 
-body {
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 300;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+body, p, span, button, input, select, textarea, a {
   font-family: var(--font-body);
-  background-color: var(--bg);
-  color: var(--text);
+  color: var(--color-text);
+}
+
+body {
+  background-color: var(--color-bg);
+  margin: 0;
+  padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -108,15 +149,29 @@ html {
 
 /* Global Typography System */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  font-family: var(--font-display);
   font-weight: 300;
-  line-height: 1.25;
-  letter-spacing: 0.03em;
-  color: #1C1B18;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+body, p, span, button, input, select, textarea, a {
+  font-family: var(--font-body);
+  color: var(--color-text);
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+@media (min-width: 768px) {
+  .container { padding: 0 var(--space-8); }
 }
 
 /* Keyboard Focus Outline */
 *:focus-visible {
-  outline: 2px solid #B08A50;
+  outline: 2px solid var(--color-accent);
   outline-offset: 4px;
 }

@@ -14,9 +14,19 @@ export default function ProfilePage() {
   const { isLoaded: authLoaded, isSignedIn, getToken } = useAuth();
   const { isLoaded: userLoaded, user } = useUser();
 
+  const [dbUser, setDbUser] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
+
+  // Edit profile form state
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    phone: ''
+  });
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState('');
 
   // Address form modal state
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -33,30 +43,38 @@ export default function ProfilePage() {
   const [savingAddress, setSavingAddress] = useState(false);
   const [addressError, setAddressError] = useState('');
 
-  // Fetch addresses and orders from Express API
+  // Fetch all data
   const fetchData = async () => {
     try {
       setLoadingData(true);
       const token = await getToken();
-
       if (!token) return;
 
-      // Fetch addresses
+      // 1. Fetch user profile from DB
+      const profileRes = await fetch('http://localhost:5000/api/user/profile', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        setDbUser(profileData);
+        setProfileForm({
+          name: profileData.name || user?.fullName || '',
+          phone: profileData.phone || ''
+        });
+      }
+
+      // 2. Fetch addresses
       const addrRes = await fetch('http://localhost:5000/api/addresses', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (addrRes.ok) {
         const addrData = await addrRes.json();
         setAddresses(addrData);
       }
 
-      // Fetch orders
+      // 3. Fetch orders
       const orderRes = await fetch('http://localhost:5000/api/orders', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (orderRes.ok) {
         const orderData = await orderRes.json();
@@ -76,6 +94,41 @@ export default function ProfilePage() {
       setLoadingData(false);
     }
   }, [isSignedIn]);
+
+  // Handle profile update submit
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    setProfileSuccess('');
+    setSavingProfile(true);
+
+    try {
+      const token = await getToken();
+      const res = await fetch('http://localhost:5000/api/user/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(profileForm)
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setDbUser({ ...dbUser, name: updated.name, phone: updated.phone });
+        setProfileSuccess('Profile updated successfully!');
+        setTimeout(() => {
+          setShowEditProfile(false);
+          setProfileSuccess('');
+        }, 1500);
+      } else {
+        console.error('Failed to update profile');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   // Handle address submit
   const handleAddressSubmit = async (e) => {
@@ -155,6 +208,9 @@ export default function ProfilePage() {
     month: 'long',
   });
 
+  const displayName = dbUser?.name || user.fullName || 'Fragrance Collector';
+  const displayPhone = dbUser?.phone || (user.primaryPhoneNumber ? user.primaryPhoneNumber.phoneNumber : 'No phone linked');
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#f0ede8] font-sans selection:bg-[#E2C275]/30 selection:text-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-10">
@@ -168,7 +224,7 @@ export default function ProfilePage() {
             {user.imageUrl ? (
               <img
                 src={user.imageUrl}
-                alt={user.fullName || 'User Avatar'}
+                alt={displayName}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -181,27 +237,87 @@ export default function ProfilePage() {
           {/* User Info */}
           <div className="text-center sm:text-left space-y-2 flex-grow">
             <h1 className="font-serif text-3xl sm:text-4xl font-semibold tracking-wide text-white">
-              {user.fullName || 'Fragrance Collector'}
+              {displayName}
             </h1>
             <p className="text-sm text-[#f0ede8]/70 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 justify-center sm:justify-start">
               <span>{user.primaryEmailAddress?.emailAddress}</span>
-              {user.primaryPhoneNumber && (
-                <>
-                  <span className="hidden sm:inline text-[#E2C275]/30">•</span>
-                  <span>{user.primaryPhoneNumber.phoneNumber}</span>
-                </>
-              )}
+              <span className="hidden sm:inline text-[#E2C275]/30">•</span>
+              <span>{displayPhone}</span>
             </p>
             <div className="pt-2 flex flex-wrap gap-3 items-center justify-center sm:justify-start">
               <span className="text-[0.65rem] font-bold uppercase tracking-widest text-[#f0ede8]/50 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
                 Member Since {memberSince}
               </span>
-              <span className="text-[0.65rem] font-bold uppercase tracking-widest text-[#E2C275] bg-[#E2C275]/10 border border-[#E2C275]/20 px-2.5 py-1 rounded-full">
-                Collector Account
-              </span>
+              {dbUser?.role === 'ADMIN' ? (
+                <button 
+                  onClick={() => { window.location.hash = 'admin'; }}
+                  className="text-[0.65rem] font-bold uppercase tracking-widest text-[#0a0a0a] bg-[#E2C275] hover:bg-[#F4E7C5] px-3 py-1 rounded-full border-none cursor-pointer transition-colors"
+                >
+                  Admin Console ⚙️
+                </button>
+              ) : (
+                <span className="text-[0.65rem] font-bold uppercase tracking-widest text-[#E2C275] bg-[#E2C275]/10 border border-[#E2C275]/20 px-2.5 py-1 rounded-full">
+                  Collector Account
+                </span>
+              )}
+              <button 
+                onClick={() => setShowEditProfile(!showEditProfile)}
+                className="text-[0.65rem] font-bold uppercase tracking-widest text-[#E2C275] hover:text-[#F4E7C5] bg-transparent border border-[#E2C275]/20 px-2.5 py-1 rounded-full cursor-pointer transition-colors"
+              >
+                Edit Info
+              </button>
             </div>
           </div>
         </header>
+
+        {/* Optional Edit Profile Form Panel */}
+        {showEditProfile && (
+          <div className="bg-[#141414] border border-[#E2C275]/20 rounded-2xl p-6 shadow-xl max-w-md mx-auto">
+            <h3 className="font-serif text-lg font-bold text-[#E2C275] mb-4 uppercase">Update Profile Details</h3>
+            {profileSuccess && (
+              <p className="bg-green-500/10 border border-green-500/20 text-green-400 text-xs p-2.5 rounded-lg mb-4 text-center">
+                {profileSuccess}
+              </p>
+            )}
+            <form onSubmit={handleProfileSubmit} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-[0.65rem] font-bold uppercase tracking-wider text-[#E2C275] mb-1">Display Name</label>
+                <input 
+                  type="text" 
+                  required
+                  className="w-full bg-black/40 border border-[#E2C275]/15 rounded-lg p-2.5 text-[#f0ede8] focus:border-[#E2C275] focus:outline-none"
+                  value={profileForm.name}
+                  onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-[0.65rem] font-bold uppercase tracking-wider text-[#E2C275] mb-1">Phone Number</label>
+                <input 
+                  type="text" 
+                  className="w-full bg-black/40 border border-[#E2C275]/15 rounded-lg p-2.5 text-[#f0ede8] focus:border-[#E2C275] focus:outline-none"
+                  value={profileForm.phone}
+                  onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="flex-grow py-2.5 bg-[#E2C275] text-[#120E0D] font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-[#F4E7C5] transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {savingProfile ? 'Saving...' : 'Save Info'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowEditProfile(false)}
+                  className="py-2.5 px-4 bg-transparent border border-white/10 text-[#f0ede8]/70 hover:text-white text-xs uppercase tracking-widest rounded-lg cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {loadingData ? (
           <div className="text-center py-12">
@@ -218,7 +334,7 @@ export default function ProfilePage() {
                 </h2>
                 <button 
                   onClick={() => setShowAddressModal(true)}
-                  className="text-[0.68rem] font-bold tracking-wider uppercase text-[#E2C275] hover:text-[#F4E7C5] transition-colors cursor-pointer"
+                  className="text-[0.68rem] font-bold tracking-wider uppercase text-[#E2C275] hover:text-[#F4E7C5] transition-colors cursor-pointer bg-transparent border-none"
                 >
                   + Add New
                 </button>
@@ -236,7 +352,7 @@ export default function ProfilePage() {
                       key={addr.id}
                       className={`p-4 rounded-xl border transition-all duration-300 ${
                         addr.isDefault
-                          ? 'bg-[#E2C275]/[0.02] border-[#E2C275]/40 shadow-md shadow-[#E2C275]/2'
+                          ? 'bg-[#E2C275]/[0.02] border-[#E2C275]/40 shadow-md'
                           : 'bg-black/20 border-white/5 hover:border-[#E2C275]/20'
                       }`}
                     >
@@ -250,13 +366,13 @@ export default function ProfilePage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-[#f0ede8]/70 leading-relaxed font-light font-sans">
+                      <p className="text-xs text-[#f0ede8]/70 leading-relaxed font-light">
                         {addr.addressLine1}
                         {addr.addressLine2 && `, ${addr.addressLine2}`}
                         <br />
                         {addr.city}, {addr.state} - {addr.postalCode}
                         <br />
-                        <span className="text-[#E2C275]/70 font-medium">{addr.country}</span>
+                        <span className="text-[#E2C275]/70 font-medium">India</span>
                       </p>
                       <p className="text-[0.68rem] text-[#f0ede8]/50 mt-2 flex items-center gap-1 font-mono">
                         📞 {addr.phone}
@@ -345,7 +461,7 @@ export default function ProfilePage() {
               <h3 className="font-serif text-lg font-bold text-[#E2C275] uppercase">Add New Address</h3>
               <button 
                 onClick={() => setShowAddressModal(false)}
-                className="text-[#f0ede8]/50 hover:text-white transition-colors text-lg font-bold cursor-pointer"
+                className="text-[#f0ede8]/50 hover:text-white transition-colors text-lg font-bold cursor-pointer bg-transparent border-none"
               >
                 &times;
               </button>
