@@ -135,6 +135,7 @@ function App() {
           activePage={activePage}
           onSelectCategory={setActiveCategory}
           activeCategory={activeCategory}
+          products={products}
         />
       )}
 

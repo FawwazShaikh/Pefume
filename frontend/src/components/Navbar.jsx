@@ -59,10 +59,11 @@ const shopDescriptions = {
   newarrivals: { title: "New Releases", text: "Experience the latest releases added fresh to our fragrance collection." }
 };
 
-export default function Navbar({ onNavigate, activePage, onSelectCategory, activeCategory }) {
+export default function Navbar({ onNavigate, activePage, onSelectCategory, activeCategory, products = [] }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearchTab, setActiveSearchTab] = useState('all');
   const [isMobileShopOpen, setIsMobileShopOpen] = useState(false);
   const [isMobileCollectionsOpen, setIsMobileCollectionsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -314,24 +315,45 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   const handleSearchProductClick = (product) => {
     setIsSearchOpen(false);
     setSearchQuery('');
-    if (onSelectCategory) onSelectCategory('all');
-    if (onNavigate) onNavigate('shop');
-    window.location.hash = 'collection';
-    setTimeout(() => {
-      const el = document.getElementById('collection');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    window.location.hash = `product-${product.slug || product.id}`;
   };
 
+  // Calculate counts dynamically from products
+  const searchCounts = useMemo(() => {
+    const baseList = products.length > 0 ? products : collectionsData;
+    return {
+      all: baseList.length,
+      best: baseList.filter(p => p.unitsSold > 0 || (p.tags && p.tags.includes('featured'))).length,
+      new: baseList.filter(p => p.tags && p.tags.includes('new-arrival')).length,
+      featured: baseList.filter(p => p.featured || (p.tags && p.tags.includes('featured'))).length
+    };
+  }, [products]);
+
   const filteredProducts = useMemo(() => {
-    if (!debouncedQuery) return collectionsData;
-    const q = debouncedQuery.toLowerCase();
-    return collectionsData.filter(product =>
-      product.name.toLowerCase().includes(q) ||
-      product.category.toLowerCase().includes(q) ||
-      product.notes.some(n => n.toLowerCase().includes(q))
-    );
-  }, [debouncedQuery]);
+    let baseList = products.length > 0 ? products : collectionsData;
+    
+    // Filter base by active search tab
+    if (activeSearchTab === 'best') {
+      baseList = baseList.filter(p => p.unitsSold > 0 || (p.tags && p.tags.includes('featured')));
+    } else if (activeSearchTab === 'new') {
+      baseList = baseList.filter(p => p.tags && p.tags.includes('new-arrival'));
+    } else if (activeSearchTab === 'featured') {
+      baseList = baseList.filter(p => p.featured || (p.tags && p.tags.includes('featured')));
+    }
+    
+    if (debouncedQuery.trim() !== '') {
+      const q = debouncedQuery.toLowerCase();
+      return baseList.filter(product =>
+        product.name.toLowerCase().includes(q) ||
+        product.brand?.toLowerCase().includes(q) ||
+        product.category?.toLowerCase().includes(q) ||
+        (product.notes && product.notes.some(n => n.toLowerCase().includes(q)))
+      );
+    }
+    
+    // If search is empty, show featured/popular products
+    return baseList.filter(p => p.featured || (p.tags && p.tags.includes('featured')));
+  }, [products, debouncedQuery, activeSearchTab]);
 
   const activeShopInfo = useMemo(() => {
     return hoveredShopIndex !== null && hoveredShopIndex >= 0 && !shopMenuItems[hoveredShopIndex].isDivider
@@ -629,34 +651,69 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
               ref={searchInputRef}
               type="text"
               className="search-input"
-              placeholder="Search fragrances..."
+              placeholder="Search perfumes by name, brand, size"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus={isSearchOpen}
             />
           </div>
           <div className="search-body">
-            <div className="search-section">
-              <h4 className="search-section-title">Trending</h4>
-              <div className="search-pills">
-                {['9 PM', 'Rare', 'Supremacy', 'Peach', 'Fruit'].map(p => (
-                  <button key={p} className="search-pill" onClick={() => setSearchQuery(p)}>{p}</button>
-                ))}
-              </div>
+            {/* Filter Tabs */}
+            <div className="search-tabs">
+              <button 
+                type="button"
+                className={`search-tab-btn ${activeSearchTab === 'all' ? 'active' : ''}`} 
+                onClick={() => setActiveSearchTab('all')}
+              >
+                All Products <span className="tab-count">({searchCounts.all})</span>
+              </button>
+              <button 
+                type="button"
+                className={`search-tab-btn ${activeSearchTab === 'best' ? 'active' : ''}`} 
+                onClick={() => setActiveSearchTab('best')}
+              >
+                Best Sellers <span className="tab-count">({searchCounts.best})</span>
+              </button>
+              <button 
+                type="button"
+                className={`search-tab-btn ${activeSearchTab === 'new' ? 'active' : ''}`} 
+                onClick={() => setActiveSearchTab('new')}
+              >
+                New Arrivals <span className="tab-count">({searchCounts.new})</span>
+              </button>
+              <button 
+                type="button"
+                className={`search-tab-btn ${activeSearchTab === 'featured' ? 'active' : ''}`} 
+                onClick={() => setActiveSearchTab('featured')}
+              >
+                Featured <span className="tab-count">({searchCounts.featured})</span>
+              </button>
             </div>
-            <div className="search-section">
-              <h4 className="search-section-title">Products</h4>
-              <div className="search-grid">
-                {filteredProducts.slice(0, 6).map(product => (
-                  <div key={product.id} className="search-card" onClick={() => handleSearchProductClick(product)}>
-                    <div className="search-card-img">
-                      <img src={product.image} alt={product.name} />
+
+            {/* Results Grid */}
+            <div className="search-results-section">
+              {filteredProducts.length > 0 ? (
+                <div className="search-grid">
+                  {filteredProducts.map(product => (
+                    <div key={product.id} className="search-card" onClick={() => handleSearchProductClick(product)}>
+                      <div className="search-card-img">
+                        <img src={product.image || '/images/perfume_placeholder.jpeg'} alt={product.name} />
+                      </div>
+                      <div className="search-card-info">
+                        <span className="search-card-brand">{product.brand || 'Decant Atelier'}</span>
+                        <h5 className="search-card-name">{product.name}</h5>
+                        <span className="search-card-price">from ₹{(product.price || 999).toLocaleString('en-IN')}</span>
+                        <span className="search-card-category">{product.category === 'decants' ? 'Decant' : product.category === 'sets' ? 'Discovery Set' : 'Full Bottle'}</span>
+                      </div>
                     </div>
-                    <span className="search-card-name">{product.name}</span>
-                    <span className="search-card-price">₹ {(parseFloat(product.price) * 20).toLocaleString('en-IN')}.00</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="search-no-results">
+                  <h4 className="no-results-title">No perfumes found</h4>
+                  <p className="no-results-text">Try adjusting your keywords or category filters.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
