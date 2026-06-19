@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
+import { SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { collectionsData } from './SignatureCollection/CollectionData';
 import './Navbar.css';
@@ -9,6 +9,13 @@ const ShoppingBagIcon = ({ className }) => (
     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
     <line x1="3" y1="6" x2="21" y2="6" />
     <path d="M16 10a4 4 0 0 1-8 0" />
+  </svg>
+);
+
+const UserIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
   </svg>
 );
 
@@ -526,12 +533,14 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             <SignedOut>
               <SignInButton mode="modal">
                 <button className="nav-icon-btn" title="Login" aria-label="Login">
-                  <i className="far fa-user-circle" />
+                  <UserIcon className="nav-profile-svg" />
                 </button>
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <UserButton />
+              <a href="#profile" onClick={(e) => handleLinkClick(e, 'profile')} className="nav-icon-btn" title="My Profile" aria-label="My Profile" style={{ display: 'flex', alignItems: 'center' }}>
+                <UserIcon className="nav-profile-svg" />
+              </a>
             </SignedIn>
 
             <div className="nav-icons">

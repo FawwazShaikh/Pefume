@@ -1,0 +1,22 @@
+{
+  "name": "decant-atelier-monorepo",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"node backend/server.js\""
+  },
+  "devDependencies": {
+    "@prisma/client": "^7.8.0",
+    "concurrently": "^8.2.2",
+    "dotenv": "^17.4.2",
+    "prisma": "^7.8.0"
+  },
+  "dependencies": {
+    "@clerk/clerk-sdk-node": "^4.13.23",
+    "@neondatabase/serverless": "^1.1.0",
+    "@prisma/adapter-neon": "^7.8.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "svix": "^1.95.2",
+    "ws": "^8.21.0"
+  }
+}

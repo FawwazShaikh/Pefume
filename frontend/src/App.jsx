@@ -10,6 +10,7 @@ import Footer from './components/Footer';
 import ProductPage from './components/ProductPage';
 import CartPage from './components/CartPage';
 import CategoriesPage from './components/CategoriesPage';
+import ProfilePage from './components/ProfilePage';
 import { collectionsData } from './components/SignatureCollection/CollectionData';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
     const policies = ['authenticity', 'about', 'shipping', 'returns', 'terms', 'privacy'];
 
     if (policies.includes(hash)) return 'policies';
+    if (hash === 'profile') return 'profile';
     if (hash === 'shop' || hash === 'collection') return 'shop';
     if (hash === 'cart') return 'cart';
     if (hash === 'categories') return 'categories';
@@ -106,6 +108,10 @@ function App() {
             window.location.hash = 'shop';
           }}
         />
+      )}
+
+      {activePage === 'profile' && (
+        <ProfilePage />
       )}
 
       {activePage === 'policies' && <PoliciesPage />}

@@ -185,7 +185,8 @@
   color: #B89563;
 }
 
-.nav-bag-icon {
+.nav-bag-icon,
+.nav-profile-svg {
   width: 20px;
   height: 20px;
   stroke-width: 1.4px;
