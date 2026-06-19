@@ -69,7 +69,7 @@ export default function CategoriesPage({ onSelectCategory }) {
           {categoriesData.map((category) => (
             <div 
               key={category.id} 
-              className="category-card"
+              className={`category-card category-${category.id}`}
               onClick={() => onSelectCategory(category.id)}
             >
               <img 

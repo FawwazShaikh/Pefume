@@ -239,18 +239,22 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                 className="w-full relative overflow-hidden mb-12 rounded-3xl bg-cover bg-center h-[200px] sm:h-[240px] flex items-center shadow-sm border border-black/5"
                 style={{ backgroundImage: `url(${activeBanner.image})` }}
               >
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#1C1B18]/90 via-[#1C1B18]/60 to-transparent z-0" />
+                {/* Overlay with dynamic darkness matching image brightness */}
+                <div className={`absolute inset-0 z-0 ${
+                  ['summer', 'gym', 'her', 'party'].includes(currentCategory) 
+                    ? 'bg-black/65' 
+                    : 'bg-black/55'
+                }`} />
                 
                 {/* Content */}
                 <div className="relative z-10 px-8 sm:px-12 max-w-4xl text-left">
                   <div className="text-[0.6rem] font-bold tracking-[3px] text-white/70 uppercase mb-3">
                     HOME / CATEGORIES / {activeBanner.title.toUpperCase()}
                   </div>
-                  <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-light text-white mb-3 leading-tight tracking-wide">
+                  <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-semibold text-white mb-3 leading-tight tracking-wide">
                     {activeBanner.title}
                   </h2>
-                  <p className="text-[0.72rem] sm:text-xs text-white/80 max-w-lg leading-relaxed font-light">
+                  <p className="text-[0.72rem] sm:text-xs text-white max-w-lg leading-relaxed font-light">
                     {activeBanner.desc}
                   </p>
                 </div>
@@ -409,9 +413,9 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                   </div>
 
                   {/* Size selectors */}
-                  <div className="min-h-[36px] mb-4 flex items-center justify-start">
+                  <div className="min-h-[36px] mb-4 flex items-center justify-start overflow-visible">
                     {item.sizes && item.sizes.length > 0 ? (
-                      <div className="flex flex-nowrap gap-1 overflow-x-auto scrollbar-hide py-0.5 whitespace-nowrap w-full">
+                      <div className="flex flex-wrap gap-5 py-1 items-center w-full overflow-visible">
                         {item.sizes.map((sz, idx) => {
                           const isSelected = getCardSizeIndex(item.id) === idx;
                           const sizeLabel = sz.size.split(' ')[0].toUpperCase();
@@ -422,13 +426,7 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                               <button
                                 key={idx}
                                 disabled
-                                className={`
-                                  px-2.5 py-1.5 rounded-xl border text-[0.6rem] font-medium select-none cursor-not-allowed transition-all duration-200
-                                  ${isSelected 
-                                    ? 'border-black/20 text-black/40 bg-black/5' 
-                                    : 'border-black/8 text-black/30 bg-black/2'
-                                  }
-                                `}
+                                className="relative py-1 text-[0.68rem] tracking-widest font-normal text-black/30 select-none cursor-not-allowed uppercase transition-colors duration-300 focus:outline-none"
                                 style={{ textDecoration: 'line-through' }}
                               >
                                 {sizeLabel}
@@ -440,15 +438,22 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
                             <button
                               key={idx}
                               onClick={(e) => handleSelectCardSize(item.id, idx, e)}
-                              className={`
-                                px-2.5 py-1.5 rounded-xl text-[0.6rem] font-semibold uppercase transition-all duration-200 cursor-pointer select-none border min-h-[32px] min-w-[32px] flex items-center justify-center
-                                ${isSelected
-                                  ? 'bg-[#1C1B18] border-[#1C1B18] text-white'
-                                  : 'bg-transparent border-black/8 text-[#1C1B18] hover:border-black/30'
-                                }
-                              `}
+                              className="relative py-1 text-[0.68rem] tracking-widest uppercase cursor-pointer select-none focus:outline-none transition-colors duration-300 min-h-[32px] flex items-center justify-center focus-visible:ring-1 focus-visible:ring-black/10 focus-visible:outline-none"
                             >
-                              {sizeLabel}
+                              <span className={`transition-colors duration-300 ${
+                                isSelected
+                                  ? 'text-[#1C1B18] font-medium'
+                                  : 'text-[#737373] hover:text-[#1C1B18]'
+                              }`}>
+                                {sizeLabel}
+                              </span>
+                              {isSelected && (
+                                <motion.div
+                                  layoutId={`activeCardSizeUnderline-${item.id}`}
+                                  className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#1C1B18]"
+                                  transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                                />
+                              )}
                             </button>
                           );
                         })}

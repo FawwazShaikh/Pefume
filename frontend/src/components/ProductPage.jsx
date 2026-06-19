@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { addToCart } from '../utils/cartHelper';
 
 export default function ProductPage({ product, onBackToShop }) {
@@ -149,26 +150,44 @@ export default function ProductPage({ product, onBackToShop }) {
             </div>
 
             {/* Size Selector */}
-            <div>
+            <div className="overflow-visible">
               <h4 className="text-[0.65rem] font-bold tracking-widest text-[#1C1B18] uppercase mb-3">
                 Select Size (ML)
               </h4>
-              <div className="flex flex-wrap gap-2">
-                {product.sizes.map((sz, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedSizeIndex(idx)}
-                    className={`
-                      px-4 py-2.5 rounded-none text-[0.68rem] font-bold tracking-widest uppercase cursor-pointer border transition-all duration-300 min-h-[44px] flex items-center justify-center
-                      ${selectedSizeIndex === idx
-                        ? 'bg-[#1C1B18] border-[#1C1B18] text-[#FEFCF9] shadow-sm'
-                        : 'bg-[#FEFCF9] border-black/8 text-[#1C1B18] hover:border-black/20'
-                      }
-                    `}
-                  >
-                    {sz.size.replace(' Decant', '').replace(' Sample', '').replace(' Luxury Atomizer', '').replace(' Discovery Set', '').replace(' Retail Bottle', '')}
-                  </button>
-                ))}
+              <div className="flex flex-wrap gap-7 py-1 items-center overflow-visible">
+                {product.sizes.map((sz, idx) => {
+                  const isSelected = selectedSizeIndex === idx;
+                  const sizeLabel = sz.size
+                    .replace(' Decant', '')
+                    .replace(' Sample', '')
+                    .replace(' Luxury Atomizer', '')
+                    .replace(' Discovery Set', '')
+                    .replace(' Retail Bottle', '')
+                    .toUpperCase();
+                  
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedSizeIndex(idx)}
+                      className="relative py-1.5 text-[0.68rem] tracking-widest uppercase cursor-pointer select-none focus:outline-none transition-colors duration-300 min-h-[40px] flex items-center justify-center focus-visible:ring-1 focus-visible:ring-black/10"
+                    >
+                      <span className={`transition-colors duration-300 ${
+                        isSelected
+                          ? 'text-[#1C1B18] font-medium'
+                          : 'text-[#737373] hover:text-[#1C1B18]'
+                      }`}>
+                        {sizeLabel}
+                      </span>
+                      {isSelected && (
+                        <motion.div
+                          layoutId="activeSizeUnderlineProduct"
+                          className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#1C1B18]"
+                          transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

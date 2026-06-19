@@ -63,17 +63,16 @@
 }
 
 /* Grid layout */
-/* Grid layout */
 .categories-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2.5rem;
+  gap: 32px;
 }
 
 /* Category Card - Luxury Editorial Card style */
 .category-card {
   position: relative;
-  height: 290px;
+  height: 320px; /* Lock standard category card heights to 320px */
   border-radius: 20px; /* Softer organic corner radius */
   overflow: hidden;
   cursor: pointer;
@@ -99,15 +98,15 @@
   transform: scale(1.03); /* Soft luxury image zoom */
 }
 
-/* Luxury Overlay System: Top transparent wash + Bottom dark gradient for text legibility */
+/* Luxury Overlay System: Stronger overlay system for guaranteed readability */
 .category-card-overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(28, 27, 24, 0.12) 0%,
-    rgba(28, 27, 24, 0.35) 50%,
-    rgba(28, 27, 24, 0.8) 100%
+    rgba(0, 0, 0, 0.35) 0%,
+    rgba(0, 0, 0, 0.55) 50%,
+    rgba(0, 0, 0, 0.85) 100%
   );
   z-index: 1;
   transition: background 0.8s cubic-bezier(0.16, 1, 0.3, 1);
@@ -116,10 +115,10 @@
 .category-card:hover .category-card-overlay {
   background: linear-gradient(
     to bottom,
-    rgba(28, 27, 24, 0.2) 0%,
-    rgba(28, 27, 24, 0.45) 50%,
-    rgba(28, 27, 24, 0.9) 100%
-  ); /* Enhanced bottom gradient on hover */
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.65) 50%,
+    rgba(0, 0, 0, 0.9) 100%
+  ); /* Enhanced overlay on hover */
 }
 
 /* Content wrapper */
@@ -130,7 +129,7 @@
   right: 0;
   padding: 2.2rem;
   z-index: 2;
-  color: #FEFCF9;
+  color: #FFFFFF;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -139,25 +138,27 @@
 .category-card-title {
   font-family: var(--font-heading, serif);
   font-size: 1.65rem; /* Larger title size */
-  font-weight: 300;
+  font-weight: 600; /* Increased font weight for readability */
   margin: 0 0 8px 0;
-  color: #FEFCF9;
+  color: #FFFFFF; /* Pure White heading color */
   letter-spacing: 0.5px;
   line-height: 1.25; /* Elegant line height */
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); /* Strong text shadow for visibility */
 }
 
 .category-card-desc {
   font-family: var(--font-body, sans-serif);
   font-size: 0.72rem;
   line-height: 1.7; /* Enhanced readability */
-  color: rgba(254, 252, 249, 0.75); /* Softer text color hierarchy */
+  color: rgba(255, 255, 255, 0.95); /* High contrast readable body text */
   margin: 0 0 18px 0; /* Refined spacing */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: 0.1px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); /* Text shadow for visibility */
 }
 
 .category-card-cta {
@@ -166,11 +167,12 @@
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #FEFCF9;
+  color: #FFFFFF;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   position: relative;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   transition: color 0.6s cubic-bezier(0.16, 1, 0.3, 1), gap 0.6s cubic-bezier(0.16, 1, 0.3, 1), letter-spacing 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -202,14 +204,14 @@
 @media (max-width: 1024px) {
   .categories-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+    gap: 24px;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .categories-grid {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 16px;
   }
   
   .categories-page {
@@ -217,10 +219,35 @@
   }
   
   .category-card {
-    height: 220px;
+    height: 320px; /* Maintain uniform 320px height on mobile */
   }
   
   .category-card-content {
     padding: 1.5rem;
   }
+}
+
+/* Custom overlay adjustments for bright/busy category backgrounds */
+.category-summer .category-card-overlay,
+.category-gym .category-card-overlay,
+.category-her .category-card-overlay,
+.category-party .category-card-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.65) 50%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+}
+
+.category-summer:hover .category-card-overlay,
+.category-gym:hover .category-card-overlay,
+.category-her:hover .category-card-overlay,
+.category-party:hover .category-card-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.75) 50%,
+    rgba(0, 0, 0, 0.95) 100%
+  );
 }
