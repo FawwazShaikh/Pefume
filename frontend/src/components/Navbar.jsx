@@ -3,6 +3,7 @@ import { SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { collectionsData } from './SignatureCollection/CollectionData';
 import './Navbar.css';
+import ScrollingMarquee from './ScrollingMarquee';
 
 const ShoppingBagIcon = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -346,6 +347,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
 
   return (
     <header className={`navbar-wrapper ${activePage === 'home' ? 'on-home' : ''} ${isScrolled ? 'scrolled' : ''} ${isSearchOpen ? 'search-active' : ''}`}>
+      <ScrollingMarquee />
       <nav className="navbar" role="navigation" aria-label="Main navigation">
         <div className="nav-container">
 

@@ -820,3 +820,28 @@
     font-size: 1.4rem;
   }
 }
+
+/* Specificity overrides to resolve global light color overrides on light backgrounds inside the dropdown */
+.lux-dropdown a.lux-dropdown-item {
+  color: #2D2D2D;
+}
+.lux-dropdown a.lux-dropdown-item .item-label {
+  color: #2D2D2D;
+}
+.lux-dropdown a.lux-dropdown-item:hover .item-label,
+.lux-dropdown a.lux-dropdown-item:focus .item-label,
+.lux-dropdown a.lux-dropdown-item.hovered .item-label {
+  color: #C8A46A;
+}
+.lux-dropdown span.lux-dropdown-title {
+  color: #8E8A82;
+}
+.lux-dropdown span.preview-subtitle {
+  color: #B89563;
+}
+.lux-dropdown h5.preview-title {
+  color: #1B1A17;
+}
+.lux-dropdown p.preview-text {
+  color: #6B6560;
+}

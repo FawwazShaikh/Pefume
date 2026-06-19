@@ -12,7 +12,6 @@ import CartPage from './components/CartPage';
 import CategoriesPage from './components/CategoriesPage';
 import ProfilePage from './components/ProfilePage';
 import DailyOfferPopup from './components/DailyOfferPopup';
-import ScrollingMarquee from './components/ScrollingMarquee';
 import AdminPage from './components/AdminPage';
 import { collectionsData } from './components/SignatureCollection/CollectionData';
 
@@ -80,8 +79,6 @@ function App() {
         activeCategory={activeCategory}
       />
 
-      <ScrollingMarquee />
-
       {activePage === 'home' && (
         <>
           <Hero />
@@ -94,48 +91,52 @@ function App() {
         </>
       )}
 
-      {activePage === 'shop' && (
-        <SignatureCollection
-          activeCategory={activeCategory}
-          onSelectCategory={setActiveCategory}
-        />
-      )}
+      {activePage !== 'home' && (
+        <div style={{ paddingTop: '115px' }}>
+          {activePage === 'shop' && (
+            <SignatureCollection
+              activeCategory={activeCategory}
+              onSelectCategory={setActiveCategory}
+            />
+          )}
 
-      {activePage === 'product' && (
-        <ProductPage
-          product={selectedProduct}
-          onBackToShop={() => {
-            window.location.hash = 'shop';
-          }}
-        />
-      )}
+          {activePage === 'product' && (
+            <ProductPage
+              product={selectedProduct}
+              onBackToShop={() => {
+                window.location.hash = 'shop';
+              }}
+            />
+          )}
 
-      {activePage === 'cart' && (
-        <CartPage
-          onBackToShop={() => {
-            window.location.hash = 'shop';
-          }}
-        />
-      )}
+          {activePage === 'cart' && (
+            <CartPage
+              onBackToShop={() => {
+                window.location.hash = 'shop';
+              }}
+            />
+          )}
 
-      {activePage === 'profile' && (
-        <ProfilePage />
-      )}
+          {activePage === 'profile' && (
+            <ProfilePage />
+          )}
 
-      {activePage === 'admin' && (
-        <AdminPage />
-      )}
+          {activePage === 'admin' && (
+            <AdminPage />
+          )}
 
-      {activePage === 'policies' && <PoliciesPage />}
+          {activePage === 'policies' && <PoliciesPage />}
 
-      {activePage === 'categories' && (
-        <CategoriesPage
-          onSelectCategory={(categoryKey) => {
-            setActiveCategory(categoryKey);
-            setActivePage('shop');
-            window.location.hash = 'collection';
-          }}
-        />
+          {activePage === 'categories' && (
+            <CategoriesPage
+              onSelectCategory={(categoryKey) => {
+                setActiveCategory(categoryKey);
+                setActivePage('shop');
+                window.location.hash = 'collection';
+              }}
+            />
+          )}
+        </div>
       )}
 
       <Footer onNavigate={setActivePage} />
