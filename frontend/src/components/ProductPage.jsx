@@ -1,8 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { addToCart } from '../utils/cartHelper';
+import { collectionsData } from './SignatureCollection/CollectionData';
 
-export default function ProductPage({ product, onBackToShop }) {
+export default function ProductPage({ product: initialProduct, onBackToShop }) {
+  const [product, setProduct] = useState(initialProduct);
+  const [loading, setLoading] = useState(false);
+
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
   const [selectedBottle, setSelectedBottle] = useState('classic');
   const [isAdding, setIsAdding] = useState(false);
@@ -15,6 +19,93 @@ export default function ProductPage({ product, onBackToShop }) {
 
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+
+  // Sync prop changes to state
+  useEffect(() => {
+    if (initialProduct) {
+      setProduct(initialProduct);
+    }
+  }, [initialProduct]);
+
+  // Fetch product from backend slug
+  useEffect(() => {
+    async function fetchProductDetails() {
+      const hash = window.location.hash.replace('#', '');
+      if (hash.startsWith('product-')) {
+        const slug = hash.replace('product-', '');
+        setLoading(true);
+        try {
+          const res = await fetch(`http://localhost:5000/api/products/${slug}`);
+          if (res.ok) {
+            const dbProduct = await res.json();
+            const staticProd = collectionsData.find(sp => sp.slug === dbProduct.slug || sp.id === dbProduct.id);
+            
+            let merged = {};
+            if (staticProd) {
+              merged = {
+                ...staticProd,
+                ...dbProduct,
+                sizes: dbProduct.variants && dbProduct.variants.length > 0
+                  ? dbProduct.variants.map(v => ({
+                      size: v.size,
+                      price: parseFloat(v.price),
+                      label: v.size.includes('2ml') ? 'Perfect for testing' : 
+                             v.size.includes('5ml') ? 'Travel friendly' : 
+                             v.size.includes('10ml') ? 'Best value' : 'Collector size',
+                      stock: v.stock,
+                      sku: v.sku,
+                      variantId: v.id
+                    }))
+                  : staticProd.sizes
+              };
+            } else {
+              merged = {
+                tagline: dbProduct.brand || 'Premium Fragrance',
+                notes: [],
+                tags: dbProduct.featured ? ['featured'] : [],
+                pyramid: {
+                  top: 'Fresh top notes',
+                  heart: 'Aromatic heart notes',
+                  base: 'Long-lasting base notes'
+                },
+                characteristics: {
+                  longevity: '8+ Hours',
+                  sillage: 'Moderate',
+                  gender: 'Unisex'
+                },
+                retailPrice: parseFloat(dbProduct.price) * 1.5,
+                competitorPrice: parseFloat(dbProduct.price) * 1.25,
+                ...dbProduct,
+                sizes: dbProduct.variants ? dbProduct.variants.map(v => ({
+                  size: v.size,
+                  price: parseFloat(v.price),
+                  label: v.size.includes('2ml') ? 'Perfect for testing' : 
+                         v.size.includes('5ml') ? 'Travel friendly' : 
+                         v.size.includes('10ml') ? 'Best value' : 'Collector size',
+                  stock: v.stock,
+                  sku: v.sku,
+                  variantId: v.id
+                })) : []
+              };
+            }
+            setProduct(merged);
+          }
+        } catch (err) {
+          console.error('Failed to fetch product details:', err);
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchProductDetails();
+
+    const handleHashChange = () => {
+      fetchProductDetails();
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [initialProduct]);
 
   // Scroll to top when product changes
   useEffect(() => {
@@ -611,6 +702,7 @@ export default function ProductPage({ product, onBackToShop }) {
               <div className="flex flex-wrap gap-7 py-1 items-center overflow-visible">
                 {product.sizes.map((sz, idx) => {
                   const isSelected = selectedSizeIndex === idx;
+                  const isOutOfStock = sz.stock <= 0;
                   const sizeLabel = sz.size
                     .replace(' Decant', '')
                     .replace(' Sample', '')
@@ -629,8 +721,8 @@ export default function ProductPage({ product, onBackToShop }) {
                         isSelected
                           ? 'text-[#1C1B18] font-medium'
                           : 'text-[#737373] hover:text-[#1C1B18]'
-                      }`}>
-                        {sizeLabel}
+                      } ${isOutOfStock ? 'opacity-40 line-through' : ''}`}>
+                        {sizeLabel} {isOutOfStock && '(Out of stock)'}
                       </span>
                       {isSelected && (
                         <motion.div
@@ -685,18 +777,26 @@ export default function ProductPage({ product, onBackToShop }) {
             <div className="mb-10">
               <button
                 onClick={handleAddToCart}
-                disabled={isAdding}
-                className="
-                  w-full py-4 rounded-none bg-[#1C1B18] text-white
-                  hover:bg-[#B08A50] border border-[#1C1B18] hover:border-[#B08A50]
+                disabled={isAdding || !selectedOption || selectedOption.stock <= 0}
+                className={`
+                  w-full py-4 rounded-none text-white
                   text-[0.68rem] font-bold tracking-widest uppercase shadow-sm
-                  transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]
-                "
+                  transition-all duration-300 flex items-center justify-center gap-2 min-h-[44px]
+                  ${(!selectedOption || selectedOption.stock <= 0)
+                    ? 'bg-neutral-400 border-neutral-400 cursor-not-allowed opacity-60'
+                    : 'bg-[#1C1B18] hover:bg-[#B08A50] border border-[#1C1B18] hover:border-[#B08A50] cursor-pointer'
+                  }
+                `}
               >
                 {isAdding ? (
                   <>
                     <i className="fas fa-spinner animate-spin"></i>
                     <span>ADDING TO CART...</span>
+                  </>
+                ) : !selectedOption || selectedOption.stock <= 0 ? (
+                  <>
+                    <i className="fas fa-ban"></i>
+                    <span>OUT OF STOCK</span>
                   </>
                 ) : (
                   <>

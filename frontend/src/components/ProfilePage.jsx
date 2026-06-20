@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth, useUser, SignOutButton } from '@clerk/clerk-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import ScrollingMarquee from './ScrollingMarquee';
 import './ProfilePage.css';
 
 const statusStyles = {
@@ -37,6 +39,9 @@ export default function ProfilePage() {
   });
   const [savingAddress, setSavingAddress] = useState(false);
   const [addressError, setAddressError] = useState('');
+  const [addressDeleteError, setAddressDeleteError] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('ALL');
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -157,13 +162,26 @@ export default function ProfilePage() {
   };
 
   const handleDeleteAddress = async (id) => {
+    setAddressDeleteError('');
     if (!confirm('Are you sure you want to delete this address?')) return;
-    const token = await getToken();
-    const res = await fetch(`http://localhost:5000/api/addresses/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (res.ok) setAddresses(addresses.filter((a) => a.id !== id));
+    try {
+      const token = await getToken();
+      const res = await fetch(`http://localhost:5000/api/addresses/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setAddresses(addresses.filter((a) => a.id !== id));
+      } else {
+        const errData = await res.json();
+        setAddressDeleteError(errData.error || 'Failed to delete address.');
+        alert(errData.error || 'Failed to delete address.');
+      }
+    } catch (err) {
+      console.error(err);
+      setAddressDeleteError('Network error. Failed to delete address.');
+      alert('Network error. Failed to delete address.');
+    }
   };
 
   const handleSetDefaultAddress = async (id) => {
@@ -199,6 +217,15 @@ export default function ProfilePage() {
   const displayName = dbUser?.name || user.fullName || 'Collector';
   const displayPhone = dbUser?.phone || (user.primaryPhoneNumber ? user.primaryPhoneNumber.phoneNumber : 'No phone linked');
 
+  const filteredOrders = useMemo(() => {
+    if (orderStatusFilter === 'ALL') return orders;
+    return orders.filter(o => o.status === orderStatusFilter);
+  }, [orders, orderStatusFilter]);
+
+  const toggleOrderExpand = (id) => {
+    setExpandedOrderId(prev => prev === id ? null : id);
+  };
+
   return (
     <div className="profile-page-shell selection:bg-[#c5a059]/20">
       <header className="profile-topbar">
@@ -221,6 +248,7 @@ export default function ProfilePage() {
           </SignOutButton>
         </div>
       </header>
+      <ScrollingMarquee />
 
       <main className="profile-main">
         {loadingData ? (
@@ -304,43 +332,140 @@ export default function ProfilePage() {
                   <span>Your Orders</span>
                   <button onClick={() => setActiveSection('dashboard')} className="profile-link-btn">Back to Account Dashboard</button>
                 </div>
-                {orders.length === 0 ? (
+                
+                {/* Status-based Order Filter Tabs */}
+                {orders.length > 0 && (
+                  <div className="profile-order-tabs" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                    {['ALL', 'PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => {
+                          setOrderStatusFilter(status);
+                          setExpandedOrderId(null);
+                        }}
+                        className="profile-status-tab-btn"
+                        style={{
+                          padding: '0.4rem 0.8rem',
+                          fontSize: '0.68rem',
+                          letterSpacing: '0.05em',
+                          borderRadius: '999px',
+                          border: '1px solid',
+                          borderColor: orderStatusFilter === status ? '#1b1a17' : 'rgba(27, 26, 23, 0.12)',
+                          backgroundColor: orderStatusFilter === status ? '#1b1a17' : 'transparent',
+                          color: orderStatusFilter === status ? '#ffffff' : '#6b6560',
+                          fontWeight: orderStatusFilter === status ? 'bold' : 'normal',
+                          cursor: 'pointer',
+                          textTransform: 'uppercase',
+                          transition: 'all 0.2s ease',
+                          minHeight: '36px'
+                        }}
+                      >
+                        {status.toLowerCase()} ({status === 'ALL' ? orders.length : orders.filter(o => o.status === status).length})
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {filteredOrders.length === 0 ? (
                   <div className="profile-empty-card">
-                    <p>You haven't ordered any premium decants yet.</p>
-                    <button onClick={() => { window.location.hash = 'shop'; }} className="profile-primary-btn">Shop Fragrance Catalog</button>
+                    <p>{orders.length === 0 ? "You haven't ordered any premium decants yet." : "No orders matching this status."}</p>
+                    {orders.length === 0 && (
+                      <button onClick={() => { window.location.hash = 'shop'; }} className="profile-primary-btn">Shop Fragrance Catalog</button>
+                    )}
                   </div>
                 ) : (
                   <div className="profile-list">
-                    {orders.map((order) => (
-                      <article key={order.id} className="profile-record-card">
-                        <div className="profile-record-head">
-                          <div>
-                            <div className="profile-kicker">Order placed</div>
-                            <div className="profile-summary-value">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                          </div>
-                          <div>
-                            <div className="profile-kicker">Total</div>
-                            <div className="profile-summary-value">₹{Number(order.total).toLocaleString('en-IN')}</div>
-                          </div>
-                          <div>
-                            <div className="profile-kicker">Ship to</div>
-                            <div className="profile-summary-value">{order.address?.fullName || displayName}</div>
-                          </div>
-                        </div>
-                        <div className="profile-record-body">
-                          <div className={`profile-status-pill ${statusStyles[order.status] || 'profile-status-neutral'}`}>{order.status}</div>
-                          {order.orderItems?.map((item) => (
-                            <div key={item.id} className="profile-order-row">
-                              <div>
-                                <div className="profile-record-name">{item.productName}</div>
-                                <div className="profile-record-meta">Size: {item.size} | Qty: {item.quantity}</div>
+                    {filteredOrders.map((order) => {
+                      const isExpanded = expandedOrderId === order.id;
+                      return (
+                        <article 
+                          key={order.id} 
+                          className={`profile-record-card ${isExpanded ? 'is-expanded' : ''}`}
+                          style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                          onClick={() => toggleOrderExpand(order.id)}
+                        >
+                          <div className="profile-record-head">
+                            <div>
+                              <div className="profile-kicker">Order ID / Date</div>
+                              <div className="profile-summary-value" style={{ fontWeight: 'bold' }}>
+                                #{order.id.slice(-8).toUpperCase()}
                               </div>
-                              <div>₹{Number(item.priceAtPurchase).toLocaleString('en-IN')}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#6b6560' }}>
+                                {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </div>
                             </div>
-                          ))}
-                        </div>
-                      </article>
-                    ))}
+                            <div>
+                              <div className="profile-kicker">Total</div>
+                              <div className="profile-summary-value" style={{ fontWeight: 600, color: '#b89563' }}>₹{Number(order.total).toLocaleString('en-IN')}</div>
+                            </div>
+                            <div>
+                              <div className="profile-kicker">Status</div>
+                              <div className={`profile-status-pill ${statusStyles[order.status] || 'profile-status-neutral'}`} style={{ marginTop: '0.2rem' }}>
+                                {order.status}
+                              </div>
+                            </div>
+                          </div>
+
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                style={{ overflow: 'hidden' }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div style={{ paddingTop: '1rem', marginTop: '1rem', borderTop: '1px solid rgba(28, 27, 24, 0.08)' }}>
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.2rem', fontSize: '0.8rem', color: '#6b6560' }}>
+                                    <div>
+                                      <h4 style={{ fontWeight: 'bold', color: '#1b1a17', marginBottom: '0.25rem', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.05em' }}>Delivery Address</h4>
+                                      {order.address ? (
+                                        <div>
+                                          <p style={{ fontWeight: 'bold', color: '#1b1a17' }}>{order.address.fullName}</p>
+                                          <p>{order.address.addressLine1}</p>
+                                          {order.address.addressLine2 && <p>{order.address.addressLine2}</p>}
+                                          <p>{order.address.city}, {order.address.state} - {order.address.postalCode}</p>
+                                          <p>Phone: {order.address.phone}</p>
+                                        </div>
+                                      ) : (
+                                        <p>No address details attached.</p>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <h4 style={{ fontWeight: 'bold', color: '#1b1a17', marginBottom: '0.25rem', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.05em' }}>Payment Details</h4>
+                                      <p>Method: <strong style={{ color: '#1b1a17' }}>{order.paymentMethod === 'COD' ? 'Cash on Delivery (COD)' : 'Simulated Card'}</strong></p>
+                                      <p>Subtotal: ₹{Number(order.subtotal).toLocaleString('en-IN')}</p>
+                                      <p>Shipping: {order.shippingFee > 0 ? `₹${Number(order.shippingFee).toLocaleString('en-IN')}` : 'FREE'}</p>
+                                      {order.notes && <p style={{ marginTop: '0.5rem', fontStyle: 'italic' }}>Notes: "{order.notes}"</p>}
+                                    </div>
+                                  </div>
+
+                                  <h4 style={{ fontWeight: 'bold', color: '#1b1a17', marginBottom: '0.5rem', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.05em' }}>Order Items</h4>
+                                  <div className="profile-record-body">
+                                    {order.orderItems?.map((item) => (
+                                      <div key={item.id} className="profile-order-row" style={{ display: 'flex', justifycontent: 'space-between', padding: '0.75rem 0', borderTop: '1px solid rgba(28, 27, 24, 0.05)' }}>
+                                        <div>
+                                          <div className="profile-record-name" style={{ fontWeight: 600 }}>{item.productName}</div>
+                                          <div className="profile-record-meta" style={{ fontSize: '0.75rem', color: '#6b6560' }}>Size: {item.size} | Qty: {item.quantity}</div>
+                                        </div>
+                                        <div style={{ fontWeight: 600 }}>₹{Number(item.priceAtPurchase).toLocaleString('en-IN')}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {!isExpanded && (
+                            <div style={{ textAlign: 'center', fontSize: '0.7rem', color: '#b89563', letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: '0.5rem' }}>
+                              ▼ Click to view details
+                            </div>
+                          )}
+                        </article>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -352,6 +477,11 @@ export default function ProfilePage() {
                   <span>Your Addresses</span>
                   <button onClick={() => { setEditingAddressId(null); resetAddressForm(); setShowAddressModal(true); }} className="profile-link-btn">Add New Address</button>
                 </div>
+                {addressDeleteError && (
+                  <div className="profile-error-banner" style={{ margin: '0 0 1rem 0' }}>
+                    {addressDeleteError}
+                  </div>
+                )}
                 {addresses.length === 0 ? (
                   <div className="profile-empty-card">
                     <p>No shipping addresses saved yet.</p>

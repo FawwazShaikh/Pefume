@@ -1,11 +1,11 @@
 import React from 'react';
 import './ScrollingMarquee.css';
 
-export default function ScrollingMarquee({ onClose }) {
+export default function ScrollingMarquee() {
   const items = [
-    "FREE SHIPPING ON ORDERS OVER ₹1999",
+    "FREE SHIPPING ON ORDERS OVER ₹999",
     "100% ORIGINAL AUTHENTIC FRAGRANCES",
-    "LUXURY NIche & DESIGNER DECANTS",
+    "LUXURY NICHE & DESIGNER DECANTS",
     "SECURE CHECKOUT & FAST DISPATCH",
     "ORDER 5ML/10ML SAMPLES NOW"
   ];
@@ -23,14 +23,6 @@ export default function ScrollingMarquee({ onClose }) {
           </div>
         ))}
       </div>
-      <button 
-        className="scrolling-marquee-close" 
-        onClick={onClose} 
-        aria-label="Close announcement bar"
-        title="Dismiss"
-      >
-        <i className="fas fa-times" />
-      </button>
     </div>
   );
 }

@@ -24,6 +24,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [inventoryLogs, setInventoryLogs] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState(null);
 
   // Settings states
   const [settingsTab, setSettingsTab] = useState('store');
@@ -242,6 +243,17 @@ export default function AdminPage() {
       if (logRes.ok) {
         const logData = await logRes.json();
         setInventoryLogs(logData);
+      }
+
+      // Fetch Dashboard Stats
+      try {
+        const dashRes = await fetch('http://localhost:5000/api/admin/dashboard', { headers });
+        if (dashRes.ok) {
+          const dashData = await dashRes.json();
+          setDashboardStats(dashData);
+        }
+      } catch (dashErr) {
+        console.error('Failed to fetch admin dashboard stats:', dashErr);
       }
 
     } catch (err) {
@@ -936,9 +948,9 @@ export default function AdminPage() {
   // Dynamic KPI Aggregations
   const KPI = useMemo(() => {
     let revToday = 0;
-    let revMonth = 0;
+    let revMonth = dashboardStats ? (dashboardStats.totalRevenue || 0) : 0;
     let ordsToday = 0;
-    let pendingOrds = 0;
+    let pendingOrds = dashboardStats ? (dashboardStats.pendingOrders || 0) : 0;
     const todayStr = new Date().toDateString();
     const thisMonth = new Date().getMonth();
     const thisYear = new Date().getFullYear();
@@ -952,27 +964,31 @@ export default function AdminPage() {
         revToday += totalAmount;
         ordsToday += 1;
       }
-      if (orderDate.getMonth() === thisMonth && orderDate.getFullYear() === thisYear) {
+      if (!dashboardStats && orderDate.getMonth() === thisMonth && orderDate.getFullYear() === thisYear) {
         revMonth += totalAmount;
       }
-      if (o.status === 'PENDING') {
+      if (!dashboardStats && o.status === 'PENDING') {
         pendingOrds += 1;
       }
     });
 
-    const lowStockCount = inventoryItems.filter(i => i.status !== 'In Stock').length;
+    const lowStockCount = dashboardStats 
+      ? (dashboardStats.lowStockVariants ? dashboardStats.lowStockVariants.length : 0)
+      : inventoryItems.filter(i => i.status !== 'In Stock').length;
 
     return {
       revenueToday: revToday,
       revenueThisMonth: revMonth,
       ordersToday: ordsToday,
       pendingOrders: pendingOrds,
-      totalCustomers: customersData.length,
+      totalCustomers: dashboardStats ? (dashboardStats.totalUsers || 0) : customersData.length,
       totalProducts: products.length,
       lowStockVariants: lowStockCount,
-      aov: filteredOrdersForStats.length > 0 ? (revMonth / filteredOrdersForStats.length) : 0
+      aov: dashboardStats 
+        ? (dashboardStats.totalOrders > 0 ? (dashboardStats.totalRevenue || 0) / dashboardStats.totalOrders : 0)
+        : (filteredOrdersForStats.length > 0 ? (revMonth / filteredOrdersForStats.length) : 0)
     };
-  }, [filteredOrdersForStats, products, inventoryItems, customersData]);
+  }, [filteredOrdersForStats, products, inventoryItems, customersData, dashboardStats]);
 
   const generateChartPaths = useMemo(() => {
     // We will generate 7 points

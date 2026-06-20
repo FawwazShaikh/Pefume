@@ -98,14 +98,37 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   const searchInputRef = useRef(null);
   const searchContainerRef = useRef(null);
   const [debouncedQuery, setDebouncedQuery] = useState('');
-
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
-    }, 250);
+    }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (debouncedQuery.trim() === '') {
+      setSearchResults([]);
+      return;
+    }
+    async function fetchSearch() {
+      setSearching(true);
+      try {
+        const res = await fetch(`http://localhost:5000/api/products?search=${encodeURIComponent(debouncedQuery)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data);
+        }
+      } catch (err) {
+        console.error('Search failed:', err);
+      } finally {
+        setSearching(false);
+      }
+    }
+    fetchSearch();
+  }, [debouncedQuery]);
 
   useEffect(() => {
     if (isSearchOpen) {
@@ -335,19 +358,31 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
 
   // Calculate counts dynamically from products
   const searchCounts = useMemo(() => {
-    const baseList = products.length > 0 ? products : collectionsData;
+    let baseList = [];
+    if (debouncedQuery.trim() !== '') {
+      baseList = searchResults;
+    } else {
+      const allProds = products.length > 0 ? products : collectionsData;
+      baseList = allProds.filter(p => p.featured || (p.tags && p.tags.includes('featured')));
+    }
     return {
       all: baseList.length,
       best: baseList.filter(p => p.unitsSold > 0 || (p.tags && p.tags.includes('featured'))).length,
       new: baseList.filter(p => p.tags && p.tags.includes('new-arrival')).length,
       featured: baseList.filter(p => p.featured || (p.tags && p.tags.includes('featured'))).length
     };
-  }, [products]);
+  }, [searchResults, debouncedQuery, products]);
 
   const filteredProducts = useMemo(() => {
-    let baseList = products.length > 0 ? products : collectionsData;
-    
-    // Filter base by active search tab
+    let baseList = [];
+    if (debouncedQuery.trim() !== '') {
+      baseList = searchResults;
+    } else {
+      // Show featured products when empty
+      const allProds = products.length > 0 ? products : collectionsData;
+      baseList = allProds.filter(p => p.featured || (p.tags && p.tags.includes('featured')));
+    }
+
     if (activeSearchTab === 'best') {
       baseList = baseList.filter(p => p.unitsSold > 0 || (p.tags && p.tags.includes('featured')));
     } else if (activeSearchTab === 'new') {
@@ -355,20 +390,9 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
     } else if (activeSearchTab === 'featured') {
       baseList = baseList.filter(p => p.featured || (p.tags && p.tags.includes('featured')));
     }
-    
-    if (debouncedQuery.trim() !== '') {
-      const q = debouncedQuery.toLowerCase();
-      return baseList.filter(product =>
-        product.name.toLowerCase().includes(q) ||
-        product.brand?.toLowerCase().includes(q) ||
-        product.category?.toLowerCase().includes(q) ||
-        (product.notes && product.notes.some(n => n.toLowerCase().includes(q)))
-      );
-    }
-    
-    // If search is empty, show featured/popular products
-    return baseList.filter(p => p.featured || (p.tags && p.tags.includes('featured')));
-  }, [products, debouncedQuery, activeSearchTab]);
+
+    return baseList;
+  }, [searchResults, debouncedQuery, products, activeSearchTab]);
 
   const activeShopInfo = useMemo(() => {
     return hoveredShopIndex !== null && hoveredShopIndex >= 0 && !shopMenuItems[hoveredShopIndex].isDivider
@@ -384,12 +408,6 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
 
   return (
     <header className={`navbar-wrapper ${activePage === 'home' ? 'on-home' : ''} ${isScrolled ? 'scrolled' : ''} ${isSearchOpen ? 'search-active' : ''}`}>
-      {isMarqueeVisible && (
-        <ScrollingMarquee onClose={() => {
-          setIsMarqueeVisible(false);
-          localStorage.setItem('marquee-dismissed', 'true');
-        }} />
-      )}
       <nav className="navbar" role="navigation" aria-label="Main navigation">
         <div className="nav-container">
 
@@ -596,6 +614,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
           </div>
         </div>
       </nav>
+      <ScrollingMarquee />
 
       {/* Mobile full-screen drawer */}
       <div className={`mobile-overlay ${isMobileMenuOpen ? 'open' : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
@@ -646,6 +665,12 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
         role="dialog"
         aria-modal="true"
         aria-label="Search fragrances"
+        onClick={(e) => {
+          if (e.target.classList.contains('search-overlay')) {
+            setIsSearchOpen(false);
+            setSearchQuery('');
+          }
+        }}
       >
         <button 
           className="search-close" 

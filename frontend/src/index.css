@@ -159,18 +159,6 @@ html {
   box-shadow: 0 6px 20px rgba(28, 27, 24, 0.15); /* Premium hover glow */
 }
 
-/* Global Typography System */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display);
-  font-weight: 300;
-  color: var(--color-text);
-  line-height: 1.2;
-}
-
-body, p, span, button, input, select, textarea, a {
-  font-family: var(--font-body);
-  color: var(--color-text);
-}
 
 .container {
   width: 100%;

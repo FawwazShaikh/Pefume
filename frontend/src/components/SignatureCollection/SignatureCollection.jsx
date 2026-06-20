@@ -118,9 +118,34 @@ export default function SignatureCollection({
     }, 500);
   };
 
+  const [dbCategories, setDbCategories] = useState([]);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch('http://localhost:5000/api/categories');
+        if (res.ok) {
+          const data = await res.json();
+          setDbCategories(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    }
+    fetchCategories();
+  }, []);
+
   const [localCategory, setLocalCategory] = useState('all');
   const currentCategory = onSelectCategory ? activeCategory : localCategory;
-  const setCategory = onSelectCategory ? onSelectCategory : setLocalCategory;
+
+  const handleCategorySelect = useCallback((categorySlug) => {
+    if (onSelectCategory) {
+      onSelectCategory(categorySlug);
+    } else {
+      setLocalCategory(categorySlug);
+    }
+    window.location.hash = `shop?category=${categorySlug}`;
+  }, [onSelectCategory]);
   const activeCollection = useMemo(
     () => collections.find(collection => collection.slug === currentCategory),
     [collections, currentCategory]
@@ -148,7 +173,7 @@ export default function SignatureCollection({
 
   // Handle clearing of all filters
   const handleClearFilters = () => {
-    setCategory('all');
+    handleCategorySelect('all');
     setSearchQuery('');
     setSortBy('recommended');
   };
@@ -166,19 +191,24 @@ export default function SignatureCollection({
 
     // 1. Filter by category
     if (currentCategory !== 'all' && !activeCollection) {
-      if (currentCategory === 'decants') {
-        items = items.filter(item => item.category === 'decants');
-      } else if (currentCategory === 'fullbottles') {
-        items = items.filter(item => item.category === 'fullbottles');
-      } else if (currentCategory === 'sets') {
-        items = items.filter(item => item.category === 'sets');
-      } else if (currentCategory === 'newarrivals') {
-        items = items.filter(item => item.tags && item.tags.includes('new-arrival'));
-      } else if (currentCategory === 'bestsellers') {
-        items = items.filter(item => item.unitsSold > 0 || (item.tags && item.tags.includes('featured')));
+      const matchedCat = dbCategories.find(c => c.slug === currentCategory || c.slug === currentCategory.replace('-', ''));
+      if (matchedCat) {
+        items = items.filter(item => item.categoryId === matchedCat.id);
       } else {
-        // Tag filters (summer, winter, him, her, etc.)
-        items = items.filter(item => item.tags && item.tags.includes(currentCategory));
+        if (currentCategory === 'decants') {
+          items = items.filter(item => item.category === 'decants');
+        } else if (currentCategory === 'fullbottles' || currentCategory === 'full-bottles') {
+          items = items.filter(item => item.category === 'fullbottles' || item.category === 'full-bottles');
+        } else if (currentCategory === 'sets') {
+          items = items.filter(item => item.category === 'sets');
+        } else if (currentCategory === 'newarrivals' || currentCategory === 'new-arrivals') {
+          items = items.filter(item => (item.tags && item.tags.includes('new-arrival')) || item.featured);
+        } else if (currentCategory === 'bestsellers' || currentCategory === 'best-sellers') {
+          items = items.filter(item => item.unitsSold > 0 || (item.tags && item.tags.includes('featured')));
+        } else {
+          // Tag filters (summer, winter, him, her, etc.)
+          items = items.filter(item => item.tags && item.tags.includes(currentCategory));
+        }
       }
     }
 
@@ -209,7 +239,7 @@ export default function SignatureCollection({
     }
 
     return items;
-  }, [activeCollection, currentCategory, products, searchQuery, sortBy]);
+  }, [activeCollection, currentCategory, products, searchQuery, sortBy, dbCategories]);
 
   // Open & Close Concierge drawer
   const openQuickView = (item) => {
@@ -347,7 +377,7 @@ export default function SignatureCollection({
               return (
                 <button
                   key={pill.id}
-                  onClick={() => setCategory(pill.id)}
+                  onClick={() => handleCategorySelect(pill.id)}
                   className={`
                     px-5 py-2.5 rounded-full text-[0.65rem] font-bold tracking-wider uppercase
                     transition-all duration-300 ease-out whitespace-nowrap cursor-pointer border min-h-[44px] flex items-center justify-center
@@ -421,13 +451,24 @@ export default function SignatureCollection({
               >
                 {/* Product Image and Badges */}
                 <div className="relative aspect-[4/5] overflow-hidden bg-[#F7F3ED]/30 border-b border-black/5">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110"
-                  />
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-[#F1ECE4] relative group-hover:scale-105 transition-transform duration-700 ease-out">
+                      <div className="text-4xl md:text-5xl font-heading text-[#B08A50] font-light tracking-widest border border-[#B08A50]/20 rounded-full w-20 h-20 flex items-center justify-center bg-white/40 shadow-inner">
+                        {item.name ? item.name.charAt(0).toUpperCase() : 'A'}
+                      </div>
+                      <div className="text-[0.65rem] tracking-[0.2em] font-body text-[#B08A50]/80 uppercase mt-4 font-semibold">
+                        {item.brand || 'Decant Atelier'}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Premium gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent pointer-events-none" />

@@ -360,8 +360,10 @@
   font-size: 0.68rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  background: rgba(184, 149, 99, 0.12);
-  color: #a17e4e;
+  background: linear-gradient(135deg, #b89563 0%, #a17e4e 100%);
+  color: #ffffff;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(184, 149, 99, 0.2);
 }
 
 .profile-address-phone {

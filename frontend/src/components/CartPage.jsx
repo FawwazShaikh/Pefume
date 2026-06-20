@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth, SignInButton } from '@clerk/clerk-react';
 import { getCart, updateQuantity, removeFromCart } from '../utils/cartHelper';
+import ScrollingMarquee from './ScrollingMarquee';
 import './CartPage.css';
 
 export default function CartPage({ onBackToShop }) {
@@ -15,6 +16,7 @@ export default function CartPage({ onBackToShop }) {
   const [notes, setNotes] = useState('');
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderPlacedSuccess, setOrderPlacedSuccess] = useState(false);
+  const [placedOrderId, setPlacedOrderId] = useState('');
 
   // Address creation form states (inline if needed)
   const [showAddAddress, setShowAddAddress] = useState(false);
@@ -75,8 +77,8 @@ export default function CartPage({ onBackToShop }) {
   }, [cartItems]);
 
   // Free Shipping configuration
-  const FREE_SHIPPING_THRESHOLD = 1999; // Adjusted to match ScrollingMarquee
-  const SHIPPING_COST = 90;
+  const FREE_SHIPPING_THRESHOLD = 999;
+  const SHIPPING_COST = 99;
 
   const shipping = useMemo(() => {
     if (subtotal === 0 || subtotal >= FREE_SHIPPING_THRESHOLD) return 0;
@@ -171,6 +173,8 @@ export default function CartPage({ onBackToShop }) {
       });
 
       if (res.ok) {
+        const orderData = await res.json();
+        setPlacedOrderId(orderData.id);
         // Clear cart
         localStorage.setItem('cart', '[]');
         localStorage.setItem('cartCount', '0');
@@ -200,11 +204,17 @@ export default function CartPage({ onBackToShop }) {
             <div style={{ width: '80px' }} />
           </div>
         </header>
+        <ScrollingMarquee />
 
         <div className="flex items-center justify-center py-20 px-4">
           <div className="max-w-md w-full bg-white border border-[#c5a059]/20 p-8 text-center shadow-md">
             <div className="text-5xl text-[#c5a059] mb-4">✦</div>
             <h2 className="font-serif text-2xl mb-2 text-[#1c1b18] uppercase">Order Confirmed</h2>
+            {placedOrderId && (
+              <p className="text-[0.68rem] font-bold tracking-[1.5px] uppercase text-[#B08A50] mb-4">
+                ORDER ID: #{placedOrderId.slice(-8).toUpperCase()}
+              </p>
+            )}
             <p className="text-sm text-[#6e6b64] mb-6 leading-relaxed">
               Thank you for your purchase. Your olfactory journey is being prepared at our atelier.
             </p>
@@ -240,6 +250,7 @@ export default function CartPage({ onBackToShop }) {
             <div style={{ width: '80px' }} />
           </div>
         </header>
+        <ScrollingMarquee />
 
         <div className="flex items-center justify-center py-24 px-4">
           <div className="max-w-md w-full text-center">
@@ -273,6 +284,7 @@ export default function CartPage({ onBackToShop }) {
           <div style={{ width: '80px' }} /> {/* balanced spacing spacer */}
         </div>
       </header>
+      <ScrollingMarquee />
 
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pb-16">
         <h1 className="cart-page-title font-heading mb-8 text-3xl font-light text-[#1C1B18] tracking-wide">

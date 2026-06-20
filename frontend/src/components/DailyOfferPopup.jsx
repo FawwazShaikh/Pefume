@@ -58,8 +58,36 @@ export default function DailyOfferPopup() {
   if (!show) return null;
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.card}>
+    <div className="daily-offer-overlay" style={styles.overlay}>
+      <style>{`
+        @media (max-width: 680px) {
+          .daily-offer-content {
+            flex-direction: column !important;
+            padding: 1.5rem !important;
+            gap: 1.5rem !important;
+          }
+          .daily-offer-image-col {
+            flex: 0 0 auto !important;
+          }
+          .daily-offer-product-img {
+            max-height: 180px !important;
+          }
+          .daily-offer-info-col {
+            width: 100% !important;
+            align-items: center !important;
+            text-align: center !important;
+          }
+          .daily-offer-discount {
+            align-self: center !important;
+          }
+          .daily-offer-btn-row {
+            width: 100% !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+          }
+        }
+      `}</style>
+      <div className="daily-offer-card" style={styles.card}>
         {/* Close Button */}
         <button onClick={handleClose} style={styles.closeBtn} aria-label="Close popup">&times;</button>
 
@@ -69,20 +97,21 @@ export default function DailyOfferPopup() {
         </div>
 
         {/* Content Wrapper */}
-        <div style={styles.content}>
-          <div style={styles.imageCol}>
+        <div className="daily-offer-content" style={styles.content}>
+          <div className="daily-offer-image-col" style={styles.imageCol}>
             <img 
               src="/her_perfume.png" 
               alt="Tom Ford Tobacco Vanille" 
+              className="daily-offer-product-img"
               style={styles.productImg}
               onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=400&q=80' }}
             />
           </div>
-          <div style={styles.infoCol}>
+          <div className="daily-offer-info-col" style={styles.infoCol}>
             <h3 style={styles.brand}>TOM FORD</h3>
             <h2 style={styles.title}>Tobacco Vanille</h2>
             <p style={styles.tagline}>"Exclusive 24-Hour Deal On Tom Ford Tobacco Vanille"</p>
-            <div style={styles.discount}>
+            <div className="daily-offer-discount" style={styles.discount}>
               15% OFF &bull; TODAY ONLY
             </div>
             <p style={styles.details}>Ends tonight at midnight. Claim now to secure this exclusive price.</p>
@@ -94,7 +123,7 @@ export default function DailyOfferPopup() {
             </div>
 
             {/* CTA Buttons */}
-            <div style={styles.btnRow}>
+            <div className="daily-offer-btn-row" style={styles.btnRow}>
               <button onClick={handleClaim} style={styles.claimBtn}>Claim Offer</button>
               <button onClick={handleClose} style={styles.notNowBtn}>Not Now</button>
             </div>

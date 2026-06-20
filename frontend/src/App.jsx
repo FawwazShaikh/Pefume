@@ -17,7 +17,8 @@ import { collectionsData } from './components/SignatureCollection/CollectionData
 
 function App() {
   const getPageFromHash = () => {
-    const hash = window.location.hash.replace('#', '');
+    const fullHash = window.location.hash.replace('#', '');
+    const hash = fullHash.split('?')[0];
     const policies = ['authenticity', 'about', 'shipping', 'returns', 'terms', 'privacy'];
 
     if (policies.includes(hash)) return 'policies';
@@ -31,8 +32,18 @@ function App() {
     return 'home';
   };
 
+  const getCategoryFromHash = () => {
+    const fullHash = window.location.hash.replace('#', '');
+    const hash = fullHash.split('?')[0];
+    if (hash === 'shop' || hash === 'collection') {
+      const params = new URLSearchParams(fullHash.split('?')[1] || '');
+      return params.get('category') || 'all';
+    }
+    return 'all';
+  };
+
   const [activePage, setActivePage] = useState(getPageFromHash);
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState(getCategoryFromHash);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -94,7 +105,17 @@ function App() {
       const page = getPageFromHash();
       setActivePage(page);
 
-      const hash = window.location.hash.replace('#', '');
+      const fullHash = window.location.hash.replace('#', '');
+      const hash = fullHash.split('?')[0];
+
+      // Restore category from query parameter if present
+      if (hash === 'shop' || hash === 'collection') {
+        const params = new URLSearchParams(fullHash.split('?')[1] || '');
+        const catParam = params.get('category');
+        if (catParam) {
+          setActiveCategory(catParam);
+        }
+      }
 
       if (hash.startsWith('product-')) {
         const id = hash.replace('product-', '');

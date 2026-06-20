@@ -122,7 +122,7 @@ async function getOrCreateDbUser(clerkId) {
 // ============================================================
 
 // GET user addresses
-app.get('/api/addresses', requireAuth, async (req, res) => {
+const getAddressesHandler = async (req, res) => {
   try {
     const dbUser = await getOrCreateDbUser(req.auth.userId);
     const addresses = await prisma.address.findMany({
@@ -134,10 +134,12 @@ app.get('/api/addresses', requireAuth, async (req, res) => {
     console.error('Failed to fetch addresses:', err);
     return res.status(500).json({ error: 'Failed to fetch addresses' });
   }
-});
+};
+app.get('/api/addresses', requireAuth, getAddressesHandler);
+app.get('/api/user/addresses', requireAuth, getAddressesHandler);
 
 // POST save address
-app.post('/api/addresses', requireAuth, async (req, res) => {
+const postAddressHandler = async (req, res) => {
   const { fullName, phone, addressLine1, addressLine2, city, state, postalCode, isDefault } = req.body;
 
   if (!fullName || !phone || !addressLine1 || !city || !state || !postalCode) {
@@ -174,10 +176,12 @@ app.post('/api/addresses', requireAuth, async (req, res) => {
     console.error('Failed to create address:', err);
     return res.status(500).json({ error: 'Failed to save address' });
   }
-});
+};
+app.post('/api/addresses', requireAuth, postAddressHandler);
+app.post('/api/user/addresses', requireAuth, postAddressHandler);
 
-// PUT update address
-app.put('/api/addresses/:id', requireAuth, async (req, res) => {
+// PUT/PATCH update address
+const patchAddressHandler = async (req, res) => {
   const { id } = req.params;
   const { fullName, phone, addressLine1, addressLine2, city, state, postalCode, isDefault } = req.body;
 
@@ -223,10 +227,14 @@ app.put('/api/addresses/:id', requireAuth, async (req, res) => {
     console.error('Failed to update address:', err);
     return res.status(500).json({ error: 'Failed to update address' });
   }
-});
+};
+app.put('/api/addresses/:id', requireAuth, patchAddressHandler);
+app.patch('/api/addresses/:id', requireAuth, patchAddressHandler);
+app.put('/api/user/addresses/:id', requireAuth, patchAddressHandler);
+app.patch('/api/user/addresses/:id', requireAuth, patchAddressHandler);
 
 // DELETE address
-app.delete('/api/addresses/:id', requireAuth, async (req, res) => {
+const deleteAddressHandler = async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -240,6 +248,14 @@ app.delete('/api/addresses/:id', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Address not found' });
     }
 
+    // Check if there are any orders attached to this address
+    const linkedOrders = await prisma.order.count({
+      where: { addressId: id }
+    });
+    if (linkedOrders > 0) {
+      return res.status(400).json({ error: 'Cannot delete address because it has orders attached to it.' });
+    }
+
     await prisma.address.delete({
       where: { id }
     });
@@ -249,10 +265,12 @@ app.delete('/api/addresses/:id', requireAuth, async (req, res) => {
     console.error('Failed to delete address:', err);
     return res.status(500).json({ error: 'Failed to delete address' });
   }
-});
+};
+app.delete('/api/addresses/:id', requireAuth, deleteAddressHandler);
+app.delete('/api/user/addresses/:id', requireAuth, deleteAddressHandler);
 
 // PATCH set address as default
-app.patch('/api/addresses/:id/default', requireAuth, async (req, res) => {
+const setDefaultAddressHandler = async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -282,7 +300,9 @@ app.patch('/api/addresses/:id/default', requireAuth, async (req, res) => {
     console.error('Failed to set default address:', err);
     return res.status(500).json({ error: 'Failed to set default address' });
   }
-});
+};
+app.patch('/api/addresses/:id/default', requireAuth, setDefaultAddressHandler);
+app.patch('/api/user/addresses/:id/default', requireAuth, setDefaultAddressHandler);
 
 // ============================================================
 // ORDER MANAGEMENT ROUTES
@@ -334,12 +354,37 @@ app.post('/api/orders', requireAuth, async (req, res) => {
       subtotal += price * qty;
     }
 
-    const shippingFee = 0; // Free shipping
+    const shippingFee = subtotal >= 999 ? 0 : 99; // Free shipping over 999, otherwise 99
     const total = subtotal + shippingFee;
 
     // Place order in transaction
     const order = await prisma.$transaction(async (tx) => {
-      // 1. Create the order
+      // 1. Validate variant stock and resolve missing variantIds
+      for (const item of items) {
+        let variantId = item.variantId;
+        if (!variantId || variantId === 'default-variant') {
+          const variant = await tx.productVariant.findFirst({
+            where: { productId: item.productId || item.id, size: item.size }
+          });
+          if (!variant) {
+            throw new Error(`Variant not found for product ${item.name} and size ${item.size}`);
+          }
+          item.variantId = variant.id;
+          variantId = variant.id;
+        }
+
+        const variant = await tx.productVariant.findUnique({
+          where: { id: variantId }
+        });
+        if (!variant) {
+          throw new Error(`Variant not found: ${variantId}`);
+        }
+        if (variant.stock < item.quantity) {
+          throw new Error(`Insufficient stock for ${item.name} (${item.size}). Available: ${variant.stock}`);
+        }
+      }
+
+      // 2. Create the order
       const newOrder = await tx.order.create({
         data: {
           userId: dbUser.id,
@@ -352,12 +397,12 @@ app.post('/api/orders', requireAuth, async (req, res) => {
           notes,
           orderItems: {
             create: items.map(item => ({
-              productId: item.productId || item.id, // Support different object formats
-              variantId: item.variantId || 'default-variant', // Fallback identifier
+              productId: item.productId || item.id,
+              variantId: item.variantId,
               productName: item.name,
-              size: item.size || '2ml Decant',
+              size: item.size,
               priceAtPurchase: parseFloat(item.price),
-              quantity: parseInt(item.quantity) || 1
+              quantity: parseInt(item.quantity)
             }))
           }
         },
@@ -366,7 +411,31 @@ app.post('/api/orders', requireAuth, async (req, res) => {
         }
       });
 
-      // 2. Initialize Payment record
+      // 3. Deduct stock and log to InventoryLog
+      for (const item of items) {
+        const variant = await tx.productVariant.findUnique({
+          where: { id: item.variantId }
+        });
+        const oldStock = variant.stock;
+        const newStock = oldStock - item.quantity;
+
+        await tx.productVariant.update({
+          where: { id: item.variantId },
+          data: { stock: newStock }
+        });
+
+        await tx.inventoryLog.create({
+          data: {
+            variantId: item.variantId,
+            oldStock,
+            newStock,
+            changeType: 'ORDER',
+            note: `Order #${newOrder.id.slice(-8).toUpperCase()} placement`
+          }
+        });
+      }
+
+      // 4. Initialize Payment record
       await tx.payment.create({
         data: {
           orderId: newOrder.id,
@@ -376,6 +445,11 @@ app.post('/api/orders', requireAuth, async (req, res) => {
         }
       });
 
+      // 5. Clear user cart in DB
+      await tx.cartItem.deleteMany({
+        where: { userId: dbUser.id }
+      });
+
       return newOrder;
     });
 
@@ -383,7 +457,7 @@ app.post('/api/orders', requireAuth, async (req, res) => {
     return res.status(201).json(order);
   } catch (err) {
     console.error('Failed to place order:', err);
-    return res.status(500).json({ error: 'Failed to place order' });
+    return res.status(500).json({ error: err.message || 'Failed to place order' });
   }
 });
 
@@ -418,9 +492,19 @@ const requireAdmin = async (req, res, next) => {
 
 // GET all products
 app.get('/api/products', async (req, res) => {
+  const { search } = req.query;
   try {
+    const where = { isActive: true };
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { brand: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
     const products = await prisma.product.findMany({
-      where: { isActive: true },
+      where,
       include: {
         images: {
           orderBy: { position: 'asc' }
@@ -642,9 +726,29 @@ app.delete('/api/products/:id', requireAuth, requireAdmin, async (req, res) => {
 // GET all categories
 app.get('/api/categories', async (req, res) => {
   try {
-    const categories = await prisma.category.findMany({
+    let categories = await prisma.category.findMany({
       orderBy: { name: 'asc' }
     });
+    if (categories.length === 0) {
+      const defaultCategories = [
+        { name: 'Shop All', slug: 'shop-all' },
+        { name: 'Decants', slug: 'decants' },
+        { name: 'Full Bottles', slug: 'full-bottles' },
+        { name: 'New Arrivals', slug: 'new-arrivals' },
+        { name: 'Best Sellers', slug: 'best-sellers' },
+        { name: 'Summer', slug: 'summer' },
+        { name: 'Winter', slug: 'winter' },
+        { name: 'For Him', slug: 'for-him' },
+        { name: 'For Her', slug: 'for-her' }
+      ];
+      await prisma.category.createMany({
+        data: defaultCategories,
+        skipDuplicates: true
+      });
+      categories = await prisma.category.findMany({
+        orderBy: { name: 'asc' }
+      });
+    }
     return res.status(200).json(categories);
   } catch (err) {
     console.error('Failed to fetch categories:', err);
@@ -667,6 +771,47 @@ app.post('/api/categories', requireAuth, requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Failed to create category:', err);
     return res.status(500).json({ error: 'Failed to create category' });
+  }
+});
+
+// PATCH update category (admin only)
+app.patch('/api/categories/:id', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { name, slug } = req.body;
+  if (!name || !slug) {
+    return res.status(400).json({ error: 'Missing name or slug for category' });
+  }
+  try {
+    const updated = await prisma.category.update({
+      where: { id },
+      data: { name, slug }
+    });
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error('Failed to update category:', err);
+    return res.status(500).json({ error: 'Failed to update category' });
+  }
+});
+
+// DELETE category (admin only)
+app.delete('/api/categories/:id', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Check if any products are linked to this category
+    const linkedProducts = await prisma.product.count({
+      where: { categoryId: id }
+    });
+    if (linkedProducts > 0) {
+      return res.status(400).json({ error: 'Cannot delete category because it has products linked to it.' });
+    }
+
+    await prisma.category.delete({
+      where: { id }
+    });
+    return res.status(200).json({ success: true, message: 'Category deleted successfully.' });
+  } catch (err) {
+    console.error('Failed to delete category:', err);
+    return res.status(500).json({ error: 'Failed to delete category' });
   }
 });
 
@@ -777,12 +922,13 @@ app.get('/api/admin/dashboard', requireAuth, requireAdmin, async (req, res) => {
       where: { status: 'PENDING' }
     });
 
-    const lowStockVariants = await prisma.productVariant.findMany({
-      where: { stock: { lte: prisma.productVariant.fields.lowStockThreshold } },
+    const allVariants = await prisma.productVariant.findMany({
+      where: { isActive: true },
       include: {
         product: { select: { name: true } }
       }
     });
+    const lowStockVariants = allVariants.filter(v => v.stock <= v.lowStockThreshold);
     const formattedLowStock = lowStockVariants.map(v => ({
       productName: v.product.name,
       size: v.size,
@@ -1127,6 +1273,341 @@ app.post('/api/admin/inventory/adjust', requireAuth, requireAdmin, async (req, r
     return res.status(500).json({ error: 'Failed to adjust inventory' });
   }
 });
+
+});
+
+// POST add image to product (admin only)
+app.post('/api/products/:id/images', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { imageUrl, altText, position } = req.body;
+  if (!imageUrl) {
+    return res.status(400).json({ error: 'Missing imageUrl' });
+  }
+  try {
+    const newImage = await prisma.productImage.create({
+      data: {
+        productId: id,
+        imageUrl,
+        altText: altText || null,
+        position: position !== undefined ? parseInt(position) : 0
+      }
+    });
+    return res.status(201).json(newImage);
+  } catch (err) {
+    console.error('Failed to add image:', err);
+    return res.status(500).json({ error: 'Failed to add image' });
+  }
+});
+
+// DELETE remove image from product (admin only)
+app.delete('/api/products/:id/images/:imageId', requireAuth, requireAdmin, async (req, res) => {
+  const { imageId } = req.params;
+  try {
+    await prisma.productImage.delete({
+      where: { id: imageId }
+    });
+    return res.status(200).json({ success: true, message: 'Image deleted successfully.' });
+  } catch (err) {
+    console.error('Failed to delete image:', err);
+    return res.status(500).json({ error: 'Failed to delete image' });
+  }
+});
+
+// POST add variant to product (admin only)
+app.post('/api/products/:id/variants', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { size, price, stock, sku, lowStockThreshold } = req.body;
+  if (!size || price === undefined || !sku) {
+    return res.status(400).json({ error: 'Missing size, price, or SKU' });
+  }
+  try {
+    const newVariant = await prisma.productVariant.create({
+      data: {
+        productId: id,
+        size,
+        price: parseFloat(price),
+        stock: stock !== undefined ? parseInt(stock) : 0,
+        sku,
+        lowStockThreshold: lowStockThreshold !== undefined ? parseInt(lowStockThreshold) : 5,
+        isActive: true
+      }
+    });
+    return res.status(201).json(newVariant);
+  } catch (err) {
+    console.error('Failed to add variant:', err);
+    return res.status(500).json({ error: 'Failed to add variant' });
+  }
+});
+
+// PATCH update variant (admin only)
+app.patch('/api/products/:id/variants/:variantId', requireAuth, requireAdmin, async (req, res) => {
+  const { variantId } = req.params;
+  const { size, price, stock, sku, lowStockThreshold, isActive } = req.body;
+  try {
+    const data = {};
+    if (size !== undefined) data.size = size;
+    if (price !== undefined) data.price = parseFloat(price);
+    if (stock !== undefined) data.stock = parseInt(stock);
+    if (sku !== undefined) data.sku = sku;
+    if (lowStockThreshold !== undefined) data.lowStockThreshold = parseInt(lowStockThreshold);
+    if (isActive !== undefined) data.isActive = !!isActive;
+
+    const updatedVariant = await prisma.productVariant.update({
+      where: { id: variantId },
+      data
+    });
+    return res.status(200).json(updatedVariant);
+  } catch (err) {
+    console.error('Failed to update variant:', err);
+    return res.status(500).json({ error: 'Failed to update variant' });
+  }
+});
+
+// DELETE remove variant (admin only)
+app.delete('/api/products/:id/variants/:variantId', requireAuth, requireAdmin, async (req, res) => {
+  const { variantId } = req.params;
+  try {
+    await prisma.productVariant.delete({
+      where: { id: variantId }
+    });
+    return res.status(200).json({ success: true, message: 'Variant deleted successfully.' });
+  } catch (err) {
+    console.error('Failed to delete variant:', err);
+    return res.status(500).json({ error: 'Failed to delete variant' });
+  }
+});
+
+// GET user cart items
+app.get('/api/cart', requireAuth, async (req, res) => {
+  try {
+    const dbUser = await getOrCreateDbUser(req.auth.userId);
+    const cartItems = await prisma.cartItem.findMany({
+      where: { userId: dbUser.id },
+      include: {
+        variant: {
+          include: {
+            product: true
+          }
+        }
+      }
+    });
+    return res.status(200).json(cartItems);
+  } catch (err) {
+    console.error('Failed to fetch cart:', err);
+    return res.status(500).json({ error: 'Failed to fetch cart' });
+  }
+});
+
+// POST add item to cart
+app.post('/api/cart', requireAuth, async (req, res) => {
+  const { variantId, quantity } = req.body;
+  if (!variantId) {
+    return res.status(400).json({ error: 'Missing variantId' });
+  }
+  const qty = parseInt(quantity) || 1;
+  try {
+    const dbUser = await getOrCreateDbUser(req.auth.userId);
+    
+    // Find if exists
+    const existing = await prisma.cartItem.findFirst({
+      where: { userId: dbUser.id, variantId }
+    });
+
+    if (existing) {
+      const updated = await prisma.cartItem.update({
+        where: { id: existing.id },
+        data: { quantity: existing.quantity + qty }
+      });
+      return res.status(200).json(updated);
+    }
+
+    const newItem = await prisma.cartItem.create({
+      data: {
+        userId: dbUser.id,
+        variantId,
+        quantity: qty
+      }
+    });
+    return res.status(201).json(newItem);
+  } catch (err) {
+    console.error('Failed to add to cart:', err);
+    return res.status(500).json({ error: 'Failed to add to cart' });
+  }
+});
+
+// PATCH update quantity
+app.patch('/api/cart/:id', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { quantity } = req.body;
+  if (quantity === undefined) {
+    return res.status(400).json({ error: 'Missing quantity' });
+  }
+  const qty = parseInt(quantity);
+  try {
+    const dbUser = await getOrCreateDbUser(req.auth.userId);
+    if (qty <= 0) {
+      await prisma.cartItem.delete({
+        where: { id, userId: dbUser.id }
+      });
+      return res.status(200).json({ success: true, message: 'Item removed' });
+    }
+    const updated = await prisma.cartItem.update({
+      where: { id, userId: dbUser.id },
+      data: { quantity: qty }
+    });
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error('Failed to update cart item:', err);
+    return res.status(500).json({ error: 'Failed to update cart item' });
+  }
+});
+
+// DELETE remove cart item
+app.delete('/api/cart/:id', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const dbUser = await getOrCreateDbUser(req.auth.userId);
+    await prisma.cartItem.delete({
+      where: { id, userId: dbUser.id }
+    });
+    return res.status(200).json({ success: true, message: 'Item removed successfully' });
+  } catch (err) {
+    console.error('Failed to delete cart item:', err);
+    return res.status(500).json({ error: 'Failed to delete cart item' });
+  }
+});
+
+// GET single order detail
+app.get('/api/orders/:id', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const dbUser = await getOrCreateDbUser(req.auth.userId);
+    const order = await prisma.order.findFirst({
+      where: { id, userId: dbUser.id },
+      include: {
+        address: true,
+        orderItems: {
+          include: {
+            product: {
+              include: {
+                images: true
+              }
+            }
+          }
+        },
+        payment: true
+      }
+    });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    return res.status(200).json(order);
+  } catch (err) {
+    console.error('Failed to fetch order details:', err);
+    return res.status(500).json({ error: 'Failed to fetch order details' });
+  }
+});
+
+// GET all inventory (admin only)
+app.get('/api/admin/inventory', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const variants = await prisma.productVariant.findMany({
+      include: {
+        product: { select: { name: true } }
+      },
+      orderBy: { product: { name: 'asc' } }
+    });
+
+    const response = variants.map(v => ({
+      id: v.id,
+      productId: v.productId,
+      productName: v.product.name,
+      size: v.size,
+      sku: v.sku,
+      stock: v.stock,
+      lowStockThreshold: v.lowStockThreshold,
+      isActive: v.isActive
+    }));
+
+    return res.status(200).json(response);
+  } catch (err) {
+    console.error('Failed to fetch admin inventory:', err);
+    return res.status(500).json({ error: 'Failed to fetch admin inventory' });
+  }
+});
+
+// PATCH update inventory stock (admin only)
+app.patch('/api/admin/inventory/:variantId', requireAuth, requireAdmin, async (req, res) => {
+  const { variantId } = req.params;
+  const { stock, lowStockThreshold, note } = req.body;
+  if (stock === undefined && lowStockThreshold === undefined) {
+    return res.status(400).json({ error: 'Missing stock or threshold count' });
+  }
+
+  try {
+    const variant = await prisma.productVariant.findUnique({
+      where: { id: variantId }
+    });
+    if (!variant) {
+      return res.status(404).json({ error: 'Variant not found' });
+    }
+
+    const oldStock = variant.stock;
+    const updateData = {};
+    if (stock !== undefined) updateData.stock = parseInt(stock);
+    if (lowStockThreshold !== undefined) updateData.lowStockThreshold = parseInt(lowStockThreshold);
+
+    const updated = await prisma.productVariant.update({
+      where: { id: variantId },
+      data: updateData
+    });
+
+    // Create log if stock was changed
+    if (stock !== undefined) {
+      await prisma.inventoryLog.create({
+        data: {
+          variantId,
+          oldStock,
+          newStock: parseInt(stock),
+          changeType: 'RESTOCK',
+          note: note || 'Stock count manually updated from Inventory console'
+        }
+      });
+    }
+
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error('Failed to update variant stock:', err);
+    return res.status(500).json({ error: 'Failed to update variant stock' });
+  }
+});
+
+// PATCH update user role (admin only - support both route aliases)
+const patchUserRoleHandler = async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body;
+  if (role !== 'USER' && role !== 'ADMIN') {
+    return res.status(400).json({ error: 'Invalid user role' });
+  }
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { role },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true
+      }
+    });
+    return res.status(200).json(updatedUser);
+  } catch (err) {
+    console.error('Failed to update user role:', err);
+    return res.status(500).json({ error: 'Failed to update user role' });
+  }
+};
+app.patch('/api/admin/users/:id/role', requireAuth, requireAdmin, patchUserRoleHandler);
+app.patch('/api/admin/users/:id', requireAuth, requireAdmin, patchUserRoleHandler);
 
 // Default root status route
 app.get('/api/status', (req, res) => {
