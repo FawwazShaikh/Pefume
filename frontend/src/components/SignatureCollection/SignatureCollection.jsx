@@ -299,46 +299,8 @@ export default function SignatureCollection({ activeCategory = 'all', onSelectCa
           </div>
         )}
 
-        {/* Unified Control Bar (Filters on Left, Search + Sort on Right) */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-black/8 mb-10">
-          {/* Left: Filter Pills */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {[
-              { id: 'all', label: 'All' },
-              { id: 'sets', label: 'Sets' },
-              { id: 'decants', label: 'Decants' },
-              { id: 'fullbottles', label: 'Full Bottles' },
-            ].map((pill) => {
-              const isActive = activePillId === pill.id;
-              return (
-                <button
-                  key={pill.id}
-                  onClick={() => setCategory(pill.id)}
-                  className={`
-                    px-5 py-2.5 rounded-full text-[0.65rem] font-bold tracking-wider uppercase
-                    transition-all duration-300 ease-out whitespace-nowrap cursor-pointer border min-h-[44px] flex items-center justify-center
-                    ${isActive
-                      ? 'bg-[#1C1B18] border-[#1C1B18] text-[#FEFCF9] shadow-sm'
-                      : 'bg-transparent border-black/8 text-[#1C1B18] hover:bg-[#EFE8DD] hover:border-[#1C1B18]/50'
-                    }
-                  `}
-                >
-                  {pill.label}
-                </button>
-              );
-            })}
-
-            {/* Clear filters */}
-            {(currentCategory !== 'all' || searchQuery !== '' || sortBy !== 'recommended') && (
-              <button
-                onClick={handleClearFilters}
-                className="ml-3 text-[0.65rem] font-bold tracking-widest text-[#1C1B18] hover:text-[#B08A50] transition-colors duration-300 underline underline-offset-4 uppercase cursor-pointer min-h-[44px] flex items-center"
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
-
+        {/* Unified Control Bar (Search + Sort controls) */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-end gap-6 pb-6 border-b border-black/8 mb-10">
           {/* Right: Search + Sort controls */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             {/* Search input container */}
