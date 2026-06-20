@@ -186,3 +186,12 @@ body, p, span, button, input, select, textarea, a {
   outline: 2px solid var(--color-accent);
   outline-offset: 4px;
 }
+
+/* Scrollbar hide utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
