@@ -445,28 +445,31 @@ body.marquee-hidden .main-content-padding {
   height: 100vh;
   background: #F8F6F2;
   z-index: 99999;
-  transform: translateY(-100%);
-  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
   display: flex;
   flex-direction: column;
-  opacity: 0;
-  visibility: hidden;
   overflow-y: auto;
-}
-
-.search-overlay.open {
-  transform: translateY(0);
-  opacity: 1;
-  visibility: visible;
+  overflow-x: hidden;
 }
 
 .search-container {
-  max-width: 1200px;
+  max-width: 1600px;
   width: 100%;
   margin: 0 auto;
-  padding: 4rem 2rem;
+  padding: 4rem 1rem;
   display: flex;
   flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .search-container {
+    padding: 4rem 1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .search-container {
+    padding: 4rem 4rem;
+  }
 }
 
 .search-header {
@@ -501,7 +504,7 @@ body.marquee-hidden .main-content-padding {
 }
 
 .search-close {
-  position: absolute;
+  position: fixed;
   top: 32px;
   right: 32px;
   background: none;
@@ -976,9 +979,6 @@ body.marquee-hidden .main-content-padding {
 
 /* Extra overrides for search overlay sizing on tablet & mobile */
 @media (max-width: 768px) {
-  .search-container {
-    padding: 2.5rem 1.25rem;
-  }
   .search-header {
     margin-top: 4.5rem;
     padding-bottom: 1rem;

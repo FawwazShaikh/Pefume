@@ -13,6 +13,7 @@ import CategoriesPage from './components/CategoriesPage';
 import ProfilePage from './components/ProfilePage';
 import DailyOfferPopup from './components/DailyOfferPopup';
 import AdminPage from './components/AdminPage';
+import GiftingPage from './components/GiftingPage';
 import { collectionsData } from './components/SignatureCollection/CollectionData';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
     if (hash === 'shop' || hash === 'collection') return 'shop';
     if (hash === 'cart') return 'cart';
     if (hash === 'categories') return 'categories';
+    if (hash === 'gifting') return 'gifting';
     if (hash.startsWith('product-')) return 'product';
 
     return 'home';
@@ -173,7 +175,7 @@ function App() {
       )}
 
       {activePage !== 'home' && (
-        <div className={(activePage === 'admin' || activePage === 'cart' || activePage === 'profile') ? '' : 'main-content-padding'}>
+        <div className={(activePage === 'admin' || activePage === 'cart' || activePage === 'profile' || activePage === 'gifting') ? '' : 'main-content-padding'}>
           {activePage === 'shop' && (
             <SignatureCollection
               activeCategory={activeCategory}
@@ -217,6 +219,10 @@ function App() {
                 window.location.hash = 'collection';
               }}
             />
+          )}
+
+          {activePage === 'gifting' && (
+            <GiftingPage />
           )}
         </div>
       )}

@@ -402,7 +402,6 @@ export default function SignatureCollection({
               </button>
             )}
           </div>
-
           {/* Right: Search + Sort controls */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             {/* Search input container */}
