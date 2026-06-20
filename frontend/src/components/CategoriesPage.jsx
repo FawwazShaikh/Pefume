@@ -51,7 +51,7 @@ const categoriesData = [
   },
   {
     id: 'bestsellers',
-    title: 'Bestsellers',
+    title: 'Best Sellers',
     desc: 'Discover our most popular fragrances that never go out of style. Find the scents that keep customers coming back for more.',
     image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600&q=80'
   }
