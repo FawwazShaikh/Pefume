@@ -1,6 +1,32 @@
+import { useState, useEffect } from 'react';
 import './Footer.css';
 
 export default function Footer({ onNavigate }) {
+  const [settings, setSettings] = useState({
+    storeName: 'DECANT ATELIER',
+    supportPhone: '+91 97681 88453',
+    supportEmail: 'orders@decantatelier.in'
+  });
+
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const res = await fetch('http://localhost:5000/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setSettings({
+            storeName: data.storeName || 'DECANT ATELIER',
+            supportPhone: data.supportPhone || '+91 97681 88453',
+            supportEmail: data.supportEmail || 'orders@decantatelier.in'
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch settings for footer:', err);
+      }
+    }
+    fetchSettings();
+  }, []);
+
   const handlePolicyClick = (e, id) => {
     e.preventDefault();
     window.location.hash = id;
@@ -25,12 +51,19 @@ export default function Footer({ onNavigate }) {
     }
   };
 
+  const handleDiscoverClick = (e, filterKey) => {
+    e.preventDefault();
+    window.location.hash = `shop?category=${filterKey}`;
+    if (onNavigate) onNavigate('shop');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <footer id="contact" className="footer">
       <div className="footer-main">
         {/* Col 1: Brand */}
         <div className="footer-brand">
-          <span className="footer-logo">DECANT ATELIER</span>
+          <span className="footer-logo">{settings.storeName.toUpperCase()}</span>
           <p className="footer-tagline">
             Independent perfume decanting service in India. Hand-poured trial sizes from genuine sealed bottles.
           </p>
@@ -41,16 +74,16 @@ export default function Footer({ onNavigate }) {
           <h4 className="footer-col-title">EXPLORE</h4>
           <ul className="footer-links">
             <li>
-              <a href="#collection" onClick={(e) => handleHomeLinkClick(e, 'collection')}>Shop All</a>
+              <a href="#shop?category=bestsellers" onClick={(e) => handleDiscoverClick(e, 'bestsellers')}>Best Sellers</a>
             </li>
             <li>
-              <a href="#collection" onClick={(e) => handleHomeLinkClick(e, 'collection')}>Featured Brands</a>
+              <a href="#shop?category=decants" onClick={(e) => handleDiscoverClick(e, 'decants')}>Decants</a>
             </li>
             <li>
-              <a href="#collection" onClick={(e) => handleHomeLinkClick(e, 'collection')}>New Arrivals</a>
+              <a href="#shop?category=newarrivals" onClick={(e) => handleDiscoverClick(e, 'newarrivals')}>New Arrivals</a>
             </li>
             <li>
-              <a href="#collection" onClick={(e) => handleHomeLinkClick(e, 'collection')}>Best Sellers</a>
+              <a href="#shop?category=sets" onClick={(e) => handleDiscoverClick(e, 'sets')}>Gift Sets</a>
             </li>
           </ul>
         </div>
@@ -60,14 +93,15 @@ export default function Footer({ onNavigate }) {
           <h4 className="footer-col-title">POLICIES</h4>
           <ul className="footer-links">
             <li>
+              <a href="#about" onClick={(e) => handlePolicyClick(e, 'about')}>About Decant Atelier</a>
+            </li>
+            <li>
               <a href="#authenticity" onClick={(e) => handlePolicyClick(e, 'authenticity')}>
                 Authenticity &amp; Sourcing
               </a>
             </li>
             <li>
-              <a href="#about" onClick={(e) => handlePolicyClick(e, 'about')}>
-                About Us
-              </a>
+              <a href="#about" onClick={(e) => handlePolicyClick(e, 'about')}>FAQ</a>
             </li>
             <li>
               <a href="#shipping" onClick={(e) => handlePolicyClick(e, 'shipping')}>
@@ -77,11 +111,6 @@ export default function Footer({ onNavigate }) {
             <li>
               <a href="#returns" onClick={(e) => handlePolicyClick(e, 'returns')}>
                 Return Policy
-              </a>
-            </li>
-            <li>
-              <a href="#terms" onClick={(e) => handlePolicyClick(e, 'terms')}>
-                Terms &amp; Conditions
               </a>
             </li>
             <li>
@@ -98,16 +127,14 @@ export default function Footer({ onNavigate }) {
           <ul className="footer-contact-list">
             <li>
               <i className="fas fa-phone"></i>
-              <span>+91 97681 88453</span>
+              <span>{settings.supportPhone}</span>
             </li>
             <li>
               <i className="fas fa-envelope"></i>
-              <span>orders@decantatelier.in</span>
+              <span>{settings.supportEmail}</span>
             </li>
           </ul>
         </div>
-
-
       </div>
 
       {/* Disclaimer */}
@@ -119,7 +146,7 @@ export default function Footer({ onNavigate }) {
 
       {/* Bottom Bar */}
       <div className="footer-bottom">
-        <p>&copy; 2026 Decant Atelier. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} {settings.storeName}. All rights reserved.</p>
         <div className="footer-bottom-links">
           <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">Instagram</a>
         </div>
