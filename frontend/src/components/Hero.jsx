@@ -67,9 +67,9 @@ export default function Hero() {
               </button>
               <button 
                 className="cta-secondary" 
-                onClick={() => { window.location.hash = 'shop?category=decants'; }}
+                onClick={() => { window.location.hash = 'shop?category=bestsellers'; }}
               >
-                Fair Price Decants
+                Best Sellers
               </button>
             </div>
           </div>
