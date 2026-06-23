@@ -57,7 +57,7 @@ export default function PoliciesPage() {
       />
 
       {/* ===== HEADER ===== */}
-      <header className="relative overflow-hidden bg-[#1C1B18]">
+      <section className="page-hero">
         {/* Subtle grid pattern */}
         <div
           className="absolute inset-0 opacity-[0.03]"
@@ -70,30 +70,17 @@ export default function PoliciesPage() {
 
         {/* Radial glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(176,138,80,0.04)_0%,transparent_65%)] rounded-full" />
+        <div className="page-hero-bg-text">POLICIES</div>
 
-        <div className="relative z-10 max-w-6xl mx-auto px-6 pt-32 pb-16 text-center">
-          {/* Eyebrow */}
-          <p className="text-[0.65rem] font-bold tracking-[5px] uppercase text-[#B08A50] mb-4">
-            Decant Atelier
-          </p>
-
-          {/* Title */}
-          <h1
-            style={{ color: '#FEFCF9' }}
-            className="font-heading text-[clamp(2.2rem,5vw,3.8rem)] font-light tracking-wide leading-tight mb-4"
-          >
-            Our Policies
-          </h1>
-
-          {/* Subtitle */}
-          <p className="font-body text-[0.88rem] text-white/70 max-w-md mx-auto leading-relaxed font-light">
+        <div className="page-hero-content">
+          <span className="page-hero-eyebrow">Decant Atelier</span>
+          <h1 className="page-hero-title">Our Policies</h1>
+          <p className="page-hero-subtitle">
             Transparency, integrity, and care — the pillars of every interaction with Decant Atelier.
           </p>
-
-          {/* Gold divider */}
-          <div className="mt-8 mx-auto h-px w-16 bg-[#B08A50]" />
+          <div className="page-hero-divider" />
         </div>
-      </header>
+      </section>
 
       {/* ===== MAIN CONTENT ===== */}
       <main className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">

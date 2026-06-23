@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { collectionsData } from './CollectionData';
-import { addToCart } from '../../utils/cartHelper';
+import { addToCart, updateQuantity } from '../../utils/cartHelper';
+import { showToast } from '../../utils/toast.js';
 
 const categoryBanners = {
   summer: {
@@ -85,10 +87,81 @@ export default function SignatureCollection({
   collectionsLoading = false,
   collectionsError = ''
 }) {
+  const { isSignedIn, getToken } = useAuth();
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('recommended');
+
+  // Sync URL search query parameters
+  useEffect(() => {
+    const handleUrlParams = () => {
+      const fullHash = window.location.hash.replace('#', '');
+      const params = new URLSearchParams(fullHash.split('?')[1] || '');
+      const searchParam = params.get('search');
+      if (searchParam) {
+        setSearchQuery(decodeURIComponent(searchParam));
+      } else {
+        setSearchQuery('');
+      }
+    };
+    handleUrlParams();
+    window.addEventListener('hashchange', handleUrlParams);
+    return () => window.removeEventListener('hashchange', handleUrlParams);
+  }, []);
+
+  const [wishlist, setWishlist] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('wishlist') || '[]');
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [cartItems, setCartItems] = useState([]);
+
+  useEffect(() => {
+    const syncCart = () => {
+      try {
+        setCartItems(JSON.parse(localStorage.getItem('cartItems') || '[]'));
+      } catch (e) {
+        console.error('Failed to sync cart in SignatureCollection:', e);
+      }
+    };
+    syncCart();
+    window.addEventListener('cart-updated', syncCart);
+    return () => window.removeEventListener('cart-updated', syncCart);
+  }, []);
+
+  const toggleWishlist = (itemId, e) => {
+    e.stopPropagation();
+    setWishlist(prev => {
+      const exists = prev.includes(itemId);
+      const updated = exists ? prev.filter(id => id !== itemId) : [...prev, itemId];
+      localStorage.setItem('wishlist', JSON.stringify(updated));
+      showToast(exists ? 'Removed from your wishlist' : 'Added to your wishlist', 'success');
+      return updated;
+    });
+  };
+
+  const handleUpdateQuantity = async (item, sizeOption, newQty, e) => {
+    e.stopPropagation();
+    const token = isSignedIn ? await getToken() : null;
+    const sizeLabel = sizeOption.size || 'Default Size';
+    
+    // Find matching size variant ID if available
+    let id = item.id;
+    if (sizeOption.variantId) {
+      id = sizeOption.variantId;
+    } else {
+      const sizes = item.sizes || [];
+      const match = sizes.find(s => s.size === sizeLabel);
+      if (match && match.variantId) {
+        id = match.variantId;
+      }
+    }
+    await updateQuantity(id, sizeLabel, newQty, token);
+  };
 
   const [selectedCardSizes, setSelectedCardSizes] = useState({});
   const [addingItemId, setAddingItemId] = useState(null);
@@ -105,16 +178,15 @@ export default function SignatureCollection({
     }));
   };
 
-  const handleCardAddToCart = (item, sizeOption, e) => {
+  const handleCardAddToCart = async (item, sizeOption, e) => {
     e.stopPropagation();
     setAddingItemId(item.id);
     
-    // Add to unified cart helper
-    addToCart(item, sizeOption);
+    const token = isSignedIn ? await getToken() : null;
+    await addToCart(item, sizeOption, 1, token);
 
     setTimeout(() => {
       setAddingItemId(null);
-      alert(`Added ${item.name} (${sizeOption.size}) to your cart!`);
     }, 500);
   };
 
@@ -180,7 +252,11 @@ export default function SignatureCollection({
 
   // Olfactory filtering & search & sorting logic
   const filteredAndSortedItems = useMemo(() => {
-    let items = products.length > 0 ? [...products] : [...collectionsData];
+    let items = [...products];
+
+    if (import.meta.env.DEV && products.length === 0) {
+      console.warn('[DEVELOPMENT WARNING] SignatureCollection: No database products loaded.');
+    }
 
     if (activeCollection) {
       const assignedProducts = activeCollection.products || [];
@@ -191,24 +267,30 @@ export default function SignatureCollection({
 
     // 1. Filter by category
     if (currentCategory !== 'all' && !activeCollection) {
-      const matchedCat = dbCategories.find(c => c.slug === currentCategory || c.slug === currentCategory.replace('-', ''));
-      if (matchedCat) {
-        items = items.filter(item => item.categoryId === matchedCat.id);
-      } else {
-        if (currentCategory === 'decants') {
-          items = items.filter(item => item.category === 'decants');
-        } else if (currentCategory === 'fullbottles' || currentCategory === 'full-bottles') {
-          items = items.filter(item => item.category === 'fullbottles' || item.category === 'full-bottles');
-        } else if (currentCategory === 'sets') {
-          items = items.filter(item => item.category === 'sets');
-        } else if (currentCategory === 'newarrivals' || currentCategory === 'new-arrivals') {
-          items = items.filter(item => (item.tags && item.tags.includes('new-arrival')) || item.featured);
-        } else if (currentCategory === 'bestsellers' || currentCategory === 'best-sellers') {
-          items = items.filter(item => item.unitsSold > 0 || (item.tags && item.tags.includes('featured')));
+      const primaryCategories = ['decants', 'full-bottles', 'fullbottles', 'sets'];
+      if (primaryCategories.includes(currentCategory)) {
+        const targetSlug = currentCategory === 'fullbottles' ? 'full-bottles' : currentCategory;
+        const matchedCat = dbCategories.find(c => c.slug === targetSlug);
+        if (matchedCat) {
+          items = items.filter(item => item.categoryId === matchedCat.id || item.category === matchedCat.slug);
         } else {
-          // Tag filters (summer, winter, him, her, etc.)
-          items = items.filter(item => item.tags && item.tags.includes(currentCategory));
+          items = items.filter(item => item.category === currentCategory || (currentCategory === 'full-bottles' && (item.category === 'fullbottles' || item.category === 'full-bottles')));
         }
+      } else {
+        // Tag-based or custom collections filtering
+        let tagToSearch = currentCategory;
+        if (currentCategory === 'for-him' || currentCategory === 'him') tagToSearch = 'him';
+        else if (currentCategory === 'for-her' || currentCategory === 'her') tagToSearch = 'her';
+        else if (currentCategory === 'newarrivals' || currentCategory === 'new-arrivals') tagToSearch = 'new-arrival';
+        else if (currentCategory === 'bestsellers' || currentCategory === 'best-sellers') tagToSearch = 'featured';
+
+        items = items.filter(item => {
+          if (item.tags && item.tags.includes(tagToSearch)) return true;
+          // Handle fallback tags/properties
+          if (tagToSearch === 'new-arrival' && item.featured) return true;
+          if (tagToSearch === 'featured' && item.featured) return true;
+          return false;
+        });
       }
     }
 
@@ -402,7 +484,6 @@ export default function SignatureCollection({
               </button>
             )}
           </div>
-
           {/* Right: Search + Sort controls */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             {/* Search input container */}
@@ -470,6 +551,29 @@ export default function SignatureCollection({
                     </div>
                   )}
 
+                  {/* Wishlist Heart Icon Button */}
+                  <button
+                    onClick={(e) => toggleWishlist(item.id, e)}
+                    className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm border border-black/5 flex items-center justify-center text-[#1C1B18] hover:text-[#FF003C] hover:bg-white transition-all duration-300 shadow-sm cursor-pointer"
+                    aria-label="Toggle wishlist"
+                  >
+                    <i className={`${wishlist.includes(item.id) ? 'fas fa-heart text-[#FF003C]' : 'far fa-heart'}`} />
+                  </button>
+
+                  {/* Fragrance Notes Hover Preview Overlay */}
+                  <div className="absolute inset-0 bg-[#1C1B18]/70 backdrop-blur-sm flex flex-col justify-center items-center p-4 text-white opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none select-none z-10">
+                    <span className="text-[0.55rem] font-bold tracking-[0.2em] text-[#B08A50] uppercase mb-2">Olfactory Profile</span>
+                    {item.notes && item.notes.length > 0 ? (
+                      <div className="flex flex-col gap-1 items-center text-center">
+                        {item.notes.slice(0, 3).map((note, nIdx) => (
+                          <span key={nIdx} className="text-xs font-heading font-light tracking-wide text-white/90">{note}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs font-body font-light text-white/80">Signature Scent</span>
+                    )}
+                  </div>
+
                   {/* Premium gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent pointer-events-none" />
 
@@ -483,6 +587,11 @@ export default function SignatureCollection({
                     {item.tags && item.tags.includes('new-arrival') && (
                       <span className="text-[0.45rem] font-bold tracking-widest uppercase bg-[#1C1B18] text-[#FEFCF9] px-2.5 py-1 rounded-md shadow-sm border border-white/10">
                         NEW ARRIVAL
+                      </span>
+                    )}
+                    {item.tags && item.tags.includes('low-stock') && (
+                      <span className="text-[0.45rem] font-bold tracking-widest uppercase bg-[#E67E22] text-[#FEFCF9] px-2.5 py-1 rounded-md shadow-sm">
+                        LOW STOCK
                       </span>
                     )}
                     {item.tags && item.tags.includes('out-of-stock') && (
@@ -565,7 +674,7 @@ export default function SignatureCollection({
                     )}
                   </div>
 
-                  {/* Add to Cart / Sold Out Button */}
+                  {/* Add to Cart / Sold Out / Quantity Adjuster Button */}
                   {(() => {
                     const isOutOfStock = item.tags && item.tags.includes('out-of-stock');
                     const isAdding = addingItemId === item.id;
@@ -580,6 +689,32 @@ export default function SignatureCollection({
                         >
                           SOLD OUT
                         </button>
+                      );
+                    }
+
+                    // Check if item is already in the cart with this size
+                    const cartItem = cartItems.find(ci => ci.id === item.id && ci.size === selectedOption.size);
+                    if (cartItem) {
+                      return (
+                        <div className="flex items-center justify-between gap-2 mt-auto w-full min-h-[44px]">
+                          <button
+                            onClick={(e) => handleUpdateQuantity(item, selectedOption, cartItem.quantity - 1, e)}
+                            className="w-10 h-10 rounded-xl border border-[#1C1B18]/15 hover:border-[#1C1B18] flex items-center justify-center text-sm text-[#1C1B18] transition-all duration-300 bg-transparent cursor-pointer font-bold"
+                            aria-label="Decrease quantity"
+                          >
+                            -
+                          </button>
+                          <span className="font-semibold text-[0.65rem] tracking-wider uppercase text-[#1C1B18] text-center flex-1">
+                            {cartItem.quantity} IN BAG
+                          </span>
+                          <button
+                            onClick={(e) => handleUpdateQuantity(item, selectedOption, cartItem.quantity + 1, e)}
+                            className="w-10 h-10 rounded-xl border border-[#1C1B18]/15 hover:border-[#1C1B18] flex items-center justify-center text-sm text-[#1C1B18] transition-all duration-300 bg-transparent cursor-pointer font-bold"
+                            aria-label="Increase quantity"
+                          >
+                            +
+                          </button>
+                        </div>
                       );
                     }
                     
@@ -785,8 +920,10 @@ export default function SignatureCollection({
 
                 <div className="flex gap-3 flex-1 max-w-xs justify-end">
                   <button
-                    onClick={() => {
-                      alert(`Concierge: Selected ${selectedItem.name} (${selectedItem.sizes[selectedSizeIndex]?.size}) for ₹${selectedItem.sizes[selectedSizeIndex]?.price.toLocaleString('en-IN')}`);
+                    onClick={async () => {
+                      const sizeOption = selectedItem.sizes[selectedSizeIndex];
+                      const token = isSignedIn ? await getToken() : null;
+                      await addToCart(selectedItem, sizeOption, 1, token);
                       closeQuickView();
                     }}
                     className="

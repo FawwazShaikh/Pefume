@@ -1,26 +1,22 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth, useUser, SignInButton, SignOutButton } from '@clerk/clerk-react';
+import { showToast } from '../utils/toast.js';
 import './AdminPage.css';
 
 export default function AdminPage() {
   const { isLoaded: authLoaded, isSignedIn, getToken } = useAuth();
   const { isLoaded: userLoaded } = useUser();
 
-  // Initialize from sessionStorage to bypass Clerk if previously bypassed
-  const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('admin_bypassed') === 'true');
-  const [checkingRole, setCheckingRole] = useState(() => sessionStorage.getItem('admin_bypassed') !== 'true');
-  const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Developer Bypass State
-  const [passcode, setPasscode] = useState('');
-  const [bypassError, setBypassError] = useState('');
-  const [isSubmittingBypass, setIsSubmittingBypass] = useState(false);
-  const [showDeveloperBypass, setShowDeveloperBypass] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingRole, setCheckingRole] = useState(true);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   // Core Data Lists
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [users, setUsers] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [inventoryLogs, setInventoryLogs] = useState([]);
@@ -28,25 +24,15 @@ export default function AdminPage() {
 
   // Settings states
   const [settingsTab, setSettingsTab] = useState('store');
-  const [storeSettings, setStoreSettings] = useState(() => {
-    const saved = localStorage.getItem('decant_atelier_settings');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return {
-      storeName: 'Decant Atelier',
-      supportEmail: 'concierge@decantatelier.com',
-      supportPhone: '+91 97681 88453',
-      codEnabled: true,
-      shippingCharges: 100,
-      freeShippingThreshold: 1999,
-      razorpayKey: 'rzp_test_AtelierKey2026',
-      razorpaySecret: '••••••••••••••••••••••••'
-    };
+  const [storeSettings, setStoreSettings] = useState({
+    storeName: 'Decant Atelier',
+    supportEmail: 'concierge@decantatelier.com',
+    supportPhone: '+91 97681 88453',
+    codEnabled: true,
+    shippingCharges: 100,
+    freeShippingThreshold: 1999,
+    razorpayKey: 'rzp_test_AtelierKey2026',
+    razorpaySecret: '••••••••••••••••••••••••'
   });
 
   // Operators user management (derived from database users where role is ADMIN)
@@ -124,21 +110,16 @@ export default function AdminPage() {
   const [loadingData, setLoadingData] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Helper to construct request headers supporting Mock Bypass and Clerk token verification
+  // Helper to construct request headers
   const getAdminHeaders = async () => {
     const headers = { 'Content-Type': 'application/json' };
-    if (sessionStorage.getItem('admin_bypassed') === 'true') {
-      headers['x-mock-user-id'] = 'user_3FIrMrbA3rY3bNCzZWTjiefI6xn';
-    } else {
-      try {
-        const token = await getToken();
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-      } catch (err) {
-        console.warn('Clerk is offline, falling back to local mock authentication:', err);
-        headers['x-mock-user-id'] = 'user_3FIrMrbA3rY3bNCzZWTjiefI6xn';
+    try {
+      const token = await getToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
+    } catch (err) {
+      console.warn('Clerk token retrieval failed:', err);
     }
     return headers;
   };
@@ -146,11 +127,6 @@ export default function AdminPage() {
   // 1. Verify admin role on load
   useEffect(() => {
     async function checkAdminRole() {
-      if (sessionStorage.getItem('admin_bypassed') === 'true') {
-        setIsAdmin(true);
-        setCheckingRole(false);
-        return;
-      }
       if (!isSignedIn) {
         setIsAdmin(false);
         setCheckingRole(false);
@@ -171,11 +147,7 @@ export default function AdminPage() {
 
         if (res.ok) {
           const profile = await res.json();
-          if (profile.role === 'ADMIN') {
-            setIsAdmin(true);
-          } else {
-            setIsAdmin(false);
-          }
+          setIsAdmin(profile.role === 'ADMIN');
         } else {
           setIsAdmin(false);
         }
@@ -192,13 +164,7 @@ export default function AdminPage() {
     }
   }, [isSignedIn, authLoaded]);
 
-  // 2. Fetch data based on active tab
-  useEffect(() => {
-    if (!isAdmin) return;
-    fetchCoreData();
-  }, [isAdmin]);
-
-  const fetchCoreData = async () => {
+  async function fetchCoreData() {
     try {
       setLoadingData(true);
       const headers = await getAdminHeaders();
@@ -256,29 +222,45 @@ export default function AdminPage() {
         console.error('Failed to fetch admin dashboard stats:', dashErr);
       }
 
+      // Fetch Store Settings
+      try {
+        const settingsRes = await fetch('http://localhost:5000/api/admin/settings', { headers });
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          setStoreSettings({
+            ...settingsData,
+            razorpaySecret: settingsData.razorpaySecret ? '••••••••••••••••••••••••' : ''
+          });
+        }
+      } catch (settingsErr) {
+        console.error('Failed to fetch store settings from DB:', settingsErr);
+      }
+
+      // Fetch Payments Ledger
+      try {
+        const payRes = await fetch('http://localhost:5000/api/admin/payments', { headers });
+        if (payRes.ok) {
+          const payData = await payRes.json();
+          setPayments(payData);
+        }
+      } catch (payErr) {
+        console.error('Failed to fetch payments ledger:', payErr);
+      }
+
     } catch (err) {
       console.error('Error syncing admin console data feeds:', err);
     } finally {
       setLoadingData(false);
     }
-  };
+  }
 
-  // Developer Bypass handler
-  const handleBypassSubmit = async (e) => {
-    e.preventDefault();
-    setBypassError('');
-    setIsSubmittingBypass(true);
+  // 2. Fetch data based on active tab
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetchCoreData();
+  }, [isAdmin]);
 
-    if (passcode === 'AtelierAdmin2026') {
-      sessionStorage.setItem('admin_bypassed', 'true');
-      setIsAdmin(true);
-      setCheckingRole(false);
-      setIsSubmittingBypass(false);
-    } else {
-      setBypassError('Invalid passcode. Access restricted to authorized operators.');
-      setIsSubmittingBypass(false);
-    }
-  };
+  // Bypasses removed for Production Hardening
 
   // --- ACTION HANDLERS ---
 
@@ -443,7 +425,7 @@ export default function AdminPage() {
         fetchCoreData();
       } else {
         const err = await res.json();
-        alert(err.error || 'Failed to adjust stock count');
+        showToast(err.error || 'Failed to adjust stock count', 'error');
       }
     } catch (err) {
       console.error(err);
@@ -454,7 +436,7 @@ export default function AdminPage() {
   const handleBulkRestock = async () => {
     const lowStockItems = inventoryItems.filter(item => item.status !== 'In Stock');
     if (lowStockItems.length === 0) {
-      alert('All items are currently fully stocked.');
+      showToast('All items are currently fully stocked.', 'success');
       return;
     }
     
@@ -474,7 +456,7 @@ export default function AdminPage() {
           })
         });
       }
-      alert(`Bulk restock complete! Elevated ${lowStockItems.length} low stock variants by +20 units.`);
+      showToast(`Bulk restock complete! Elevated ${lowStockItems.length} low stock variants by +20 units.`, 'success');
       fetchCoreData();
     } catch (err) {
       console.error('Bulk restock failed:', err);
@@ -518,16 +500,36 @@ export default function AdminPage() {
   };
 
   // Settings saving and operator role toggle handler
-  const handleSaveSettings = (e) => {
+  const handleSaveSettings = async (e) => {
     e.preventDefault();
-    localStorage.setItem('decant_atelier_settings', JSON.stringify(storeSettings));
-    alert('Configurations saved successfully!');
+    try {
+      const headers = await getAdminHeaders();
+      const res = await fetch('http://localhost:5000/api/admin/settings', {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(storeSettings)
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setStoreSettings({
+          ...updated,
+          razorpaySecret: updated.razorpaySecret ? '••••••••••••••••••••••••' : ''
+        });
+        showToast('Configurations saved successfully.', 'success');
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Failed to save settings.', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      showToast('Network error saving settings.', 'error');
+    }
   };
 
   const handleToggleUserRole = async (userId, currentRole) => {
     const newRole = currentRole === 'ADMIN' ? 'USER' : 'ADMIN';
     if (newRole === 'USER' && users.filter(u => u.role === 'ADMIN').length <= 1) {
-      alert('Security Protocol: You must keep at least one administrator to avoid lockout.');
+      showToast('Security Protocol: You must keep at least one administrator to avoid lockout.', 'warning');
       return;
     }
     
@@ -543,11 +545,11 @@ export default function AdminPage() {
         fetchCoreData();
       } else {
         const err = await res.json();
-        alert(err.error || 'Failed to update user role');
+        showToast(err.error || 'Failed to update user role', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Network error updating user role.');
+      showToast('Network error updating user role.', 'error');
     } finally {
       setLoadingData(false);
     }
@@ -838,60 +840,44 @@ export default function AdminPage() {
   }, [orders, orderSearch, orderFilter, orderSort]);
 
   const paymentsData = useMemo(() => {
-    const pmts = [];
-    orders.forEach(o => {
-      pmts.push({
-        id: `PMT-${o.id.slice(-5).toUpperCase()}`,
-        orderId: o.id,
-        customerName: o.user?.name || 'Collector',
-        provider: o.paymentMethod,
-        transactionId: o.razorpayOrderId || 'COD_Fulfill',
-        amount: o.total,
-        status: o.status === 'CANCELLED' ? 'Failed' : (o.status === 'DELIVERED' || o.paymentMethod === 'RAZORPAY' ? 'Success' : 'Pending'),
-        paidDate: o.createdAt
-      });
-    });
-    
-    const list = pmts.filter(p => {
-      const matchesSearch = p.id.toLowerCase().includes(paymentSearch.toLowerCase()) || p.orderId.toLowerCase().includes(paymentSearch.toLowerCase()) || p.customerName.toLowerCase().includes(paymentSearch.toLowerCase()) || p.transactionId.toLowerCase().includes(paymentSearch.toLowerCase());
+    const list = payments.filter(p => {
+      const matchesSearch = (p.id || '').toLowerCase().includes(paymentSearch.toLowerCase()) || 
+                            (p.orderId || '').toLowerCase().includes(paymentSearch.toLowerCase()) || 
+                            (p.customerName || '').toLowerCase().includes(paymentSearch.toLowerCase()) || 
+                            (p.transactionId || '').toLowerCase().includes(paymentSearch.toLowerCase());
       let matchesFilter = true;
-      if (paymentFilter === 'FAILED') matchesFilter = p.status === 'Failed';
-      else if (paymentFilter === 'PENDING_COD') matchesFilter = p.status === 'Pending' && p.provider === 'COD';
-      else if (paymentFilter === 'SUCCESS') matchesFilter = p.status === 'Success';
+      if (paymentFilter === 'FAILED') matchesFilter = p.status === 'FAILED';
+      else if (paymentFilter === 'PENDING_COD') matchesFilter = p.status === 'PENDING' && p.provider === 'COD';
+      else if (paymentFilter === 'SUCCESS') matchesFilter = p.status === 'SUCCESS';
       return matchesSearch && matchesFilter;
     });
     
     return sortData(list, paymentSort, 'paidDate');
-  }, [orders, paymentFilter, paymentSearch, paymentSort]);
+  }, [payments, paymentFilter, paymentSearch, paymentSort]);
 
   const customersData = useMemo(() => {
-    const custs = {};
-    orders.forEach(o => {
-      const email = o.user?.email || `${o.userId}@clerk.local`;
-      if (!custs[email]) {
-        custs[email] = {
-          name: o.user?.name || 'Collector',
-          email: email,
-          phone: o.user?.phone || 'N/A',
-          ordersCount: 0,
-          totalSpent: 0,
-          joinedDate: o.createdAt,
-          addresses: o.address ? [o.address] : []
-        };
-      }
-      custs[email].ordersCount += 1;
-      custs[email].totalSpent += parseFloat(o.total);
-      if (o.address && !custs[email].addresses.some(a => a.id === o.address.id)) {
-        custs[email].addresses.push(o.address);
-      }
+    const list = users.map(u => {
+      const ordersCount = u.orders?.length || 0;
+      const totalSpent = u.orders?.reduce((sum, o) => sum + parseFloat(o.total), 0) || 0;
+      return {
+        name: u.name || 'Collector',
+        email: u.email,
+        phone: u.phone || 'N/A',
+        ordersCount,
+        totalSpent,
+        joinedDate: u.createdAt,
+        addresses: u.addresses || []
+      };
     });
 
-    const list = Object.values(custs).filter(c => {
-      return c.name.toLowerCase().includes(customerSearch.toLowerCase()) || c.email.toLowerCase().includes(customerSearch.toLowerCase()) || c.phone.toLowerCase().includes(customerSearch.toLowerCase());
+    const filtered = list.filter(c => {
+      return (c.name || '').toLowerCase().includes(customerSearch.toLowerCase()) || 
+             (c.email || '').toLowerCase().includes(customerSearch.toLowerCase()) || 
+             (c.phone || '').toLowerCase().includes(customerSearch.toLowerCase());
     });
 
-    return sortData(list, customerSort, 'totalSpent');
-  }, [orders, customerSearch, customerSort]);
+    return sortData(filtered, customerSort, 'totalSpent');
+  }, [users, customerSearch, customerSort]);
 
   const filteredReviewsData = useMemo(() => {
     const list = reviews.filter(r => {
@@ -1155,73 +1141,19 @@ export default function AdminPage() {
 
   if (!authLoaded || !userLoaded || checkingRole) {
     return (
-      <div className="min-h-screen bg-white text-gray-800 flex items-center justify-center font-sans">
-        <div className="text-center">
+      <div className="min-h-screen bg-[#F7F3ED] text-gray-800 flex items-center justify-center font-sans">
+        <div className="text-center bg-white border border-black/8 p-8 rounded-xl shadow-sm">
           <p className="text-gray-900 mb-2 font-bold text-xl tracking-wide animate-pulse">Accessing Secure Vault...</p>
           <p className="text-xs text-gray-500">Verifying administrative credentials.</p>
-          
-          <div className="mt-8">
-            {!showDeveloperBypass ? (
-              <button
-                onClick={() => setShowDeveloperBypass(true)}
-                className="text-xs text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer underline transition-colors"
-              >
-                Developer Access Bypass
-              </button>
-            ) : (
-              <form onSubmit={handleBypassSubmit} className="space-y-3 text-left max-w-xs mx-auto">
-                <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-700">
-                    Enter Admin Passcode
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowDeveloperBypass(false);
-                      setBypassError('');
-                      setPasscode('');
-                    }}
-                    className="text-[10px] text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                </div>
-                
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    required
-                    placeholder="Enter passcode..."
-                    value={passcode}
-                    onChange={(e) => setPasscode(e.target.value)}
-                    className="flex-grow bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isSubmittingBypass}
-                    className="px-4 bg-gray-900 text-white font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50 cursor-pointer"
-                  >
-                    {isSubmittingBypass ? 'Verifying...' : 'Submit'}
-                  </button>
-                </div>
-
-                {bypassError && (
-                  <p className="text-[11px] text-red-600 mt-1">
-                    {bypassError}
-                  </p>
-                )}
-              </form>
-            )}
-          </div>
         </div>
       </div>
     );
   }
 
-  if (!isSignedIn && !isAdmin) {
+  if (!isSignedIn) {
     return (
-      <div className="min-h-screen bg-white text-gray-800 flex items-center justify-center font-sans px-4">
-        <div className="max-w-md w-full text-center bg-gray-50 border border-gray-200 p-8 rounded-xl shadow-sm relative overflow-hidden">
+      <div className="min-h-screen bg-[#F7F3ED] text-gray-800 flex items-center justify-center font-sans px-4">
+        <div className="max-w-md w-full text-center bg-white border border-black/8 p-8 rounded-xl shadow-sm relative overflow-hidden">
           <h2 className="text-2xl font-bold tracking-tight mb-3 text-gray-900">Admin Control Panel</h2>
           <p className="text-sm text-gray-600 mb-6 leading-relaxed">
             Administrative access is restricted to authorized coordinators. Please authenticate to continue.
@@ -1231,60 +1163,24 @@ export default function AdminPage() {
               Admin Authenticate
             </button>
           </SignInButton>
-          
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            {!showDeveloperBypass ? (
-              <button
-                onClick={() => setShowDeveloperBypass(true)}
-                className="text-xs text-gray-500 hover:text-gray-900 bg-transparent border-none cursor-pointer underline transition-colors"
-              >
-                Developer Access Bypass
-              </button>
-            ) : (
-              <form onSubmit={handleBypassSubmit} className="space-y-3 text-left">
-                <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-700">
-                    Enter Admin Passcode
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowDeveloperBypass(false);
-                      setBypassError('');
-                      setPasscode('');
-                    }}
-                    className="text-[10px] text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                </div>
-                
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    required
-                    placeholder="Enter passcode..."
-                    value={passcode}
-                    onChange={(e) => setPasscode(e.target.value)}
-                    className="flex-grow bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isSubmittingBypass}
-                    className="px-4 bg-gray-900 text-white font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50 cursor-pointer"
-                  >
-                    {isSubmittingBypass ? 'Verifying...' : 'Submit'}
-                  </button>
-                </div>
+        </div>
+      </div>
+    );
+  }
 
-                {bypassError && (
-                  <p className="text-[11px] text-red-600 mt-1">
-                    {bypassError}
-                  </p>
-                )}
-              </form>
-            )}
-          </div>
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-[#F7F3ED] text-gray-800 flex items-center justify-center font-sans px-4">
+        <div className="max-w-md w-full text-center bg-white border border-black/8 p-8 rounded-xl shadow-sm relative overflow-hidden">
+          <h2 className="text-2xl font-bold tracking-tight mb-3 text-red-600">Access Denied</h2>
+          <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+            Forbidden: Your account does not have administrative privileges. Please switch to an authorized coordinator account.
+          </p>
+          <SignOutButton>
+            <button className="w-full py-3 bg-gray-900 text-white font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-gray-800 transition-all duration-200 cursor-pointer">
+              Sign Out / Switch Account
+            </button>
+          </SignOutButton>
         </div>
       </div>
     );
@@ -1614,11 +1510,16 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Low Stock Alerts & Recent reviews widgets */}
+            {/* Low Stock Alerts & Conversion Funnel */}
             <div className="admin-grid-2">
-              {/* Low stock alerts widget */}
-              <div className="admin-card">
-                <h3 className="admin-card-title">Inventory Low Stock Alerts</h3>
+              {/* Low stock visual alarm widget */}
+              <div className={`admin-card ${inventoryItems.filter(i => i.status !== 'In Stock').length > 0 ? 'alarm-active' : ''}`} style={{ transition: 'all 0.3s ease' }}>
+                <h3 className="admin-card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {inventoryItems.filter(i => i.status !== 'In Stock').length > 0 && (
+                    <span className="alarm-pulsate-dot" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444', boxShadow: '0 0 8px #ef4444', animation: 'pulse-alarm 1.2s infinite' }} />
+                  )}
+                  Inventory Low Stock Alarm
+                </h3>
                 <div className="admin-table-wrapper" style={{ border: 'none' }}>
                   <table className="admin-table">
                     <thead>
@@ -1626,28 +1527,42 @@ export default function AdminPage() {
                         <th>Product</th>
                         <th>Size</th>
                         <th>Stock</th>
-                        <th>Action</th>
+                        <th>Quick Restock</th>
                       </tr>
                     </thead>
                     <tbody>
                       {inventoryItems.filter(i => i.status !== 'In Stock').slice(0, 4).map((item, idx) => (
-                        <tr key={idx}>
+                        <tr key={idx} className={item.stock === 0 ? 'row-out-of-stock' : 'row-low-stock'}>
                           <td style={{ fontWeight: 600 }}>{item.productName}</td>
                           <td>{item.size}</td>
-                          <td style={{ fontFamily: 'monospace', color: 'red', fontWeight: 'bold' }}>{item.stock}</td>
+                          <td style={{ fontFamily: 'monospace', color: item.stock === 0 ? '#ef4444' : '#f59e0b', fontWeight: 'bold' }}>
+                            {item.stock === 0 ? 'OUT' : item.stock}
+                          </td>
                           <td>
-                            <button onClick={() => {
-                              const qty = prompt(`Restock ${item.productName} (${item.size}):`, item.stock + 20);
-                              if (qty && !isNaN(qty)) handleRestockInventory(item.sku, qty);
-                            }} className="admin-btn" style={{ padding: '0.2rem 0.4rem', fontSize: '0.65rem' }}>
-                              Restock
-                            </button>
+                            <div style={{ display: 'flex', gap: '0.35rem' }}>
+                              <button 
+                                onClick={() => handleRestockInventory(item.sku, item.stock + 20)} 
+                                className="admin-btn" 
+                                style={{ padding: '0.2rem 0.4rem', fontSize: '0.62rem', backgroundColor: '#10b981', borderColor: '#10b981', color: 'white', cursor: 'pointer' }}
+                                title="Instantly Restock +20 units"
+                              >
+                                +20
+                              </button>
+                              <button 
+                                onClick={() => handleRestockInventory(item.sku, item.stock + 50)} 
+                                className="admin-btn" 
+                                style={{ padding: '0.2rem 0.4rem', fontSize: '0.62rem', backgroundColor: '#3b82f6', borderColor: '#3b82f6', color: 'white', cursor: 'pointer' }}
+                                title="Instantly Restock +50 units"
+                              >
+                                +50
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
                       {inventoryItems.filter(i => i.status !== 'In Stock').length === 0 && (
                         <tr>
-                          <td colSpan="4" style={{ color: '#10b981', textAlign: 'center', padding: '1rem', fontWeight: 600 }}>All atomizers fully stocked.</td>
+                          <td colSpan="4" style={{ color: '#10b981', textAlign: 'center', padding: '1.25rem', fontWeight: 600 }}>All atomizers fully stocked.</td>
                         </tr>
                       )}
                     </tbody>
@@ -1655,6 +1570,42 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* SVG Conversion Funnel */}
+              <div className="admin-card">
+                <h3 className="admin-card-title">Atelier Conversion Funnel</h3>
+                <div style={{ padding: '0.5rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <svg className="admin-funnel-svg" viewBox="0 0 400 130" style={{ width: '100%', height: 'auto', maxWidth: '360px' }}>
+                    {/* Tier 1: Add to Cart */}
+                    <polygon points="10,10 390,10 340,42 60,42" fill="#1C1B18" opacity="0.9" />
+                    <text x="200" y="27" fill="#FEFCF9" textAnchor="middle" fontSize="10" fontWeight="bold" letterSpacing="0.5">
+                      ADD TO BAG: {Math.round(orders.length * 1.5) + 3} SESSIONS (100%)
+                    </text>
+
+                    {/* Tier 2: Checkout */}
+                    <polygon points="62,45 338,45 288,77 112,77" fill="#B08A50" opacity="0.95" />
+                    <text x="200" y="62" fill="#FEFCF9" textAnchor="middle" fontSize="10" fontWeight="bold" letterSpacing="0.5">
+                      CHECKOUT: {orders.length} ({Math.round(orders.length / (orders.length * 1.5 + 3) * 100) || 0}%)
+                    </text>
+
+                    {/* Tier 3: Completed */}
+                    <polygon points="114,80 286,80 236,112 164,112" fill="#4CAF7D" opacity="0.95" />
+                    <text x="200" y="97" fill="#FEFCF9" textAnchor="middle" fontSize="10" fontWeight="bold" letterSpacing="0.5">
+                      COMPLETED: {orders.filter(o => o.status !== 'CANCELLED' && o.status !== 'PENDING').length} ({Math.round(orders.filter(o => o.status !== 'CANCELLED' && o.status !== 'PENDING').length / (orders.length * 1.5 + 3) * 100) || 0}%)
+                    </text>
+                  </svg>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: '360px', marginTop: '0.75rem', fontSize: '0.68rem', color: '#6b7280' }}>
+                    <span>Add to Bag</span>
+                    <span>→</span>
+                    <span>Checkout ({Math.round(orders.length / (orders.length * 1.5 + 3) * 100) || 0}%)</span>
+                    <span>→</span>
+                    <span>Purchase ({orders.length > 0 ? Math.round(orders.filter(o => o.status !== 'CANCELLED' && o.status !== 'PENDING').length / orders.length * 100) : 0}%)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Reviews Moderation Grid */}
+            <div className="admin-grid-1" style={{ marginTop: '1.5rem' }}>
               {/* Recent reviews moderation widget */}
               <div className="admin-card">
                 <h3 className="admin-card-title">Reviews Pending Moderation</h3>

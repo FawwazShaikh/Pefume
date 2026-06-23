@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { collectionsData } from './SignatureCollection/CollectionData';
 import './Navbar.css';
-import ScrollingMarquee from './ScrollingMarquee';
 
 const ShoppingBagIcon = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -31,8 +29,8 @@ const collectionsMenuItems = [
   { id: 'all', label: 'All Collections', type: 'categories', filter: 'categories' },
   { id: 'summer', label: 'Summer', type: 'collection', filter: 'summer' },
   { id: 'winter', label: 'Winter', type: 'collection', filter: 'winter' },
-  { id: 'office', label: 'Office', type: 'collection', filter: 'office' },
-  { id: 'datenight', label: 'Date Night', type: 'collection', filter: 'datenight' },
+  // { id: 'office', label: 'Office', type: 'collection', filter: 'office' },
+  // { id: 'datenight', label: 'Date Night', type: 'collection', filter: 'datenight' },
   { id: 'her', label: 'For Her', type: 'collection', filter: 'her' },
   { id: 'him', label: 'For Him', type: 'collection', filter: 'him' }
 ];
@@ -67,6 +65,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const [activeSearchTab, setActiveSearchTab] = useState('all');
   const [isMobileShopOpen, setIsMobileShopOpen] = useState(false);
   const [isMobileCollectionsOpen, setIsMobileCollectionsOpen] = useState(false);
@@ -98,8 +97,37 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   const searchInputRef = useRef(null);
   const searchContainerRef = useRef(null);
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [searching, setSearching] = useState(false);
+  const [recentSearches, setRecentSearches] = useState([]);
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    if (isSearchOpen) {
+      const saved = localStorage.getItem('recentSearches');
+      if (saved) {
+        try {
+          setRecentSearches(JSON.parse(saved));
+        } catch (e) {
+          setRecentSearches([]);
+        }
+      }
+    }
+  }, [isSearchOpen]);
+
+  const addRecentSearch = (term) => {
+    if (!term || term.trim() === '') return;
+    const cleanTerm = term.trim();
+    setRecentSearches(prev => {
+      const filtered = prev.filter(t => t.toLowerCase() !== cleanTerm.toLowerCase());
+      const updated = [cleanTerm, ...filtered].slice(0, 5); // Keep last 5
+      localStorage.setItem('recentSearches', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleTermClick = (term) => {
+    setSearchQuery(term);
+    addRecentSearch(term);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -107,28 +135,6 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
-
-  useEffect(() => {
-    if (debouncedQuery.trim() === '') {
-      setSearchResults([]);
-      return;
-    }
-    async function fetchSearch() {
-      setSearching(true);
-      try {
-        const res = await fetch(`http://localhost:5000/api/products?search=${encodeURIComponent(debouncedQuery)}`);
-        if (res.ok) {
-          const data = await res.json();
-          setSearchResults(data);
-        }
-      } catch (err) {
-        console.error('Search failed:', err);
-      } finally {
-        setSearching(false);
-      }
-    }
-    fetchSearch();
-  }, [debouncedQuery]);
 
   useEffect(() => {
     if (isSearchOpen) {
@@ -296,8 +302,14 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
 
   useEffect(() => {
     const syncCart = () => {
-      const count = parseInt(localStorage.getItem('cartCount') || '0');
-      setCartCount(count);
+      try {
+        const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+        const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+        setCartCount(count);
+      } catch (e) {
+        console.error('Failed to parse cartItems in Navbar:', e);
+        setCartCount(0);
+      }
     };
     syncCart();
     window.addEventListener('cart-updated', syncCart);
@@ -315,6 +327,9 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
     } else if (hash === 'categories') {
       window.location.hash = 'categories';
       if (onNavigate) onNavigate('categories');
+    } else if (hash === 'gifting') {
+      window.location.hash = 'gifting';
+      if (onNavigate) onNavigate('gifting');
     } else if (policies.includes(hash)) {
       window.location.hash = hash;
       if (onNavigate) onNavigate('policies');
@@ -356,43 +371,59 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
     window.location.hash = `product-${product.slug || product.id}`;
   };
 
-  // Calculate counts dynamically from products
-  const searchCounts = useMemo(() => {
-    let baseList = [];
-    if (debouncedQuery.trim() !== '') {
-      baseList = searchResults;
-    } else {
-      const allProds = products.length > 0 ? products : collectionsData;
-      baseList = allProds.filter(p => p.featured || (p.tags && p.tags.includes('featured')));
-    }
-    return {
-      all: baseList.length,
-      best: baseList.filter(p => p.unitsSold > 0 || (p.tags && p.tags.includes('featured'))).length,
-      new: baseList.filter(p => p.tags && p.tags.includes('new-arrival')).length,
-      featured: baseList.filter(p => p.featured || (p.tags && p.tags.includes('featured'))).length
-    };
-  }, [searchResults, debouncedQuery, products]);
-
+  // Smart client-side search: matches name, brand, family, notes, tags/occasions
   const filteredProducts = useMemo(() => {
-    let baseList = [];
-    if (debouncedQuery.trim() !== '') {
-      baseList = searchResults;
-    } else {
-      // Show featured products when empty
-      const allProds = products.length > 0 ? products : collectionsData;
-      baseList = allProds.filter(p => p.featured || (p.tags && p.tags.includes('featured')));
-    }
+    const q = debouncedQuery.toLowerCase().trim();
+    if (!q) return [];
+    return products.filter(p => {
+      if (p.name && p.name.toLowerCase().includes(q)) return true;
+      if (p.brand && p.brand.toLowerCase().includes(q)) return true;
+      if (p.family && p.family.toLowerCase().includes(q)) return true;
+      if (p.tagline && p.tagline.toLowerCase().includes(q)) return true;
+      if (Array.isArray(p.notes) && p.notes.some(n => n.toLowerCase().includes(q))) return true;
+      if (Array.isArray(p.tags) && p.tags.some(t => t.toLowerCase().includes(q))) return true;
+      if (p.description && p.description.toLowerCase().includes(q)) return true;
+      return false;
+    });
+  }, [debouncedQuery, products]);
 
-    if (activeSearchTab === 'best') {
-      baseList = baseList.filter(p => p.unitsSold > 0 || (p.tags && p.tags.includes('featured')));
-    } else if (activeSearchTab === 'new') {
-      baseList = baseList.filter(p => p.tags && p.tags.includes('new-arrival'));
-    } else if (activeSearchTab === 'featured') {
-      baseList = baseList.filter(p => p.featured || (p.tags && p.tags.includes('featured')));
-    }
+  const handleViewAllResults = () => {
+    setIsSearchOpen(false);
+    const encoded = encodeURIComponent(searchQuery.trim());
+    window.location.hash = encoded ? `shop?search=${encoded}` : 'shop';
+    setSearchQuery('');
+  };
 
-    return baseList;
-  }, [searchResults, debouncedQuery, products, activeSearchTab]);
+  const mobileSearchResults = useMemo(() => {
+    if (!mobileSearchQuery.trim()) return { products: [], brands: [], notes: [] };
+    const q = mobileSearchQuery.toLowerCase().trim();
+    
+    // Filter matching products
+    const matchedProducts = products.filter(p => 
+      p.name.toLowerCase().includes(q) || 
+      (p.brand && p.brand.toLowerCase().includes(q))
+    ).slice(0, 5);
+
+    // Filter matching brands
+    const matchedBrands = Array.from(new Set(
+      products
+        .filter(p => p.brand && p.brand.toLowerCase().includes(q))
+        .map(p => p.brand)
+    )).slice(0, 3);
+
+    // Filter matching notes
+    const matchedNotes = Array.from(new Set(
+      products
+        .flatMap(p => p.notes || [])
+        .filter(note => note.toLowerCase().includes(q))
+    )).slice(0, 5);
+
+    return {
+      products: matchedProducts,
+      brands: matchedBrands,
+      notes: matchedNotes
+    };
+  }, [mobileSearchQuery, products]);
 
   const activeShopInfo = useMemo(() => {
     return hoveredShopIndex !== null && hoveredShopIndex >= 0 && !shopMenuItems[hoveredShopIndex].isDivider
@@ -578,6 +609,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
               <li className="nav-item">
                 <a href="#gifting" className="nav-link" onClick={(e) => handleLinkClick(e, 'gifting')}>Gifting</a>
               </li>
+
             </ul>
           </div>
 
@@ -614,7 +646,6 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
           </div>
         </div>
       </nav>
-      <ScrollingMarquee />
 
       {/* Mobile full-screen drawer */}
       <div className={`mobile-overlay ${isMobileMenuOpen ? 'open' : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
@@ -625,6 +656,113 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             <i className="fas fa-times" />
           </button>
         </div>
+
+        {/* Integrated Mobile Search */}
+        <div className="mobile-search-section">
+          <div className="mobile-search-input-container">
+            <SearchIcon className="mobile-search-icon" />
+            <input
+              type="text"
+              placeholder="Search scents, brands, notes..."
+              value={mobileSearchQuery}
+              onChange={(e) => setMobileSearchQuery(e.target.value)}
+              className="mobile-search-input"
+            />
+            {mobileSearchQuery && (
+              <button 
+                onClick={() => setMobileSearchQuery('')} 
+                className="mobile-search-clear"
+                aria-label="Clear mobile search"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* Inline search results */}
+          {mobileSearchQuery.trim() !== '' && (
+            <div className="mobile-search-results scrollbar-hide">
+              {mobileSearchResults.brands.length > 0 && (
+                <div className="mobile-search-group">
+                  <span className="mobile-search-group-title">Brands</span>
+                  <div className="mobile-search-pills">
+                    {mobileSearchResults.brands.map(brand => (
+                      <button
+                        key={brand}
+                        onClick={(e) => {
+                          setMobileSearchQuery('');
+                          setIsMobileMenuOpen(false);
+                          window.location.hash = `collection?search=${encodeURIComponent(brand)}`;
+                        }}
+                        className="mobile-search-pill"
+                      >
+                        {brand}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {mobileSearchResults.notes.length > 0 && (
+                <div className="mobile-search-group">
+                  <span className="mobile-search-group-title">Olfactory Notes</span>
+                  <div className="mobile-search-pills">
+                    {mobileSearchResults.notes.map(note => (
+                      <button
+                        key={note}
+                        onClick={() => {
+                          setMobileSearchQuery('');
+                          setIsMobileMenuOpen(false);
+                          window.location.hash = `collection?search=${encodeURIComponent(note)}`;
+                        }}
+                        className="mobile-search-pill"
+                      >
+                        {note}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {mobileSearchResults.products.length > 0 ? (
+                <div className="mobile-search-group">
+                  <span className="mobile-search-group-title">Fragrances</span>
+                  <div className="mobile-search-products-list">
+                    {mobileSearchResults.products.map(product => (
+                      <div
+                        key={product.id}
+                        onClick={() => {
+                          setMobileSearchQuery('');
+                          setIsMobileMenuOpen(false);
+                          window.location.hash = `product-${product.slug || product.id}`;
+                        }}
+                        className="mobile-search-product-item"
+                      >
+                        <img 
+                          src={product.image || '/images/perfume_placeholder.jpeg'} 
+                          alt={product.name} 
+                          className="mobile-search-product-img"
+                        />
+                        <div className="mobile-search-product-info">
+                          <span className="mobile-search-product-brand">{product.brand}</span>
+                          <span className="mobile-search-product-name">{product.name}</span>
+                        </div>
+                        <span className="mobile-search-product-price">₹{product.price}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                mobileSearchResults.brands.length === 0 && mobileSearchResults.notes.length === 0 && (
+                  <div className="mobile-search-empty">
+                    No matching scents found.
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </div>
+
         <ul className="mobile-nav-list">
           <li>
             <button className={`mobile-accordion ${isMobileShopOpen ? 'expanded' : ''}`} onClick={() => setIsMobileShopOpen(!isMobileShopOpen)}>
@@ -657,107 +795,243 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
           <li><a href="#reviews" onClick={(e) => handleLinkClick(e, 'reviews')}>Reviews</a></li>
           <li><a href="#contact" onClick={(e) => handleLinkClick(e, 'contact')}>Contact</a></li>
         </ul>
-      </div>
 
-      {/* Search Overlay */}
-      <div 
-        className={`search-overlay ${isSearchOpen ? 'open' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Search fragrances"
-        onClick={(e) => {
-          if (e.target.classList.contains('search-overlay')) {
-            setIsSearchOpen(false);
-            setSearchQuery('');
-          }
-        }}
-      >
-        <button 
-          className="search-close" 
-          onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
-          aria-label="Close search"
-        >
-          <i className="fas fa-times" />
-        </button>
-
-        <div 
-          className="search-container" 
-          ref={searchContainerRef} 
-          onKeyDown={handleSearchKeyDown}
-        >
-          <div className="search-header">
-            <i className="fas fa-search search-icon" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              className="search-input"
-              placeholder="Search perfumes by name, brand, size"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              autoFocus={isSearchOpen}
-            />
-          </div>
-          <div className="search-body">
-            {/* Filter Tabs */}
-            <div className="search-tabs">
-              <button 
-                type="button"
-                className={`search-tab-btn ${activeSearchTab === 'all' ? 'active' : ''}`} 
-                onClick={() => setActiveSearchTab('all')}
-              >
-                All Products <span className="tab-count">({searchCounts.all})</span>
+        {/* Mobile Quick Actions at Bottom */}
+        <div className="mobile-menu-actions">
+          <SignedIn>
+            <a href="#profile" className="mobile-action-btn" onClick={(e) => handleLinkClick(e, 'profile')}>
+              <UserIcon className="mobile-action-icon" />
+              <span>Profile</span>
+            </a>
+          </SignedIn>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="mobile-action-btn" onClick={() => setIsMobileMenuOpen(false)}>
+                <UserIcon className="mobile-action-icon" />
+                <span>Login</span>
               </button>
-              <button 
-                type="button"
-                className={`search-tab-btn ${activeSearchTab === 'best' ? 'active' : ''}`} 
-                onClick={() => setActiveSearchTab('best')}
-              >
-                Best Sellers <span className="tab-count">({searchCounts.best})</span>
-              </button>
-              <button 
-                type="button"
-                className={`search-tab-btn ${activeSearchTab === 'new' ? 'active' : ''}`} 
-                onClick={() => setActiveSearchTab('new')}
-              >
-                New Arrivals <span className="tab-count">({searchCounts.new})</span>
-              </button>
-              <button 
-                type="button"
-                className={`search-tab-btn ${activeSearchTab === 'featured' ? 'active' : ''}`} 
-                onClick={() => setActiveSearchTab('featured')}
-              >
-                Featured <span className="tab-count">({searchCounts.featured})</span>
-              </button>
+            </SignInButton>
+          </SignedOut>
+          <a href="#cart" className="mobile-action-btn" onClick={(e) => handleLinkClick(e, 'cart')}>
+            <div className="mobile-cart-badge-wrapper">
+              <ShoppingBagIcon className="mobile-action-icon" />
+              {cartCount > 0 && <span className="mobile-cart-count">{cartCount}</span>}
             </div>
-
-            {/* Results Grid */}
-            <div className="search-results-section">
-              {filteredProducts.length > 0 ? (
-                <div className="search-grid">
-                  {filteredProducts.map(product => (
-                    <div key={product.id} className="search-card" onClick={() => handleSearchProductClick(product)}>
-                      <div className="search-card-img">
-                        <img src={product.image || '/images/perfume_placeholder.jpeg'} alt={product.name} />
-                      </div>
-                      <div className="search-card-info">
-                        <span className="search-card-brand">{product.brand || 'Decant Atelier'}</span>
-                        <h5 className="search-card-name">{product.name}</h5>
-                        <span className="search-card-price">from ₹{(product.price || 999).toLocaleString('en-IN')}</span>
-                        <span className="search-card-category">{product.category === 'decants' ? 'Decant' : product.category === 'sets' ? 'Discovery Set' : 'Full Bottle'}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="search-no-results">
-                  <h4 className="no-results-title">No perfumes found</h4>
-                  <p className="no-results-text">Try adjusting your keywords or category filters.</p>
-                </div>
-              )}
-            </div>
-          </div>
+            <span>Bag</span>
+          </a>
         </div>
       </div>
+
+      {/* ─── Search Overlay — Spotlight / Raycast Style ─── */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <motion.div
+            className="search-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Search fragrances"
+            onClick={(e) => {
+              if (e.target.classList.contains('search-overlay')) {
+                setIsSearchOpen(false);
+                setSearchQuery('');
+              }
+            }}
+          >
+            <motion.div
+              className="search-container"
+              initial={{ opacity: 0, y: -16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.97 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              ref={searchContainerRef}
+              onKeyDown={handleSearchKeyDown}
+            >
+
+              {/* ── Panel Header: search input ── */}
+              <div className="search-header-container">
+                <svg className="search-input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+
+                <input
+                  ref={searchInputRef}
+                  id="search-input-field"
+                  type="text"
+                  className="search-input-field"
+                  placeholder="Search fragrances, notes, occasions…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && searchQuery.trim()) {
+                      addRecentSearch(searchQuery);
+                      handleViewAllResults();
+                    }
+                  }}
+                  autoFocus
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+
+                {searchQuery && (
+                  <button
+                    className="search-clear-btn"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+
+                <button
+                  className="search-close-panel-btn"
+                  onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
+                  aria-label="Close search"
+                >
+                  ESC
+                </button>
+              </div>
+
+              {/* ── Panel Body ── */}
+              <div className="search-panel-body">
+
+                {searchQuery.trim() === '' ? (
+                  /* ── Empty state: Popular Searches + Browse by Family ── */
+                  <>
+                    {/* Recent searches (if any) */}
+                    {recentSearches.length > 0 && (
+                      <div style={{ marginBottom: '1.75rem' }}>
+                        <span className="search-panel-section-title">Recent</span>
+                        <div className="search-pills-list">
+                          {recentSearches.map(term => (
+                            <button
+                              key={term}
+                              className="search-pill-item"
+                              onClick={() => handleTermClick(term)}
+                            >
+                              {term}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Popular searches */}
+                    <div style={{ marginBottom: '1.75rem' }}>
+                      <span className="search-panel-section-title">Popular Searches</span>
+                      <div className="search-pills-list">
+                        {['Baccarat Rouge 540', 'Hawas', 'Khamrah', 'Bleu de Chanel', '9PM'].map(term => (
+                          <button
+                            key={term}
+                            className="search-pill-item"
+                            onClick={() => handleTermClick(term)}
+                          >
+                            {term}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Browse by Family */}
+                    <div>
+                      <span className="search-panel-section-title">Browse by Family</span>
+                      <div className="search-family-grid">
+                        {[
+                          { name: 'Woody', sub: 'Warm & Grounded' },
+                          { name: 'Amber', sub: 'Rich & Sensual' },
+                          { name: 'Fresh', sub: 'Clean & Bright' },
+                          { name: 'Citrus', sub: 'Zesty & Uplifting' },
+                          { name: 'Gourmand', sub: 'Sweet & Edible' },
+                          { name: 'Floral', sub: 'Delicate & Romantic' },
+                        ].map(({ name, sub }) => (
+                          <button
+                            key={name}
+                            className="search-family-card"
+                            onClick={() => handleTermClick(name)}
+                          >
+                            <span className="search-family-name">{name}</span>
+                            <span className="search-family-sub">{sub}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* ── Active query: live result rows ── */
+                  <>
+                    {filteredProducts.length > 0 ? (
+                      <div className="search-results-list">
+                        {filteredProducts.slice(0, 6).map((product) => (
+                          <motion.div
+                            key={product.id}
+                            className="search-result-row"
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => {
+                              addRecentSearch(product.name);
+                              handleSearchProductClick(product);
+                            }}
+                          >
+                            <img
+                              className="search-result-img"
+                              src={product.image || '/images/perfume_placeholder.jpeg'}
+                              alt={product.name}
+                              loading="lazy"
+                            />
+                            <div className="search-result-meta">
+                              <span className="search-result-title">{product.name}</span>
+                              {product.family && (
+                                <span className="search-result-category">{product.family}</span>
+                              )}
+                              <span className="search-result-desc">
+                                {product.tagline ||
+                                  (Array.isArray(product.notes) && product.notes.slice(0, 3).join(' · ')) ||
+                                  (product.brand || '')}
+                              </span>
+                            </div>
+                            <span className="search-result-price">
+                              ₹{parseFloat(product.price).toLocaleString('en-IN')}
+                            </span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      /* No results */
+                      <div className="search-no-results">
+                        <p className="no-results-title">No fragrances found</p>
+                        <p className="no-results-text">Try "vanilla", "office", or "woody amber"</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* ── Panel Footer: View All Results ── */}
+              <div className="search-footer-action">
+                <span className="search-action-hint">
+                  {searchQuery.trim()
+                    ? `${filteredProducts.length} result${filteredProducts.length !== 1 ? 's' : ''} found`
+                    : 'Start typing to discover'}
+                </span>
+                <button
+                  className="search-action-btn-main"
+                  onClick={() => {
+                    if (searchQuery.trim()) addRecentSearch(searchQuery);
+                    handleViewAllResults();
+                  }}
+                >
+                  View All Results
+                </button>
+              </div>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
