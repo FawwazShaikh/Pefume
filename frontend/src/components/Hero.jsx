@@ -10,8 +10,8 @@ export default function Hero() {
       {/* Full-bleed product image (background layer) */}
       <div className="hero-image-layer">
         <img
-          src="/valentino_tree.png"
-          alt="Valentino Born In Roma — luxury fragrance"
+          src="/valentino_uomo_intense.png"
+          alt="Valentino Born In Roma Uomo Intense — luxury fragrance campaign"
           className="hero-product-img"
           loading="eager"
         />
@@ -28,9 +28,8 @@ export default function Hero() {
 
             {/* Headline */}
             <div className="hero-headline">
-              <h1 >
-                <span className="headline-line" style={{ color: "black" }}>Rare Fragrances</span>
-                {/* <span className="headline-line"></span> */}
+              <h1>
+                <span className="headline-line" style={{ color: "var(--hero-text)" }}>Rare Fragrances</span>
               </h1>
               <p className="headline-sub">Perfectly Yours</p>
             </div>
@@ -62,15 +61,15 @@ export default function Hero() {
             <div className="hero-cta">
               <button 
                 className="cta-primary" 
-                onClick={() => { window.location.hash = 'shop?category=bestsellers'; }}
+                onClick={() => { window.location.hash = 'shop'; }}
               >
-                Best Sellers
+                Explore Collection
               </button>
               <button 
                 className="cta-secondary" 
-                onClick={() => { window.location.hash = 'shop?category=decants'; }}
+                onClick={() => { window.location.hash = 'shop?category=bestsellers'; }}
               >
-                Fair Price Decants
+                Best Sellers
               </button>
             </div>
           </div>
