@@ -1441,3 +1441,36 @@ body.marquee-hidden .main-content-padding {
   font-size: 0.5rem;
   font-weight: 600;
 }
+
+/* ─── Before-Scroll Hero High Visibility styling ─── */
+.navbar-wrapper.on-home:not(.scrolled) .nav-link {
+  color: rgba(254, 252, 249, 0.85) !important;
+}
+
+.navbar-wrapper.on-home:not(.scrolled) .nav-link:hover {
+  color: #C59F6E !important; /* Soft champagne accent matching the bottle */
+}
+
+.navbar-wrapper.on-home:not(.scrolled) .nav-link::after {
+  background: #C59F6E !important;
+}
+
+.navbar-wrapper.on-home:not(.scrolled) .brand-name {
+  color: rgba(254, 252, 249, 0.95) !important;
+}
+
+.navbar-wrapper.on-home:not(.scrolled) .logo-container:hover .brand-name {
+  color: #C59F6E !important;
+}
+
+.navbar-wrapper.on-home:not(.scrolled) .nav-icon-btn {
+  color: rgba(254, 252, 249, 0.85) !important;
+}
+
+.navbar-wrapper.on-home:not(.scrolled) .nav-icon-btn:hover {
+  color: #C59F6E !important;
+}
+
+.navbar-wrapper.on-home:not(.scrolled) .hamburger span {
+  background: rgba(254, 252, 249, 0.95) !important;
+}
