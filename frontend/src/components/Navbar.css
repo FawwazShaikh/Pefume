@@ -1136,23 +1136,64 @@ body.marquee-hidden .main-content-padding {
     height: 64px;
   }
   .logo-container {
-    max-width: 180px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    max-width: 65%;
+    display: flex;
+    justify-content: center;
   }
   .brand-name {
-    font-size: 0.95rem;
-    letter-spacing: 0.15em;
+    font-size: 0.88rem !important;
+    letter-spacing: 0.14em !important;
+    text-align: center;
   }
   .nav-container {
-    padding: 0 1.5rem;
+    padding: 0 0.75rem;
   }
   .nav-menu {
     display: none;
   }
   .hamburger {
     display: flex;
+    min-width: 44px;
+    justify-content: center;
+  }
+  .nav-left {
+    min-width: 44px;
   }
   .nav-right {
-    gap: 12px;
+    min-width: 44px;
+    gap: 0px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .nav-icons {
+    gap: 0px;
+  }
+  .nav-profile-btn,
+  .cart-icon {
+    display: none !important;
+  }
+  .nav-icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Extra small mobile adjustments to prevent any overlaps */
+@media (max-width: 400px) {
+  .brand-name {
+    font-size: 0.78rem !important;
+    letter-spacing: 0.1em !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .brand-name {
+    font-size: 0.72rem !important;
+    letter-spacing: 0.08em !important;
   }
 }
 
@@ -1473,4 +1514,23 @@ body.marquee-hidden .main-content-padding {
 
 .navbar-wrapper.on-home:not(.scrolled) .hamburger span {
   background: rgba(254, 252, 249, 0.95) !important;
+}
+
+/* Mobile drawer typography & formatting */
+.mobile-drawer-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 1.5rem 0 1rem 0;
+}
+
+.mobile-drawer-section-title {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8E8A82;
+  margin-bottom: 0.75rem;
+  padding-left: 0;
 }

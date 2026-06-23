@@ -23,7 +23,22 @@ export default function ProfilePage() {
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
-  const [activeSection, setActiveSection] = useState('profile'); // profile, orders, addresses, security
+  const getTabFromHash = () => {
+    const fullHash = window.location.hash.replace('#', '');
+    const params = new URLSearchParams(fullHash.split('?')[1] || '');
+    const tab = params.get('tab');
+    return ['profile', 'orders', 'addresses', 'security'].includes(tab) ? tab : 'profile';
+  };
+
+  const [activeSection, setActiveSection] = useState(getTabFromHash); // profile, orders, addresses, security
+
+  useEffect(() => {
+    const handleHashTab = () => {
+      setActiveSection(getTabFromHash());
+    };
+    window.addEventListener('hashchange', handleHashTab);
+    return () => window.removeEventListener('hashchange', handleHashTab);
+  }, []);
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({ name: '', phone: '' });

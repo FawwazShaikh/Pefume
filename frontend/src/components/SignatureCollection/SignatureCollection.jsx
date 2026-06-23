@@ -232,7 +232,8 @@ export default function SignatureCollection({
     all: 'All',
     sets: 'Sets',
     decants: 'Decants',
-    fullbottles: 'Full Bottles'
+    fullbottles: 'Full Bottles',
+    wishlist: 'Wishlist'
   };
 
   // Helper to determine active pill ID based on selected category state
@@ -267,30 +268,34 @@ export default function SignatureCollection({
 
     // 1. Filter by category
     if (currentCategory !== 'all' && !activeCollection) {
-      const primaryCategories = ['decants', 'full-bottles', 'fullbottles', 'sets'];
-      if (primaryCategories.includes(currentCategory)) {
-        const targetSlug = currentCategory === 'fullbottles' ? 'full-bottles' : currentCategory;
-        const matchedCat = dbCategories.find(c => c.slug === targetSlug);
-        if (matchedCat) {
-          items = items.filter(item => item.categoryId === matchedCat.id || item.category === matchedCat.slug);
-        } else {
-          items = items.filter(item => item.category === currentCategory || (currentCategory === 'full-bottles' && (item.category === 'fullbottles' || item.category === 'full-bottles')));
-        }
+      if (currentCategory === 'wishlist') {
+        items = items.filter(item => wishlist.includes(item.id));
       } else {
-        // Tag-based or custom collections filtering
-        let tagToSearch = currentCategory;
-        if (currentCategory === 'for-him' || currentCategory === 'him') tagToSearch = 'him';
-        else if (currentCategory === 'for-her' || currentCategory === 'her') tagToSearch = 'her';
-        else if (currentCategory === 'newarrivals' || currentCategory === 'new-arrivals') tagToSearch = 'new-arrival';
-        else if (currentCategory === 'bestsellers' || currentCategory === 'best-sellers') tagToSearch = 'featured';
+        const primaryCategories = ['decants', 'full-bottles', 'fullbottles', 'sets'];
+        if (primaryCategories.includes(currentCategory)) {
+          const targetSlug = currentCategory === 'fullbottles' ? 'full-bottles' : currentCategory;
+          const matchedCat = dbCategories.find(c => c.slug === targetSlug);
+          if (matchedCat) {
+            items = items.filter(item => item.categoryId === matchedCat.id || item.category === matchedCat.slug);
+          } else {
+            items = items.filter(item => item.category === currentCategory || (currentCategory === 'full-bottles' && (item.category === 'fullbottles' || item.category === 'full-bottles')));
+          }
+        } else {
+          // Tag-based or custom collections filtering
+          let tagToSearch = currentCategory;
+          if (currentCategory === 'for-him' || currentCategory === 'him') tagToSearch = 'him';
+          else if (currentCategory === 'for-her' || currentCategory === 'her') tagToSearch = 'her';
+          else if (currentCategory === 'newarrivals' || currentCategory === 'new-arrivals') tagToSearch = 'new-arrival';
+          else if (currentCategory === 'bestsellers' || currentCategory === 'best-sellers') tagToSearch = 'featured';
 
-        items = items.filter(item => {
-          if (item.tags && item.tags.includes(tagToSearch)) return true;
-          // Handle fallback tags/properties
-          if (tagToSearch === 'new-arrival' && item.featured) return true;
-          if (tagToSearch === 'featured' && item.featured) return true;
-          return false;
-        });
+          items = items.filter(item => {
+            if (item.tags && item.tags.includes(tagToSearch)) return true;
+            // Handle fallback tags/properties
+            if (tagToSearch === 'new-arrival' && item.featured) return true;
+            if (tagToSearch === 'featured' && item.featured) return true;
+            return false;
+          });
+        }
       }
     }
 
