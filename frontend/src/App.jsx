@@ -70,6 +70,7 @@ function App() {
             // Sensible fallbacks for newly added admin panel products
             return {
               tagline: dbProd.brand || 'Premium Fragrance',
+              family: 'Woody / Amber',
               notes: [],
               tags: dbProd.featured ? ['featured'] : [],
               pyramid: {
@@ -87,13 +88,27 @@ function App() {
               ...dbProd
             };
           });
+
+          // Verify that all CollectionData products exist in the database
+          if (import.meta.env.DEV) {
+            collectionsData.forEach(sp => {
+              const found = dbProducts.find(dp => dp.slug === sp.slug || dp.id === sp.id);
+              if (!found) {
+                console.error(`[CRITICAL DEVELOPMENT ERROR] Product "${sp.name}" with slug/id "${sp.slug || sp.id}" is defined in CollectionData.js but is MISSING from the Neon Database!`);
+              }
+            });
+          }
+
           setProducts(merged);
         } else {
-          setProducts(collectionsData);
+          setProducts([]);
+          if (import.meta.env.DEV) {
+            console.error('[CRITICAL DEVELOPMENT ERROR] Product catalog fetch returned non-200 response.');
+          }
         }
       } catch (err) {
         console.error('Failed to load dynamic product catalog:', err);
-        setProducts(collectionsData);
+        setProducts([]);
       } finally {
         setLoadingProducts(false);
       }
@@ -124,12 +139,12 @@ function App() {
         // Search in dynamic/merged products first
         const foundProduct = products.find(
           (p) => String(p.id) === String(id) || String(p.slug) === String(id)
-        ) || collectionsData.find(
-          (p) => String(p.id) === String(id) || String(p.slug) === String(id)
         );
 
         if (foundProduct) {
           setSelectedProduct(foundProduct);
+        } else if (import.meta.env.DEV) {
+          console.error(`[CRITICAL DEVELOPMENT ERROR] Selected product "${id}" was not found in the database products list.`);
         }
       }
     };
@@ -152,7 +167,7 @@ function App() {
     <div className="flex flex-col gap-0 min-h-screen">
       {activePage !== 'admin' && activePage !== 'cart' && activePage !== 'profile' && <DailyOfferPopup />}
       
-      {activePage !== 'admin' && activePage !== 'cart' && activePage !== 'profile' && (
+      {activePage !== 'admin' && (
         <Navbar
           onNavigate={setActivePage}
           activePage={activePage}
@@ -175,7 +190,7 @@ function App() {
       )}
 
       {activePage !== 'home' && (
-        <div className={(activePage === 'admin' || activePage === 'cart' || activePage === 'profile' || activePage === 'gifting') ? '' : 'main-content-padding'}>
+        <div className={(activePage === 'admin' || activePage === 'cart' || activePage === 'profile' || activePage === 'gifting') ? '' : 'main-content-padding'} style={(activePage !== 'admin' && activePage !== 'cart' && activePage !== 'profile' && activePage !== 'gifting') ? { backgroundColor: '#F7F3ED' } : {}}>
           {activePage === 'shop' && (
             <SignatureCollection
               activeCategory={activeCategory}
@@ -187,6 +202,7 @@ function App() {
           {activePage === 'product' && (
             <ProductPage
               product={selectedProduct}
+              products={products}
               onBackToShop={() => {
                 window.location.hash = 'shop';
               }}
@@ -195,6 +211,7 @@ function App() {
 
           {activePage === 'cart' && (
             <CartPage
+              products={products}
               onBackToShop={() => {
                 window.location.hash = 'shop';
               }}
@@ -227,7 +244,7 @@ function App() {
         </div>
       )}
 
-      {activePage !== 'admin' && activePage !== 'cart' && activePage !== 'profile' && <Footer onNavigate={setActivePage} />}
+      {activePage !== 'admin' && <Footer onNavigate={setActivePage} />}
     </div>
   );
 }
