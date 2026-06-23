@@ -623,13 +623,13 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             <div className="nav-icons">
               <SignedOut>
                 <SignInButton mode="modal">
-                  <button className="nav-icon-btn" title="Login" aria-label="Login">
+                  <button className="nav-icon-btn nav-profile-btn" title="Login" aria-label="Login">
                     <UserIcon className="nav-profile-svg" />
                   </button>
                 </SignInButton>
               </SignedOut>
               <SignedIn>
-                <a href="#profile" onClick={(e) => handleLinkClick(e, 'profile')} className="nav-icon-btn" title="My Profile" aria-label="My Profile" style={{ display: 'flex', alignItems: 'center' }}>
+                <a href="#profile" onClick={(e) => handleLinkClick(e, 'profile')} className="nav-icon-btn nav-profile-btn" title="My Profile" aria-label="My Profile" style={{ display: 'flex', alignItems: 'center' }}>
                   <UserIcon className="nav-profile-svg" />
                 </a>
               </SignedIn>
@@ -794,6 +794,20 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
           <li><a href="#about" onClick={(e) => handleLinkClick(e, 'about')}>About</a></li>
           <li><a href="#reviews" onClick={(e) => handleLinkClick(e, 'reviews')}>Reviews</a></li>
           <li><a href="#contact" onClick={(e) => handleLinkClick(e, 'contact')}>Contact</a></li>
+          
+          <SignedIn>
+            <div className="mobile-drawer-divider" />
+            <span className="mobile-drawer-section-title">My Account</span>
+            <li><a href="#profile?tab=profile" onClick={(e) => handleLinkClick(e, 'profile')}>Profile Details</a></li>
+            <li><a href="#profile?tab=orders" onClick={(e) => handleLinkClick(e, 'profile')}>My Orders</a></li>
+            <li><a href="#profile?tab=addresses" onClick={(e) => handleLinkClick(e, 'profile')}>Manage Addresses</a></li>
+            <li><a href="#profile?tab=security" onClick={(e) => handleLinkClick(e, 'profile')}>Account Security</a></li>
+            <li><a href="#shop?category=wishlist" onClick={(e) => { setIsMobileMenuOpen(false); window.location.hash = 'shop?category=wishlist'; }}>My Wishlist</a></li>
+          </SignedIn>
+          <SignedOut>
+            <div className="mobile-drawer-divider" />
+            <li><a href="#shop?category=wishlist" onClick={(e) => { setIsMobileMenuOpen(false); window.location.hash = 'shop?category=wishlist'; }}>My Wishlist</a></li>
+          </SignedOut>
         </ul>
 
         {/* Mobile Quick Actions at Bottom */}
