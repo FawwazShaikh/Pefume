@@ -2,8 +2,33 @@
  * PolicyContent — Renders the active policy's sections with editorial typography,
  * animated entrance, and luxury card styling.
  */
+import { useState, useEffect } from 'react';
+
 export default function PolicyContent({ policy }) {
   const Icon = policy.icon;
+
+  const [settings, setSettings] = useState({
+    supportPhone: '+91 97681 88453',
+    supportEmail: 'orders@decantatelier.in'
+  });
+
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const res = await fetch('http://localhost:5000/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setSettings({
+            supportPhone: data.supportPhone || '+91 97681 88453',
+            supportEmail: data.supportEmail || 'orders@decantatelier.in'
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch settings for policy content:', err);
+      }
+    }
+    fetchSettings();
+  }, []);
 
   return (
     <article
@@ -85,12 +110,12 @@ export default function PolicyContent({ policy }) {
             <p className="text-[0.82rem] font-bold text-[#1C1B18] mb-1.5 tracking-wide uppercase">Need Assistance?</p>
             <p className="text-[0.76rem] text-black/65 leading-relaxed font-body">
               Our concierge team is available to assist you. Contact us at{' '}
-              <a href="mailto:orders@decantatelier.in" className="text-[#B08A50] hover:text-[#1C1B18] font-bold underline underline-offset-4 decoration-[#B08A50]/30 hover:decoration-[#1C1B18] transition-all duration-300">
-                orders@decantatelier.in
+              <a href={`mailto:${settings.supportEmail}`} className="text-[#B08A50] hover:text-[#1C1B18] font-bold underline underline-offset-4 decoration-[#B08A50]/30 hover:decoration-[#1C1B18] transition-all duration-300">
+                {settings.supportEmail}
               </a>{' '}
               or call{' '}
-              <a href="tel:+919768188453" className="text-[#B08A50] hover:text-[#1C1B18] font-bold underline underline-offset-4 decoration-[#B08A50]/30 hover:decoration-[#1C1B18] transition-all duration-300">
-                +91 97681 88453
+              <a href={`tel:${settings.supportPhone.replace(/\s+/g, '')}`} className="text-[#B08A50] hover:text-[#1C1B18] font-bold underline underline-offset-4 decoration-[#B08A50]/30 hover:decoration-[#1C1B18] transition-all duration-300">
+                {settings.supportPhone}
               </a>
             </p>
           </div>
