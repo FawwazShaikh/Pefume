@@ -3,7 +3,7 @@ import './Pricing.css';
 export default function Pricing() {
   const handleCtaClick = (e) => {
     e.preventDefault();
-    document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' });
+    window.location.hash = 'shop?category=decants';
   };
 
   return (
@@ -48,7 +48,7 @@ export default function Pricing() {
         {/* Footer info & CTA */}
         <div className="pricing-footer">
           <p>Transparent pricing so you can explore more scents without paying inflated margins.</p>
-          <a href="#collection" onClick={handleCtaClick} className="pricing-cta">
+          <a href="#shop?category=decants" onClick={handleCtaClick} className="pricing-cta">
             EXPLORE FAIR-PRICE DECANTS &nbsp;→
           </a>
         </div>
