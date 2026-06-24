@@ -212,7 +212,7 @@ export const addToCart = async (product, sizeOption, quantity = 1, token = null)
         console.warn('[Diagnostics] Background DB sync failed on item add.');
       }
     }).catch(err => {
-      console.error('Failed to sync added item in background:', err);
+      console.error("Cart sync failed", err);
     });
   }
 };
@@ -240,23 +240,41 @@ export const updateQuantity = async (id, size, quantity, token = null) => {
   }
 
   if (token && dbCartItemId) {
-    // Sync to database in the background
-    fetch(`http://localhost:5000/api/cart/${dbCartItemId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ quantity })
-    }).then(res => {
-      if (res.ok) {
-        syncDbCartWithCache(token);
-      } else {
-        console.warn('[Diagnostics] Background DB sync failed on quantity update.');
-      }
-    }).catch(err => {
-      console.error('Failed to sync updated quantity in background:', err);
-    });
+    if (quantity <= 0) {
+      // Sync removal to database in the background
+      fetch(`http://localhost:5000/api/cart/${dbCartItemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }).then(res => {
+        if (res.ok) {
+          syncDbCartWithCache(token);
+        } else {
+          console.warn('[Diagnostics] Background DB sync failed on item remove via quantity update.');
+        }
+      }).catch(err => {
+        console.error("Cart sync failed", err);
+      });
+    } else {
+      // Sync quantity update to database in the background
+      fetch(`http://localhost:5000/api/cart/${dbCartItemId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ quantity })
+      }).then(res => {
+        if (res.ok) {
+          syncDbCartWithCache(token);
+        } else {
+          console.warn('[Diagnostics] Background DB sync failed on quantity update.');
+        }
+      }).catch(err => {
+        console.error("Cart sync failed", err);
+      });
+    }
   }
 };
 
@@ -293,7 +311,7 @@ export const removeFromCart = async (id, size, token = null) => {
         console.warn('[Diagnostics] Background DB sync failed on item remove.');
       }
     }).catch(err => {
-      console.error('Failed to sync item removal in background:', err);
+      console.error("Cart sync failed", err);
     });
   }
 };

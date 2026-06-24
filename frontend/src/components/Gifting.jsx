@@ -25,13 +25,13 @@ export default function Gifting({ onSelectCategory, onNavigate }) {
             <div className="gift-card-content">
               <h3 className="gift-card-title">Shop For Him</h3>
               <a 
-                href="#collection" 
+                href="#shop?category=him" 
                 className="gift-explore-btn"
                 onClick={(e) => {
                   e.preventDefault();
                   if (onSelectCategory) onSelectCategory('him');
                   if (onNavigate) onNavigate('shop');
-                  window.location.hash = 'collection';
+                  window.location.hash = 'shop?category=him';
                   setTimeout(() => {
                     const element = document.getElementById('collection');
                     if (element) element.scrollIntoView({ behavior: 'smooth' });
@@ -52,13 +52,13 @@ export default function Gifting({ onSelectCategory, onNavigate }) {
             <div className="gift-card-content">
               <h3 className="gift-card-title">Shop For Her</h3>
               <a 
-                href="#collection" 
+                href="#shop?category=her" 
                 className="gift-explore-btn"
                 onClick={(e) => {
                   e.preventDefault();
                   if (onSelectCategory) onSelectCategory('her');
                   if (onNavigate) onNavigate('shop');
-                  window.location.hash = 'collection';
+                  window.location.hash = 'shop?category=her';
                   setTimeout(() => {
                     const element = document.getElementById('collection');
                     if (element) element.scrollIntoView({ behavior: 'smooth' });

@@ -402,9 +402,10 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
     e.preventDefault();
     setIsMobileMenuOpen(false);
     setIsSearchOpen(false);
-    if (onSelectCategory) onSelectCategory(filterKey);
+    const normalized = (filterKey || '').toLowerCase().trim();
+    if (onSelectCategory) onSelectCategory(normalized);
     if (onNavigate) onNavigate('shop');
-    window.location.hash = 'collection';
+    window.location.hash = `shop?category=${normalized}`;
     setTimeout(() => {
       const el = document.getElementById('collection');
       if (el) el.scrollIntoView({ behavior: 'smooth' });

@@ -225,9 +225,10 @@ function App() {
           {activePage === 'categories' && (
             <CategoriesPage
               onSelectCategory={(categoryKey) => {
-                setActiveCategory(categoryKey);
+                const normalized = (categoryKey || '').toLowerCase().trim();
+                setActiveCategory(normalized);
                 setActivePage('shop');
-                window.location.hash = 'collection';
+                window.location.hash = `shop?category=${normalized}`;
               }}
             />
           )}

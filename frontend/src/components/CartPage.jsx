@@ -600,7 +600,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
 
                     return (
                       <div key={itemKey} className="product-row py-6 first:pt-0">
-                        <div className="flex gap-6 items-start">
+                        <div className="flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-left w-full">
                           
                           {/* Product Image and Thumbnail Gallery */}
                           <div className="flex flex-col gap-2 flex-shrink-0 items-center">
@@ -625,33 +625,33 @@ export default function CartPage({ onBackToShop, products = [] }) {
                           </div>
 
                           {/* Product Details */}
-                          <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="space-y-1">
+                          <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+                            <div className="space-y-1 w-full text-center md:text-left">
                               <span className="text-[0.58rem] font-bold text-black/40 uppercase tracking-widest block">
                                 {item.brand ? item.brand.toUpperCase() : 'DECANTS'}
                               </span>
-                              <h3 className="font-heading text-lg font-normal text-[#1C1B18] text-left">
+                              <h3 className="font-heading text-lg font-normal text-[#1C1B18] text-center md:text-left">
                                 {item.name}
                               </h3>
-                              <span className="text-[0.72rem] text-black/50 block font-body text-left">
+                              <span className="text-[0.72rem] text-black/50 block font-body text-center md:text-left">
                                 Size: {item.size} {item.label && `(${item.label})`}
                               </span>
                             </div>
 
                             {/* Price & Quantity Selector Column */}
-                            <div className="flex items-center gap-8 justify-between md:justify-end">
-                              <div>
+                            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 justify-center md:justify-end w-full mt-2 md:mt-0">
+                              <div className="text-center md:text-left">
                                 <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block mb-1">Price</span>
                                 <span className="text-xs font-semibold">₹{item.price.toLocaleString('en-IN')}</span>
                               </div>
 
                               {/* Inline Quantity Controls */}
-                              <div>
-                                <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block mb-1 text-center">Quantity</span>
-                                <div className="flex items-center border border-black/8 bg-white h-9 px-2">
+                              <div className="text-center">
+                                <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block mb-1">Quantity</span>
+                                <div className="flex items-center border border-black/8 bg-white h-11 md:h-9 px-1">
                                   <button 
                                     onClick={() => handleUpdateQuantity(item.variantId || item.id, item.size, item.quantity - 1)}
-                                    className="w-6 h-full flex items-center justify-center text-xs text-black/55 hover:text-black cursor-pointer"
+                                    className="w-11 h-full md:w-6 flex items-center justify-center text-xs text-black/55 hover:text-black cursor-pointer min-h-[44px] md:min-h-0"
                                     aria-label="Decrease quantity"
                                   >
                                     <i className="fas fa-minus text-[10px]"></i>
@@ -661,7 +661,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                                   </span>
                                   <button 
                                     onClick={() => handleUpdateQuantity(item.variantId || item.id, item.size, item.quantity + 1)}
-                                    className="w-6 h-full flex items-center justify-center text-xs text-black/55 hover:text-black cursor-pointer"
+                                    className="w-11 h-full md:w-6 flex items-center justify-center text-xs text-black/55 hover:text-black cursor-pointer min-h-[44px] md:min-h-0"
                                     aria-label="Increase quantity"
                                   >
                                     <i className="fas fa-plus text-[10px]"></i>
@@ -670,11 +670,11 @@ export default function CartPage({ onBackToShop, products = [] }) {
                               </div>
 
                               {/* Delete Item */}
-                              <div className="text-right">
+                              <div className="text-center flex flex-col items-center">
                                 <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block mb-1">Remove</span>
                                 <button 
                                   onClick={() => handleRemoveFromCart(item.variantId || item.id, item.size)}
-                                  className="text-xs text-black/45 hover:text-black transition-colors cursor-pointer"
+                                  className="w-11 h-11 md:w-auto md:h-auto flex items-center justify-center text-xs text-black/45 hover:text-black transition-colors cursor-pointer"
                                   title="Delete Item"
                                 >
                                   <i className="far fa-trash-can"></i>

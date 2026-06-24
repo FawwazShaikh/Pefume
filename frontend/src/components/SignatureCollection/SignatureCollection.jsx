@@ -849,47 +849,51 @@ export default function SignatureCollection({
       {/* Concierge Drawer Panel Overlay */}
       <AnimatePresence>
         {selectedItem && (
-          <>
+          <div className="fixed inset-0 z-50 flex items-center justify-center lg:items-stretch lg:justify-end pointer-events-none">
             {/* Backdrop overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closeQuickView}
-              className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-end justify-center lg:justify-end"
+              className="absolute inset-0 bg-black/40 backdrop-blur-md pointer-events-auto"
             />
 
-            {/* Slide-over Drawer Panel */}
+            {/* Slide-over Drawer Panel / Centered Modal */}
             <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
+              initial={typeof window !== 'undefined' && window.innerWidth < 1024 ? { opacity: 0, y: 50, scale: 0.95 } : { x: '100%' }}
+              animate={typeof window !== 'undefined' && window.innerWidth < 1024 ? { opacity: 1, y: 0, scale: 1 } : { x: 0 }}
+              exit={typeof window !== 'undefined' && window.innerWidth < 1024 ? { opacity: 0, y: 50, scale: 0.95 } : { x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 200 }}
               className="
-                fixed top-0 bottom-0 right-0 w-full lg:max-w-2xl bg-[#F7F3ED] z-50
-                shadow-2xl flex flex-col h-full border-l border-black/8
+                relative bg-[#F7F3ED] shadow-2xl flex flex-col overflow-hidden pointer-events-auto
+                w-[calc(100vw-24px)] max-h-[90vh] rounded-lg border border-black/8
+                lg:h-full lg:max-h-none lg:w-full lg:max-w-2xl lg:rounded-none lg:border-l lg:border-t-0 lg:border-r-0 lg:border-b-0
               "
             >
-              {/* Drawer Content */}
-              <div className="flex-1 overflow-y-auto scrollbar-hide p-8 sm:p-10 lg:p-12 pb-32">
-                {/* Header panel controls */}
-                <div className="flex items-center justify-between mb-10 pb-4 border-b border-black/8">
-                  <span className="text-[0.62rem] font-bold tracking-[3px] uppercase" style={{ color: '#C9A46A' }}>
-                    Interactive Concierge Sizing
-                  </span>
-                  <button
-                    onClick={closeQuickView}
-                    aria-label="Close panel"
-                    className="
-                      group w-9 h-9 rounded-full bg-black/5 hover:bg-[#2C2926]
-                      flex items-center justify-center text-[#2C2926] hover:text-white
-                      transition-all duration-300 hover:rotate-90 cursor-pointer
-                    "
-                  >
-                    <CloseIcon className="w-4 h-4" />
-                  </button>
-                </div>
+              {/* Header panel controls */}
+              <div className="sticky top-0 bg-[#F7F3ED] z-30 flex-shrink-0 border-b border-black/8 p-6 sm:px-10 lg:px-12 flex items-center justify-between">
+                <span className="text-[0.62rem] font-bold tracking-[3px] uppercase" style={{ color: '#C9A46A' }}>
+                  Interactive Concierge Sizing
+                </span>
+                <button
+                  onClick={closeQuickView}
+                  aria-label="Close panel"
+                  className="
+                    group w-9 h-9 rounded-full bg-black/5 hover:bg-[#2C2926]
+                    flex items-center justify-center text-[#2C2926] hover:text-white
+                    transition-all duration-300 hover:rotate-90 cursor-pointer
+                  "
+                >
+                  <CloseIcon className="w-4 h-4" />
+                </button>
+              </div>
 
+              {/* Drawer Content Body */}
+              <div 
+                className="flex-1 overflow-y-auto scrollbar-hide p-6 sm:p-10 lg:p-12 pb-6"
+                style={{ overscrollBehavior: 'contain' }}
+              >
                 {/* Main Product Layout inside Drawer */}
                 <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8">
                   {/* Left Column: Image & Details */}
@@ -965,7 +969,7 @@ export default function SignatureCollection({
                             <button
                               key={idx}
                               onClick={() => setSelectedSizeIndex(idx)}
-                              className="p-3.5 rounded-none border text-left cursor-pointer transition-all duration-300"
+                              className="p-3.5 rounded-none border text-left cursor-pointer transition-all duration-300 min-h-[44px]"
                               style={{
                                 backgroundColor: selectedSizeIndex === idx ? '#2C2926' : '#FEFCF9',
                                 borderColor: selectedSizeIndex === idx ? '#2C2926' : '#D8D1C7',
@@ -993,7 +997,10 @@ export default function SignatureCollection({
               </div>
 
               {/* Drawer Footer Purchase Strip */}
-              <div className="absolute bottom-0 left-0 right-0 bg-[#F7F3ED]/95 backdrop-blur-md border-t p-8 flex items-center justify-between gap-6 z-20" style={{ borderTopColor: '#D8D1C7' }}>
+              <div 
+                className="sticky bottom-0 bg-[#F7F3ED]/95 backdrop-blur-md border-t p-6 sm:px-10 lg:px-12 flex items-center justify-between gap-6 z-20 flex-shrink-0" 
+                style={{ borderTopColor: '#D8D1C7' }}
+              >
                 <div>
                   <span className="text-[0.62rem] uppercase tracking-wider block" style={{ color: '#746F69' }}>Selected Option Price</span>
                   <span className="text-2xl font-semibold font-heading tracking-wide" style={{ color: '#2C2926' }}>
@@ -1010,7 +1017,7 @@ export default function SignatureCollection({
                       closeQuickView();
                     }}
                     className="
-                      flex-1 px-6 py-4 rounded-none text-white
+                      flex-1 px-6 py-4 rounded-none text-white min-h-[44px]
                       hover:bg-[#C9A46A] border flex items-center justify-center gap-2 cursor-pointer
                     "
                     style={{
@@ -1024,7 +1031,7 @@ export default function SignatureCollection({
                 </div>
               </div>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
     </section>

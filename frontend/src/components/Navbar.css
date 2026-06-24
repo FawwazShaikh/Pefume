@@ -449,9 +449,12 @@ body.marquee-hidden .main-content-padding {
 /* ─── Search overlay (Spotlight/Raycast styled) ─── */
 .search-overlay {
   position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: 100%;
   background: rgba(28, 27, 24, 0.4);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -498,6 +501,7 @@ body.marquee-hidden .main-content-padding {
 
 .search-input-field {
   flex: 1;
+  min-width: 0 !important;
   background: transparent;
   border: none;
   outline: none;
@@ -1598,4 +1602,68 @@ a:focus-visible,
 input:focus-visible {
   outline: 1.5px solid #B89563 !important;
   outline-offset: 4px !important;
+}
+
+/* Mobile search overlay overrides */
+@media (max-width: 767px) {
+  .search-overlay {
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+    max-width: 100% !important;
+    height: 100vh !important;
+    padding: 12px !important;
+    padding-top: 16px !important;
+    align-items: flex-start !important;
+    box-sizing: border-box !important;
+  }
+
+  .search-container {
+    width: 100% !important;
+    max-width: calc(100vw - 24px) !important;
+    margin: 0 !important;
+    border-radius: 16px !important;
+    height: calc(100vh - 32px) !important;
+    max-height: calc(100vh - 32px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+  }
+
+  .search-header-container {
+    padding: 1rem 1rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .search-panel-body {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    max-height: none !important;
+    padding: 1rem !important;
+  }
+
+  .search-footer-action {
+    position: sticky !important;
+    bottom: 0 !important;
+    background: #F7F3ED !important;
+    z-index: 20 !important;
+    width: 100% !important;
+    flex-shrink: 0 !important;
+    padding: 0.85rem 1rem !important;
+  }
+
+  .search-close-panel-btn {
+    padding-left: 0.5rem !important;
+    margin-left: 0.5rem !important;
+    flex-shrink: 0 !important;
+    font-size: 0.6rem !important;
+  }
+
+  .search-clear-btn {
+    flex-shrink: 0 !important;
+  }
+
+  .search-family-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
 }

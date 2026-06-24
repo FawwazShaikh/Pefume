@@ -772,6 +772,11 @@ export default function ProductPage({ product: initialProduct, products = [], on
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
                       className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-103 cursor-zoom-in z-10"
+                      style={{
+                        transform: 'translateZ(0)',
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden'
+                      }}
                       onClick={() => setIsLightboxOpen(true)}
                       onError={() => {
                         setImageErrors((prev) => ({ ...prev, [activeImageIndex]: true }));
