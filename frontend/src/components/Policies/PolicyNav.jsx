@@ -22,8 +22,8 @@ export default function PolicyNav({ policies, activeId, onSelect }) {
                   group w-full flex items-center gap-4 px-6 py-4 rounded-2xl
                   transition-all duration-300 ease-out text-left cursor-pointer
                   ${isActive
-                    ? 'bg-[#1C1B18] shadow-sm'
-                    : 'hover:bg-[#EFE8DD]/60'
+                    ? 'bg-policy-primary shadow-sm'
+                    : 'hover:bg-policy-divider/30'
                   }
                 `}
               >
@@ -33,8 +33,8 @@ export default function PolicyNav({ policies, activeId, onSelect }) {
                     flex-shrink-0 w-10 h-10 rounded-none flex items-center justify-center
                     transition-all duration-300
                     ${isActive
-                      ? 'bg-[#B08A50]/20 text-[#B08A50]'
-                      : 'bg-black/5 text-black/50 group-hover:bg-black/8 group-hover:text-[#1C1B18]'
+                      ? 'bg-policy-gold/20 text-policy-gold'
+                      : 'bg-policy-divider/30 text-policy-body/60 group-hover:bg-policy-divider/50 group-hover:text-policy-primary'
                     }
                   `}
                 >
@@ -46,7 +46,7 @@ export default function PolicyNav({ policies, activeId, onSelect }) {
                   <span
                     className={`
                       block text-[0.82rem] font-bold tracking-wide transition-colors duration-300 font-body
-                      ${isActive ? 'text-white' : 'text-[#1C1B18]'}
+                      ${isActive ? 'text-white' : 'text-policy-primary'}
                     `}
                   >
                     {policy.title}
@@ -54,7 +54,7 @@ export default function PolicyNav({ policies, activeId, onSelect }) {
                   <span
                     className={`
                       block text-[0.68rem] mt-0.5 transition-colors duration-300 font-body
-                      ${isActive ? 'text-[#B08A50]' : 'text-black/40 group-hover:text-black/60'}
+                      ${isActive ? 'text-policy-gold' : 'text-policy-body/70 group-hover:text-policy-body'}
                     `}
                   >
                     {policy.tagline}
@@ -66,8 +66,8 @@ export default function PolicyNav({ policies, activeId, onSelect }) {
                   className={`
                     w-4 h-4 flex-shrink-0 transition-all duration-300
                     ${isActive
-                      ? 'text-[#B08A50] translate-x-0 opacity-100'
-                      : 'text-black/20 -translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-60'
+                      ? 'text-policy-gold translate-x-0 opacity-100'
+                      : 'text-policy-divider -translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100'
                     }
                   `}
                 />
@@ -77,35 +77,42 @@ export default function PolicyNav({ policies, activeId, onSelect }) {
         })}
       </ul>
 
-      {/* Mobile / Tablet: horizontal scrollable pills */}
-      <div className="lg:hidden overflow-x-auto scrollbar-hide -mx-1 px-1">
-        <ul className="flex gap-2.5 pb-2 min-w-max">
+      {/* Mobile / Tablet: horizontal scrollable pills navigation */}
+      <div className="lg:hidden -mx-4 overflow-x-auto scroll-smooth scrollbar-hide px-4 pb-2 snap-x snap-mandatory">
+        <div className="inline-flex items-center gap-2 w-max">
           {policies.map((policy) => {
             const Icon = policy.icon;
             const isActive = activeId === policy.id;
 
             return (
-              <li key={policy.id}>
-                <button
-                  onClick={() => onSelect(policy.id)}
-                  aria-current={isActive ? 'page' : undefined}
+              <button
+                key={policy.id}
+                onClick={() => onSelect(policy.id)}
+                aria-current={isActive ? 'page' : undefined}
+                className={`
+                  inline-flex items-center justify-center gap-2 whitespace-nowrap
+                  min-w-[140px] sm:min-w-[160px] flex-shrink-0 snap-start
+                  h-10 px-4 py-2.5 rounded-full transition-all duration-300 ease-out cursor-pointer
+                  text-[0.74rem] font-medium tracking-wide font-body
+                  ${isActive
+                    ? 'bg-policy-primary text-white shadow-sm'
+                    : 'bg-policy-divider/30 text-policy-primary hover:bg-policy-divider/50'
+                  }
+                `}
+              >
+                <Icon
                   className={`
-                    flex items-center gap-2.5 px-5.5 py-3 rounded-2xl
-                    transition-all duration-300 whitespace-nowrap cursor-pointer
-                    text-[0.78rem] font-medium tracking-wide
-                    ${isActive
-                      ? 'bg-[#1C1B18] text-white shadow-md shadow-black/15'
-                      : 'bg-[#EFE8DD]/70 text-[#1C1B18] hover:bg-[#EFE8DD] hover:text-[#1C1B18]'
-                    }
+                    w-4 h-4 flex-shrink-0 transition-colors duration-300
+                    ${isActive ? 'text-policy-gold' : 'text-policy-primary/70'}
                   `}
-                >
-                  <Icon className="w-4 h-4" />
+                />
+                <span className="flex items-center leading-none mt-[-0.5px]">
                   {policy.title}
-                </button>
-              </li>
+                </span>
+              </button>
             );
           })}
-        </ul>
+        </div>
       </div>
     </nav>
   );

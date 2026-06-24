@@ -49,7 +49,7 @@ export default function PoliciesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F7F3ED]">
+    <div className="min-h-screen bg-[#F7F3ED] text-policy-body">
       {/* Google Fonts */}
       <link
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap"
@@ -88,7 +88,7 @@ export default function PoliciesPage() {
         <div className="hidden lg:grid lg:grid-cols-[300px_1fr] gap-0 -mt-10 relative z-20">
           {/* Sidebar */}
           <aside className="pt-0">
-            <div className="sticky top-28 bg-[#FEFCF9] rounded-3xl border border-black/8 shadow-md p-4">
+            <div className="sticky top-28 bg-[#FEFCF9] rounded-3xl border border-policy-divider/50 shadow-md p-4">
               <PolicyNav
                 policies={policiesData}
                 activeId={activeId}
@@ -99,7 +99,7 @@ export default function PoliciesPage() {
 
           {/* Content */}
           <div className="pl-12 pt-4 pb-24">
-            <div className="bg-[#FEFCF9] rounded-3xl border border-black/6 shadow-md p-12 lg:p-16">
+            <div className="bg-[#FEFCF9] rounded-3xl border border-policy-divider/40 shadow-md p-12 lg:p-16">
               <PolicyContent policy={activePolicy} />
             </div>
           </div>
@@ -118,25 +118,25 @@ export default function PoliciesPage() {
                     onClick={() => handleSelect(policy.id)}
                     className="
                       group bg-[#FEFCF9] rounded-2xl
-                      border border-black/6 p-6 text-left
+                      border border-policy-divider/50 p-6 text-left
                       transition-all duration-300 hover:shadow-md
-                      hover:border-black/20 hover:-translate-y-0.5
+                      hover:border-policy-gold/50 hover:-translate-y-0.5
                       cursor-pointer
                     "
                   >
                     <div className="flex items-center gap-4">
-                      <span className="w-12 h-12 rounded-xl bg-[#1C1B18] flex items-center justify-center flex-shrink-0 shadow-sm transition-shadow duration-300">
-                        <Icon className="w-5 h-5 text-[#B08A50]" />
+                      <span className="w-12 h-12 rounded-xl bg-policy-primary flex items-center justify-center flex-shrink-0 shadow-sm transition-shadow duration-300">
+                        <Icon className="w-5 h-5 text-policy-gold" />
                       </span>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-[0.88rem] font-bold text-[#1C1B18] tracking-wide font-body">
+                        <h3 className="text-[0.88rem] font-bold text-policy-primary tracking-wide font-body">
                           {policy.title}
                         </h3>
-                        <p className="text-[0.7rem] text-black/45 mt-1">
+                        <p className="text-[0.7rem] text-policy-body/75 mt-1">
                           {policy.tagline}
                         </p>
                       </div>
-                      <svg className="w-4 h-4 text-[#B08A50]/40 group-hover:text-[#B08A50] group-hover:translate-x-0.5 transition-all duration-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <svg className="w-4 h-4 text-policy-gold/50 group-hover:text-policy-gold group-hover:translate-x-0.5 transition-all duration-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                       </svg>
                     </div>
@@ -148,9 +148,9 @@ export default function PoliciesPage() {
             /* Detail view */
             <div className="animate-fadeIn">
               {/* Content card */}
-              <div className="bg-[#FEFCF9] rounded-3xl border border-black/6 shadow-md p-6 sm:p-10">
+              <div className="bg-[#FEFCF9] rounded-3xl border border-policy-divider/40 shadow-md p-6 sm:p-10">
                 {/* Horizontal policy pills */}
-                <div className="mb-6 border-b border-black/5 pb-4">
+                <div className="mb-6 border-b border-policy-divider/30 pb-4">
                   <PolicyNav
                     policies={policiesData}
                     activeId={activeId}

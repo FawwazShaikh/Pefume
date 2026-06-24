@@ -63,6 +63,12 @@
   --color-lux-accent: #B08A50;
   --color-lux-border: rgba(0, 0, 0, 0.08);
 
+  --color-policy-primary: #2C2926;
+  --color-policy-section: #3A3632;
+  --color-policy-body: #5A5550;
+  --color-policy-gold: #C9A46A;
+  --color-policy-divider: #D8D1C7;
+
   --font-heading: 'Cormorant Garamond', 'Playfair Display', 'Georgia', serif;
   --font-body: 'Inter', 'Segoe UI', sans-serif;
 }
