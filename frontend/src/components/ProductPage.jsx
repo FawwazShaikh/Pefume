@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth, SignInButton } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { addToCart, getCart } from '../utils/cartHelper';
+import { addToCart, getCart, updateQuantity } from '../utils/cartHelper';
 import { showToast } from '../utils/toast';
 import { collectionsData } from './SignatureCollection/CollectionData';
 
@@ -13,7 +13,6 @@ export default function ProductPage({ product: initialProduct, products = [], on
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
   const [selectedBottle, setSelectedBottle] = useState('classic');
   const [isAdding, setIsAdding] = useState(false);
-  const [quantity, setQuantity] = useState(1);
   const [cartItems, setCartItems] = useState(getCart());
   const [detectedAspect, setDetectedAspect] = useState('aspect-[1/1]');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -137,11 +136,6 @@ export default function ProductPage({ product: initialProduct, products = [], on
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [initialProduct]);
 
-  // Reset quantity on option change
-  useEffect(() => {
-    setQuantity(1);
-  }, [product, selectedSizeIndex]);
-
   // Sync cart items dynamically
   useEffect(() => {
     const handleCartUpdate = () => {
@@ -186,6 +180,29 @@ export default function ProductPage({ product: initialProduct, products = [], on
       return itemProdId === currProdId && item.size === sizeLabel;
     });
   }, [cartItems, product, selectedOption]);
+
+  const quantity = useMemo(() => {
+    return existingCartItem ? existingCartItem.quantity : 0;
+  }, [existingCartItem]);
+
+  const handleDecrease = async () => {
+    if (quantity === 0) return;
+    const token = isSignedIn ? await getToken() : null;
+    await updateQuantity(selectedOption.variantId || product.id, selectedOption.size, quantity - 1, token);
+  };
+
+  const handleIncrease = async () => {
+    if (selectedOption && quantity >= selectedOption.stock) {
+      showToast("Cannot exceed available stock.", "warning");
+      return;
+    }
+    const token = isSignedIn ? await getToken() : null;
+    if (quantity === 0) {
+      await addToCart(product, selectedOption, 1, token);
+    } else {
+      await updateQuantity(selectedOption.variantId || product.id, selectedOption.size, quantity + 1, token);
+    }
+  };
 
   const galleryImages = useMemo(() => {
     if (!product) return [];
@@ -375,13 +392,14 @@ export default function ProductPage({ product: initialProduct, products = [], on
   // Handle Add to Cart
   const handleAddToCart = async () => {
     setIsAdding(true);
-    
     const token = isSignedIn ? await getToken() : null;
-    await addToCart(product, selectedOption, quantity, token);
-
+    if (quantity === 0) {
+      await addToCart(product, selectedOption, 1, token);
+    } else {
+      await updateQuantity(selectedOption.variantId || product.id, selectedOption.size, quantity + 1, token);
+    }
     setTimeout(() => {
       setIsAdding(false);
-      setQuantity(1);
     }, 500);
   };
 
@@ -944,8 +962,9 @@ export default function ProductPage({ product: initialProduct, products = [], on
                   {selectedOption && selectedOption.stock > 0 ? (
                     <div className="flex items-center border border-black/8 bg-white h-[44px] px-1 w-[130px]">
                       <button
-                        onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                        className="w-10 h-full flex items-center justify-center text-xs text-[#1C1B18]/70 cursor-pointer hover:bg-black/[0.02]"
+                        onClick={handleDecrease}
+                        disabled={quantity === 0}
+                        className={`w-10 h-full flex items-center justify-center text-xs text-[#1C1B18]/70 hover:bg-black/[0.02] ${quantity === 0 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
                         aria-label="Decrease quantity"
                       >
                         <i className="fas fa-minus"></i>
@@ -954,7 +973,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                         {quantity}
                       </span>
                       <button
-                        onClick={() => setQuantity(q => Math.min(selectedOption.stock, q + 1))}
+                        onClick={handleIncrease}
                         className="w-10 h-full flex items-center justify-center text-xs text-[#1C1B18]/70 cursor-pointer hover:bg-black/[0.02]"
                         aria-label="Increase quantity"
                       >
