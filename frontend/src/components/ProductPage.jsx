@@ -671,30 +671,43 @@ export default function ProductPage({ product: initialProduct, products = [], on
       <div className="max-w-[1440px] xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 pt-8 lg:pt-16">
         
         {/* Breadcrumbs Row */}
-        <div className="flex justify-between items-center text-[0.6rem] font-bold tracking-[3px] text-[#B08A50] uppercase mb-8 select-none">
-          <div className="flex items-center gap-1.5">
+        <div className="mb-6 lg:mb-8 select-none">
+          {/* Mobile Back Button - min touch target 44px */}
+          <div className="lg:hidden">
             <button 
               onClick={onBackToShop}
-              className="flex items-center gap-1 px-3 py-1.5 border border-black/8 hover:border-black/35 hover:bg-black/[0.02] text-black/60 hover:text-black transition-colors rounded-none cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2 border border-black/8 hover:border-black/35 hover:bg-black/[0.02] text-black/60 hover:text-black transition-colors rounded-none cursor-pointer text-[0.65rem] font-bold tracking-[3px] uppercase"
             >
-              <i className="fas fa-arrow-left text-[9px]"></i> Back
+              <i className="fas fa-arrow-left text-[10px]"></i> Back to Collection
             </button>
-            <span className="ml-4 text-black/30">SHOP</span>
-            <span className="mx-2 text-black/20">&gt;</span>
-            <span className="text-black/30">{product.brand}</span>
-            <span className="mx-2 text-black/20">&gt;</span>
-            <span className="text-[#1C1B18]">{product.name}</span>
           </div>
-          <button 
-            onClick={() => showToast("Provenance trace standard: authenticated retail stock only.", "info")} 
-            className="text-[0.58rem] font-bold tracking-[2px] text-[#B08A50] hover:text-black transition-colors border-b border-[#B08A50]/20 pb-0.5 cursor-pointer"
-          >
-            Verified Provenance
-          </button>
+
+          {/* Desktop Breadcrumbs Row */}
+          <div className="hidden lg:flex justify-between items-center text-[0.6rem] font-bold tracking-[3px] text-[#B08A50] uppercase">
+            <div className="flex items-center gap-1.5">
+              <button 
+                onClick={onBackToShop}
+                className="flex items-center gap-1 px-3 py-1.5 border border-black/8 hover:border-black/35 hover:bg-black/[0.02] text-black/60 hover:text-black transition-colors rounded-none cursor-pointer"
+              >
+                <i className="fas fa-arrow-left text-[9px]"></i> Back
+              </button>
+              <span className="ml-4 text-black/30">SHOP</span>
+              <span className="mx-2 text-black/20">&gt;</span>
+              <span className="text-black/30">{product.brand}</span>
+              <span className="mx-2 text-black/20">&gt;</span>
+              <span className="text-[#1C1B18]">{product.name}</span>
+            </div>
+            <button 
+              onClick={() => showToast("Provenance trace standard: authenticated retail stock only.", "info")} 
+              className="text-[0.58rem] font-bold tracking-[2px] text-[#B08A50] hover:text-black transition-colors border-b border-[#B08A50]/20 pb-0.5 cursor-pointer"
+            >
+              Verified Provenance
+            </button>
+          </div>
         </div>
 
         {/* 2-Column Grid Layout: 58% Gallery / 42% Specs & Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-[5.8fr_4.2fr] gap-10 xl:gap-16 items-start mb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-[5.8fr_4.2fr] gap-8 lg:gap-10 xl:gap-16 items-start mb-20">
           
           {/* LEFT COLUMN: Gallery Hero & Thumbnails */}
           <div className="w-full">
@@ -703,7 +716,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEnd}
-              className={`gallery-card group relative overflow-hidden bg-white border border-black/5 rounded-[24px] select-none transition-all duration-300 ${detectedAspect}`}
+              className={`gallery-card group relative overflow-hidden bg-white border border-black/5 rounded-[24px] select-none transition-all duration-300 p-2 sm:p-4 md:p-6 lg:p-8 ${detectedAspect}`}
             >
               {/* Zoom Hint Icon */}
               <div className="absolute top-6 right-6 z-10 w-9 h-9 rounded-full bg-white/95 border border-black/5 flex items-center justify-center text-[#1C1B18]/60 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none shadow-sm">
@@ -758,7 +771,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                 </>
               )}
 
-              {/* Minimal gallery controls */}
+              {/* Minimal gallery controls (Min-touch target: 44px) */}
               {galleryImages.length > 1 && (
                 <>
                   <button
@@ -766,20 +779,20 @@ export default function ProductPage({ product: initialProduct, products = [], on
                       e.stopPropagation();
                       handlePrevImage();
                     }}
-                    className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/95 shadow-sm border border-black/5 hover:scale-105 active:scale-95 transition-all text-[#1C1B18] flex items-center justify-center cursor-pointer select-none z-20"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 md:w-12 md:h-12 rounded-full bg-white/95 shadow-sm border border-black/5 hover:scale-105 active:scale-95 transition-all text-[#1C1B18] flex items-center justify-center cursor-pointer select-none z-20"
                     aria-label="Previous image"
                   >
-                    <i className="fas fa-chevron-left text-[10px]"></i>
+                    <i className="fas fa-chevron-left text-[11px]"></i>
                   </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleNextImage();
                     }}
-                    className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/95 shadow-sm border border-black/5 hover:scale-105 active:scale-95 transition-all text-[#1C1B18] flex items-center justify-center cursor-pointer select-none z-20"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 md:w-12 md:h-12 rounded-full bg-white/95 shadow-sm border border-black/5 hover:scale-105 active:scale-95 transition-all text-[#1C1B18] flex items-center justify-center cursor-pointer select-none z-20"
                     aria-label="Next image"
                   >
-                    <i className="fas fa-chevron-right text-[10px]"></i>
+                    <i className="fas fa-chevron-right text-[11px]"></i>
                   </button>
                 </>
               )}
@@ -787,7 +800,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
 
             {/* Horizontal thumbnail list directly below the gallery container */}
             {galleryImages.length > 1 && (
-              <div className="flex justify-center items-center gap-3 mt-6 select-none overflow-x-auto py-2 scrollbar-none">
+              <div className="flex justify-center items-center gap-4 mt-6 select-none overflow-x-auto py-2 scrollbar-none">
                 {galleryImages.map((imgUrl, idx) => {
                   const isActive = activeImageIndex === idx;
                   return (
@@ -797,7 +810,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                         setActiveImageIndex(idx);
                         setIsZoomed(false);
                       }}
-                      className={`relative overflow-hidden rounded-[12px] border w-16 h-16 bg-white flex items-center justify-center cursor-pointer transition-all duration-300 ${
+                      className={`relative overflow-hidden rounded-[12px] border min-w-[56px] min-h-[56px] w-16 h-16 bg-white flex items-center justify-center cursor-pointer transition-all duration-300 ${
                         isActive
                           ? 'border-[#B08A50] ring-1 ring-[#B08A50] scale-[1.02]'
                           : 'border-black/5 hover:border-black/20 hover:scale-102'
@@ -817,28 +830,42 @@ export default function ProductPage({ product: initialProduct, products = [], on
           </div>
 
           {/* RIGHT COLUMN: Buy Box, Scent Pyramid, Specs Grid */}
-          <div className="space-y-8 text-left">
+          <div className="space-y-6 lg:space-y-8 text-left">
             
             {/* Header Product Details */}
-            <div>
-              <span className="text-[0.62rem] font-bold tracking-[3px] text-black/45 uppercase block mb-1">
+            <div className="space-y-2">
+              <span className="text-[0.62rem] font-bold tracking-[3px] text-black/45 uppercase block">
                 {product.brand.toUpperCase()}
               </span>
               <div className="flex justify-between items-start gap-4">
-                <h1 className="font-heading text-3xl font-light text-[#1C1B18] tracking-wide uppercase leading-tight">
+                <h1 
+                  className="font-heading font-light text-[#1C1B18] tracking-wide uppercase leading-tight"
+                  style={{
+                    fontSize: 'clamp(1.75rem, 6vw, 3rem)',
+                    wordBreak: 'normal',
+                    overflowWrap: 'break-word',
+                    maxWidth: '100%'
+                  }}
+                >
                   {product.name}
                 </h1>
                 
                 <button
                   onClick={() => showToast("Added to your collection wishlist.", "success")}
-                  className="flex items-center gap-1.5 px-3 py-1.5 border border-black/8 rounded-full text-[0.62rem] font-bold tracking-wider uppercase hover:border-black/30 hover:bg-black/[0.02] transition-all select-none cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 px-4 py-2 border border-black/8 rounded-full text-[0.62rem] font-bold tracking-wider uppercase hover:border-black/30 hover:bg-black/[0.02] transition-all select-none cursor-pointer min-h-[44px] min-w-[44px] whitespace-nowrap"
                 >
                   <i className="far fa-heart"></i> Wishlist
                 </button>
               </div>
 
-              {/* Rating Star Indicator */}
-              <div className="flex items-center gap-2 mt-3 text-[#B08A50]">
+              {/* Verified Provenance Inline Badge (Mobile & Desktop Accent) */}
+              <div className="pt-1 flex flex-wrap gap-2.5 items-center">
+                <div className="inline-flex items-center gap-1.5 bg-[#B08A50]/5 border border-[#B08A50]/20 py-1.5 px-3 text-[0.58rem] font-bold tracking-[2px] text-[#B08A50] uppercase select-none">
+                  <i className="fa-solid fa-circle-check text-[9px]"></i> ✓ Verified Authentic Fragrance
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1 text-[#B08A50]">
                 <div className="flex items-center gap-1 text-[10px]">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <i key={i} className={`fa-star ${i < Math.round(avgRating) ? 'fas' : 'far'}`} />
@@ -848,13 +875,6 @@ export default function ProductPage({ product: initialProduct, products = [], on
                   {avgRating > 0 ? `${avgRating} Rating (${reviews.length} reviews)` : 'No Reviews Yet'}
                 </span>
               </div>
-
-              {/* Concise Scent Story Short Description */}
-              {product.description && (
-                <p className="mt-4 text-xs text-black/65 font-light leading-relaxed line-clamp-3">
-                  {product.description.split('\n\n')[0]}
-                </p>
-              )}
             </div>
 
             {/* Price section */}
@@ -869,10 +889,10 @@ export default function ProductPage({ product: initialProduct, products = [], on
             <div className="config-card">
               {/* Size Select */}
               <div>
-                <h4 className="text-[0.58rem] font-bold tracking-[2px] text-black/45 uppercase mb-2">
+                <h4 className="text-[0.58rem] font-bold tracking-[2px] text-black/45 uppercase mb-3">
                   Select Size (ML)
                 </h4>
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-3">
                   {product.sizes.map((sz, idx) => {
                     const isSelected = selectedSizeIndex === idx;
                     const isOutOfStock = sz.stock <= 0;
@@ -885,14 +905,17 @@ export default function ProductPage({ product: initialProduct, products = [], on
                       <button
                         key={idx}
                         onClick={() => setSelectedSizeIndex(idx)}
-                        className={`text-xs pb-1 tracking-widest uppercase relative cursor-pointer font-medium ${
-                          isSelected ? 'text-[#1C1B18]' : 'text-black/35 hover:text-[#1C1B18]'
-                        } ${isOutOfStock ? 'opacity-40 line-through' : ''}`}
+                        disabled={isOutOfStock}
+                        className={`
+                          min-h-[44px] min-w-[44px] px-4 py-2 text-[0.68rem] tracking-widest uppercase font-medium border transition-all duration-300 cursor-pointer
+                          ${isSelected 
+                            ? 'bg-[#1C1B18] text-[#FEFCF9] border-[#1C1B18]' 
+                            : 'bg-white text-black/65 border-black/8 hover:border-black/25'
+                          }
+                          ${isOutOfStock ? 'opacity-30 cursor-not-allowed line-through' : ''}
+                        `}
                       >
-                        {sizeLabel} {isOutOfStock && '(Out of stock)'}
-                        {isSelected && (
-                          <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#1C1B18]" />
-                        )}
+                        {sizeLabel}
                       </button>
                     );
                   })}
@@ -905,7 +928,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                   <h4 className="text-[0.58rem] font-bold tracking-[2px] text-black/45 uppercase mb-2">
                     Vial Spray Setup
                   </h4>
-                  <div className="p-3 border border-black/8 bg-white flex justify-between items-center text-xs">
+                  <div className="p-3 border border-black/8 bg-white flex justify-between items-center text-xs min-h-[44px]">
                     <span className="font-bold text-[#1C1B18]">Classic Glass Micro-Spray</span>
                     <span className="text-[#B08A50] font-semibold">+₹0</span>
                   </div>
@@ -913,33 +936,33 @@ export default function ProductPage({ product: initialProduct, products = [], on
               )}
 
               {/* Quantity Select and Availability */}
-              <div className="flex justify-between items-center pt-2">
+              <div className="flex justify-between items-center pt-2 gap-4">
                 <div>
                   <h4 className="text-[0.58rem] font-bold tracking-[2px] text-black/45 uppercase mb-2">
                     Quantity
                   </h4>
                   {selectedOption && selectedOption.stock > 0 ? (
-                    <div className="flex items-center border border-black/8 bg-white h-[36px] px-2 w-[120px]">
+                    <div className="flex items-center border border-black/8 bg-white h-[44px] px-1 w-[130px]">
                       <button
                         onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                        className="w-6 h-full flex items-center justify-center text-xs text-[#1C1B18]/70 cursor-pointer"
+                        className="w-10 h-full flex items-center justify-center text-xs text-[#1C1B18]/70 cursor-pointer hover:bg-black/[0.02]"
                         aria-label="Decrease quantity"
                       >
                         <i className="fas fa-minus"></i>
                       </button>
-                      <span className="w-10 text-center text-xs font-bold text-[#1C1B18] select-none">
+                      <span className="w-10 text-center text-[0.7rem] font-bold text-[#1C1B18] select-none">
                         {quantity}
                       </span>
                       <button
                         onClick={() => setQuantity(q => Math.min(selectedOption.stock, q + 1))}
-                        className="w-6 h-full flex items-center justify-center text-xs text-[#1C1B18]/70 cursor-pointer"
+                        className="w-10 h-full flex items-center justify-center text-xs text-[#1C1B18]/70 cursor-pointer hover:bg-black/[0.02]"
                         aria-label="Increase quantity"
                       >
                         <i className="fas fa-plus"></i>
                       </button>
                     </div>
                   ) : (
-                    <span className="text-xs text-red-600 font-bold uppercase">Sold Out</span>
+                    <span className="text-xs text-red-600 font-bold uppercase h-[44px] flex items-center">Sold Out</span>
                   )}
                 </div>
 
@@ -955,13 +978,13 @@ export default function ProductPage({ product: initialProduct, products = [], on
                 </div>
               </div>
 
-              {/* CTA Action button */}
+              {/* CTA Action button (Touch target: 48px height) */}
               <button
                 onClick={handleAddToCart}
                 disabled={isAdding || !selectedOption || selectedOption.stock <= 0}
                 className={`
                   w-full py-4 text-white text-[0.68rem] font-bold tracking-widest uppercase shadow-sm
-                  transition-all duration-300 flex items-center justify-center gap-2 min-h-[44px]
+                  transition-all duration-300 flex items-center justify-center gap-2 min-h-[48px]
                   ${(!selectedOption || selectedOption.stock <= 0)
                     ? 'bg-neutral-400 border-neutral-400 cursor-not-allowed opacity-60'
                     : 'bg-[#1C1B18] hover:bg-[#B08A50] border border-[#1C1B18] hover:border-[#B08A50] cursor-pointer'
@@ -1001,6 +1024,18 @@ export default function ProductPage({ product: initialProduct, products = [], on
                     <span className="text-black/85 text-right font-light">{product.pyramid.base}</span>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Scent Story Description Box */}
+            {product.description && (
+              <div className="border border-black/6 bg-[#FEFCF9] p-5 space-y-2">
+                <h4 className="text-[0.58rem] font-bold tracking-[2px] text-black/45 uppercase">
+                  Scent Story
+                </h4>
+                <p className="text-xs text-black/65 font-light leading-relaxed">
+                  {product.description}
+                </p>
               </div>
             )}
 
