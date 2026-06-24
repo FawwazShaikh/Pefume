@@ -70,7 +70,7 @@ export default function PoliciesPage() {
 
         {/* Radial glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(176,138,80,0.04)_0%,transparent_65%)] rounded-full" />
-        <div className="page-hero-bg-text">POLICIES</div>
+        {/* <div className="page-hero-bg-text">POLICIES</div> */}
 
         <div className="page-hero-content">
           <span className="page-hero-eyebrow">Decant Atelier</span>

@@ -22,7 +22,7 @@ export default function Hero() {
       <div className="hero-container">
         {/* Left editorial content overlay */}
         <div className="hero-content">
-          <div className="hero-content-inner" style={{ color: "#C9A46A" }}>
+          <div className="hero-content-inner">
             {/* Eyebrow */}
             <span className="hero-eyebrow">EST. 2026 &bull; LUXURY FRAGRANCES</span>
 
