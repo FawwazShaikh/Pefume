@@ -63,7 +63,7 @@ export default function CategoriesPage({ onSelectCategory }) {
       <div className="categories-bg-grid" />
       
       <div className="categories-container">
-        <div className="categories-header">
+        <div id="shop-by-category" className="categories-header">
           <h1 className="categories-title" >Shop by Category</h1>
           <p className="categories-subtitle">Curated collections for every preference</p>
           <div className="categories-divider" />

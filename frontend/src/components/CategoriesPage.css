@@ -36,6 +36,22 @@
   gap: 0.4rem;
 }
 
+/* Ensure scroll target accounts for fixed navbar height */
+#shop-by-category {
+  scroll-margin-top: 130px;
+}
+@media (max-width: 1199px) {
+  #shop-by-category {
+    scroll-margin-top: 120px;
+  }
+}
+@media (max-width: 767px) {
+  #shop-by-category {
+    scroll-margin-top: 110px;
+  }
+}
+
+
 .categories-title {
   font-family: var(--font-heading, serif);
   font-size: clamp(2rem, 4vw, 3rem);

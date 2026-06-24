@@ -182,6 +182,31 @@ export default function CartPage({ onBackToShop, products = [] }) {
     }
   };
 
+  // Navigate to Categories page and scroll to "Shop by Category" section
+  const handleExploreCollection = () => {
+    window.location.hash = 'categories';
+
+    // Wait for the categories page to mount and render, then scroll to the section.
+    // Using requestAnimationFrame + a small timeout ensures the DOM is ready.
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const target = document.getElementById('shop-by-category');
+        if (target) {
+          // Calculate the fixed navbar height dynamically for accurate offset
+          const navbar = document.querySelector('.navbar-wrapper');
+          const navbarHeight = navbar ? navbar.getBoundingClientRect().height : 0;
+          const buffer = 16; // Comfortable visual breathing room
+          const targetTop = target.getBoundingClientRect().top + window.scrollY - navbarHeight - buffer;
+
+          window.scrollTo({
+            top: targetTop,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
+    });
+  };
+
   // Continue checkout
   const handleContinueToCheckout = () => {
     if (!isSignedIn) return;
@@ -473,7 +498,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
 
             {/* CTA */}
             <button
-              onClick={handleBackToShop}
+              onClick={handleExploreCollection}
               className="empty-cart-cta"
               style={{ color: '#FEFCF9' }}
             >
