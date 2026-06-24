@@ -352,11 +352,20 @@ export default function ProductPage({ product: initialProduct, products = [], on
     return Math.round((baseCompetitor * scaleFactor) / 10) * 10;
   }, [product, selectedOption]);
 
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-32 flex flex-col items-center justify-center font-body">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#B08A50] mb-4"></div>
+        <span className="text-xs uppercase tracking-[0.2em] text-[#1C1B18]/60 animate-pulse">Loading fragrance...</span>
+      </div>
+    );
+  }
+
   if (!product) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center font-body">
-        <h3 className="font-heading text-2xl font-bold text-[#0F3D3E] mb-2">Scents Not Loaded</h3>
-        <button onClick={onBackToShop} className="px-6 py-2.5 bg-[#0F3D3E] text-white rounded-full text-xs font-bold uppercase tracking-wider">
+        <h3 className="font-heading text-2xl font-bold text-[#1C1B18] mb-2">Scents Not Loaded</h3>
+        <button onClick={onBackToShop} className="px-6 py-2.5 bg-[#1C1B18] text-white rounded-none text-xs font-bold uppercase tracking-wider cursor-pointer">
           Return to Shop
         </button>
       </div>
