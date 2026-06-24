@@ -422,19 +422,77 @@ export default function CartPage({ onBackToShop, products = [] }) {
   // Render Empty Cart Screen
   if (cartItems.length === 0) {
     return (
-      <div className="luxury-cart-container min-h-screen bg-[#F7F3ED] font-body text-[#1C1B18] pb-24 select-none pt-12">
+      <div className="luxury-cart-container min-h-screen bg-[#F7F3ED] font-body text-[#1C1B18] select-none">
 
-        <div className="max-w-xl mx-auto text-center px-4 py-16 bg-[#FEFCF9] border border-black/5 mt-16 shadow-sm">
-          <h2 className="font-heading text-3xl font-light uppercase tracking-wide mb-4">Your Shopping Bag</h2>
-          <p className="text-xs text-black/50 leading-relaxed mb-8">
-            There are currently no items in your luxury fragrance bag.
-          </p>
-          <button 
-            onClick={handleBackToShop} 
-            className="py-3 px-8 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#B08A50] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 shadow-sm"
-          >
-            Explore the Collection
-          </button>
+        {/* Luxury Page Hero — matches filled cart */}
+        <section className="page-hero">
+          <div className="page-hero-bg-text">BAG</div>
+          <div className="page-hero-content">
+            <span className="page-hero-eyebrow">Decant Atelier</span>
+            <h1 className="page-hero-title">Your Shopping Bag</h1>
+            <p className="page-hero-subtitle">
+              Your fragrance journey begins here.
+            </p>
+            <div className="page-hero-divider" />
+          </div>
+        </section>
+
+        {/* Empty State Body */}
+        <div className="empty-cart-body">
+          <div className="empty-cart-card">
+
+            {/* SVG Bag Icon */}
+            <div className="empty-cart-icon-wrap">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 48 48"
+                fill="none"
+                stroke="#B08A50"
+                strokeWidth="1.25"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="empty-cart-icon"
+              >
+                <path d="M14 20V16a10 10 0 0 1 20 0v4" />
+                <rect x="8" y="20" width="32" height="24" rx="3" />
+                <path d="M18 28a6 6 0 0 0 12 0" strokeDasharray="2 2" />
+              </svg>
+            </div>
+
+            {/* Heading */}
+            <h2 className="empty-cart-heading">Your bag is empty</h2>
+
+            {/* Gold divider */}
+            <div className="empty-cart-divider" />
+
+            {/* Supporting text */}
+            <p className="empty-cart-body-text">
+              Discover our curated collection of niche and luxury fragrances — each bottle a story, each note a memory waiting to be made.
+            </p>
+
+            {/* CTA */}
+            <button
+              onClick={handleBackToShop}
+              className="empty-cart-cta"
+              style={{ color: '#FEFCF9' }}
+            >
+              Explore the Collection
+              <span className="empty-cart-cta-arrow" aria-hidden="true">→</span>
+            </button>
+
+            {/* Secondary link */}
+            <p className="empty-cart-secondary-note">
+              Looking for something specific?&nbsp;
+              <button
+                onClick={handleBackToShop}
+                className="empty-cart-text-link"
+              >
+                Browse all fragrances
+              </button>
+            </p>
+
+          </div>
         </div>
       </div>
     );
