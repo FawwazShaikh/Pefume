@@ -24,6 +24,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
 
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const imageRef = useRef(null);
 
   // Reviews submission state variables
   const [reviewRating, setReviewRating] = useState(5);
@@ -157,10 +158,14 @@ export default function ProductPage({ product: initialProduct, products = [], on
     setIsImageLoading(true);
   }, [product]);
 
-  // Set image loading state to true on active image change
+  // Set image loading state to true on active image change, but check if already complete/cached
   useEffect(() => {
-    setIsImageLoading(true);
-  }, [activeImageIndex]);
+    if (imageRef.current && imageRef.current.complete) {
+      setIsImageLoading(false);
+    } else {
+      setIsImageLoading(true);
+    }
+  }, [activeImageIndex, product]);
 
   // Selected option details
   const selectedOption = useMemo(() => {
@@ -750,12 +755,13 @@ export default function ProductPage({ product: initialProduct, products = [], on
               ) : (
                 <>
                   {isImageLoading && (
-                    <div className="absolute inset-0 bg-neutral-50 animate-pulse z-10 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-neutral-50 animate-pulse z-0 flex items-center justify-center">
                       <div className="w-12 h-16 border border-neutral-200/50 opacity-20 relative overflow-hidden" />
                     </div>
                   )}
                   <AnimatePresence mode="wait">
                     <motion.img
+                      ref={imageRef}
                       key={activeImageIndex}
                       src={galleryImages[activeImageIndex]}
                       alt={product.name}
@@ -765,7 +771,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-                      className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-103 cursor-zoom-in z-0"
+                      className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-103 cursor-zoom-in z-10"
                       onClick={() => setIsLightboxOpen(true)}
                       onError={() => {
                         setImageErrors((prev) => ({ ...prev, [activeImageIndex]: true }));
