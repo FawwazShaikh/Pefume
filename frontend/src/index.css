@@ -777,4 +777,12 @@ html {
     line-height: 1.5 !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Policies Page Hero Refinements
+   ═══════════════════════════════════════════════════════════ */
+.page-hero.policies-hero {
+  padding-top: clamp(6rem, 12vw, 8.5rem);
+  padding-bottom: clamp(5rem, 8vw, 7rem);
+}
 

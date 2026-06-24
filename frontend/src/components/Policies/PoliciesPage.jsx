@@ -57,7 +57,7 @@ export default function PoliciesPage() {
       />
 
       {/* ===== HEADER ===== */}
-      <section className="page-hero">
+      <section className="page-hero policies-hero">
         {/* Subtle grid pattern */}
         <div
           className="absolute inset-0 opacity-[0.03]"
@@ -83,9 +83,9 @@ export default function PoliciesPage() {
       </section>
 
       {/* ===== MAIN CONTENT ===== */}
-      <main className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+      <main className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 -mt-16 relative z-20">
         {/* Desktop + Tablet landscape: sidebar layout */}
-        <div className="hidden lg:grid lg:grid-cols-[300px_1fr] gap-0 -mt-10 relative z-20">
+        <div className="hidden lg:grid lg:grid-cols-[300px_1fr] gap-0">
           {/* Sidebar */}
           <aside className="pt-0">
             <div className="sticky top-28 bg-[#FEFCF9] rounded-3xl border border-policy-divider/50 shadow-md p-4">
@@ -106,7 +106,7 @@ export default function PoliciesPage() {
         </div>
 
         {/* Mobile + Tablet portrait: card grid or detail view */}
-        <div className="lg:hidden -mt-8 relative z-20 pb-16">
+        <div className="lg:hidden pb-16">
           {mobileView === 'grid' ? (
             /* Policy card grid */
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">

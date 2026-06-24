@@ -495,48 +495,8 @@ export default function SignatureCollection({
 
         {/* Unified Control Bar (Filters on Left, Search + Sort on Right) */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4 border-b mb-8" style={{ borderBottomColor: '#D8D1C7' }}>
-          {/* Left: Filter Pills */}
-          <div className="flex flex-wrap items-center gap-6 md:gap-8">
-            {[
-              { id: 'all', label: 'Shop All' },
-              { id: 'decants', label: 'Decants' },
-              { id: 'fullbottles', label: 'Full Bottles' },
-            ].map((pill) => {
-              const isActive = activePillId === pill.id;
-              return (
-                <button
-                  key={pill.id}
-                  onClick={() => handleCategorySelect(pill.id)}
-                  className="py-2 text-[0.9rem] tracking-[0.08em] uppercase transition-all duration-300 ease-out whitespace-nowrap cursor-pointer min-h-[44px] flex items-center justify-center relative"
-                  style={{
-                    color: isActive ? '#2C2926' : '#746F69',
-                    fontWeight: isActive ? 600 : 500
-                  }}
-                >
-                  <span>{pill.label}</span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeCategoryUnderline"
-                      className="absolute bottom-0 left-0 right-0 h-[2px]"
-                      style={{ backgroundColor: '#2C2926' }}
-                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Clear filters */}
-            {(currentCategory !== 'all' || searchQuery !== '' || sortBy !== 'recommended') && (
-              <button
-                onClick={handleClearFilters}
-                className="text-[0.75rem] tracking-[0.08em] uppercase transition-colors duration-300 font-medium cursor-pointer min-h-[44px] flex items-center ml-2"
-                style={{ color: '#746F69' }}
-              >
-                <span className="underline underline-offset-4">CLEAR ALL</span>
-              </button>
-            )}
-          </div>
+          {/* Left side intentionally empty — filter pills removed */}
+          <div />
           {/* Right: Search + Sort controls */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-6">
             {/* Search input container */}

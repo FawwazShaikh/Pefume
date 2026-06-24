@@ -184,7 +184,7 @@ function App() {
       )}
 
       {activePage !== 'home' && (
-        <div className={(activePage === 'admin' || activePage === 'cart' || activePage === 'profile' || activePage === 'gifting') ? '' : 'main-content-padding'} style={(activePage !== 'admin' && activePage !== 'cart' && activePage !== 'profile' && activePage !== 'gifting') ? { backgroundColor: '#F7F3ED' } : {}}>
+        <div className={(activePage === 'admin' || activePage === 'cart' || activePage === 'profile' || activePage === 'gifting' || activePage === 'policies') ? '' : 'main-content-padding'} style={(activePage !== 'admin' && activePage !== 'cart' && activePage !== 'profile' && activePage !== 'gifting' && activePage !== 'policies') ? { backgroundColor: '#F7F3ED' } : {}}>
           {(activePage === 'shop' || activePage === 'wishlist') && (
             <SignatureCollection
               activeCategory={activeCategory}
