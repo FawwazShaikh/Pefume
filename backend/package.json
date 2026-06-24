@@ -4,6 +4,9 @@
   "description": "Express backend server for Decant Atelier",
   "main": "server.js",
   "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "@clerk/clerk-sdk-node": "^5.0.7",
     "@neondatabase/serverless": "^1.1.0",
