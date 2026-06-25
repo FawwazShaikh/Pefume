@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_BASE_URL, sanitizeImageUrl } from '../utils/config.js';
 
 const CTA_DESTINATIONS = {
   shop: '#shop',
@@ -36,7 +37,7 @@ export default function DailyOfferPopup() {
   useEffect(() => {
     async function fetchCampaign() {
       try {
-        const res = await fetch('http://localhost:5000/api/campaigns/active');
+        const res = await fetch(`${API_BASE_URL}/api/campaigns/active`);
         if (!res.ok || res.status === 204) return;
         const data = await res.json();
         if (!data || !data.id) return;
@@ -117,7 +118,7 @@ export default function DailyOfferPopup() {
               {campaign.imageUrl && (
                 <div style={styles.imageCol} className="campaign-popup-img-col">
                   <img
-                    src={campaign.imageUrl}
+                    src={sanitizeImageUrl(campaign.imageUrl)}
                     alt={campaign.title}
                     style={styles.productImg}
                     onError={e => { e.target.style.display = 'none'; }}

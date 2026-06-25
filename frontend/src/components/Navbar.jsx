@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { SignedIn, SignedOut, SignInButton, SignOutButton } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CartStore } from '../utils/store.js';
+import { sanitizeImageUrl } from '../utils/config.js';
 import './Navbar.css';
 
 const ShoppingBagIcon = ({ className }) => (
@@ -345,18 +347,10 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   }, []);
 
   useEffect(() => {
-    const syncCart = () => {
-      try {
-        const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
-        setCartCount(cart.length); // Count unique lines/variants in the cart
-      } catch (e) {
-        console.error('Failed to parse cartItems in Navbar:', e);
-        setCartCount(0);
-      }
-    };
-    syncCart();
-    window.addEventListener('cart-updated', syncCart);
-    return () => window.removeEventListener('cart-updated', syncCart);
+    const unsubscribe = CartStore.subscribe(cart => {
+      setCartCount(cart.length);
+    });
+    return unsubscribe;
   }, []);
 
   const handleLinkClick = (e, hash) => {
@@ -914,7 +908,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
                           >
                             <img
                               className="search-result-img"
-                              src={product.image || '/images/perfume_placeholder.jpeg'}
+                              src={sanitizeImageUrl(product.image || '/images/perfume_placeholder.jpeg')}
                               alt={product.name}
                               loading="lazy"
                             />

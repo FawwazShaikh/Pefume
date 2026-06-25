@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth, useUser, SignInButton, SignOutButton } from '@clerk/clerk-react';
 import { showToast } from '../utils/toast.js';
 import './AdminPage.css';
+import { API_BASE_URL, sanitizeImageUrl } from '../utils/config.js';
 
 export default function AdminPage() {
   const { isLoaded: authLoaded, isSignedIn, getToken } = useAuth();
@@ -141,7 +142,7 @@ export default function AdminPage() {
           return;
         }
 
-        const res = await fetch('http://localhost:5000/api/user/profile', {
+        const res = await fetch(`${API_BASE_URL}/api/user/profile`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -170,42 +171,42 @@ export default function AdminPage() {
       const headers = await getAdminHeaders();
 
       // Fetch Categories
-      const catRes = await fetch('http://localhost:5000/api/categories');
+      const catRes = await fetch(`${API_BASE_URL}/api/categories`);
       if (catRes.ok) {
         const catData = await catRes.json();
         setCategories(catData);
       }
 
       // Fetch Admin Products (all details, variants, image sets, metrics)
-      const prodRes = await fetch('http://localhost:5000/api/admin/products', { headers });
+      const prodRes = await fetch(`${API_BASE_URL}/api/admin/products`, { headers });
       if (prodRes.ok) {
         const prodData = await prodRes.json();
         setProducts(prodData);
       }
 
       // Fetch Orders
-      const orderRes = await fetch('http://localhost:5000/api/admin/orders?status=ALL', { headers });
+      const orderRes = await fetch(`${API_BASE_URL}/api/admin/orders?status=ALL`, { headers });
       if (orderRes.ok) {
         const orderData = await orderRes.json();
         setOrders(orderData);
       }
 
       // Fetch Users
-      const userRes = await fetch('http://localhost:5000/api/admin/users', { headers });
+      const userRes = await fetch(`${API_BASE_URL}/api/admin/users`, { headers });
       if (userRes.ok) {
         const userData = await userRes.json();
         setUsers(userData);
       }
 
       // Fetch Reviews Moderation list
-      const revRes = await fetch('http://localhost:5000/api/admin/reviews', { headers });
+      const revRes = await fetch(`${API_BASE_URL}/api/admin/reviews`, { headers });
       if (revRes.ok) {
         const revData = await revRes.json();
         setReviews(revData);
       }
 
       // Fetch Inventory Audit Logs
-      const logRes = await fetch('http://localhost:5000/api/admin/inventory-logs', { headers });
+      const logRes = await fetch(`${API_BASE_URL}/api/admin/inventory-logs`, { headers });
       if (logRes.ok) {
         const logData = await logRes.json();
         setInventoryLogs(logData);
@@ -213,7 +214,7 @@ export default function AdminPage() {
 
       // Fetch Dashboard Stats
       try {
-        const dashRes = await fetch('http://localhost:5000/api/admin/dashboard', { headers });
+        const dashRes = await fetch(`${API_BASE_URL}/api/admin/dashboard`, { headers });
         if (dashRes.ok) {
           const dashData = await dashRes.json();
           setDashboardStats(dashData);
@@ -224,7 +225,7 @@ export default function AdminPage() {
 
       // Fetch Store Settings
       try {
-        const settingsRes = await fetch('http://localhost:5000/api/admin/settings', { headers });
+        const settingsRes = await fetch(`${API_BASE_URL}/api/admin/settings`, { headers });
         if (settingsRes.ok) {
           const settingsData = await settingsRes.json();
           setStoreSettings({
@@ -238,7 +239,7 @@ export default function AdminPage() {
 
       // Fetch Payments Ledger
       try {
-        const payRes = await fetch('http://localhost:5000/api/admin/payments', { headers });
+        const payRes = await fetch(`${API_BASE_URL}/api/admin/payments`, { headers });
         if (payRes.ok) {
           const payData = await payRes.json();
           setPayments(payData);
@@ -268,7 +269,7 @@ export default function AdminPage() {
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {
       const headers = await getAdminHeaders();
-      const res = await fetch(`http://localhost:5000/api/admin/orders/${orderId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/orders/${orderId}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ status: newStatus })
@@ -293,8 +294,8 @@ export default function AdminPage() {
       const headers = await getAdminHeaders();
       const method = editingProduct ? 'PATCH' : 'POST';
       const url = editingProduct 
-        ? `http://localhost:5000/api/products/${editingProduct.id}` 
-        : 'http://localhost:5000/api/products';
+        ? `${API_BASE_URL}/api/products/${editingProduct.id}` 
+        : `${API_BASE_URL}/api/products`;
 
       const payload = {
         ...productForm,
@@ -331,7 +332,7 @@ export default function AdminPage() {
     if (!window.confirm('Delete this product? This action is permanent.')) return;
     try {
       const headers = await getAdminHeaders();
-      const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
         method: 'DELETE',
         headers
       });
@@ -347,7 +348,7 @@ export default function AdminPage() {
   const handleToggleProductActive = async (prod) => {
     try {
       const headers = await getAdminHeaders();
-      const res = await fetch(`http://localhost:5000/api/products/${prod.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/products/${prod.id}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ isActive: !prod.isActive })
@@ -366,7 +367,7 @@ export default function AdminPage() {
     if (!categoryForm.name || !categoryForm.slug) return;
     try {
       const headers = await getAdminHeaders();
-      const res = await fetch('http://localhost:5000/api/categories', {
+      const res = await fetch(`${API_BASE_URL}/api/categories`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ name: categoryForm.name, slug: categoryForm.slug })
@@ -411,7 +412,7 @@ export default function AdminPage() {
   const handleRestockInventory = async (sku, newStock) => {
     try {
       const headers = await getAdminHeaders();
-      const res = await fetch('http://localhost:5000/api/admin/inventory/adjust', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/inventory/adjust`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -445,7 +446,7 @@ export default function AdminPage() {
       const headers = await getAdminHeaders();
       for (const item of lowStockItems) {
         const newStock = item.stock + 20;
-        await fetch('http://localhost:5000/api/admin/inventory/adjust', {
+        await fetch(`${API_BASE_URL}/api/admin/inventory/adjust`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
@@ -469,7 +470,7 @@ export default function AdminPage() {
   const handleReviewStatus = async (reviewId, approve) => {
     try {
       const headers = await getAdminHeaders();
-      const res = await fetch(`http://localhost:5000/api/admin/reviews/${reviewId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/reviews/${reviewId}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ approved: approve })
@@ -487,7 +488,7 @@ export default function AdminPage() {
     if (!window.confirm('Moderator Action: Are you sure you want to delete this review?')) return;
     try {
       const headers = await getAdminHeaders();
-      const res = await fetch(`http://localhost:5000/api/admin/reviews/${reviewId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/reviews/${reviewId}`, {
         method: 'DELETE',
         headers
       });
@@ -504,7 +505,7 @@ export default function AdminPage() {
     e.preventDefault();
     try {
       const headers = await getAdminHeaders();
-      const res = await fetch('http://localhost:5000/api/admin/settings', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/settings`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify(storeSettings)
@@ -536,7 +537,7 @@ export default function AdminPage() {
     setLoadingData(true);
     try {
       const headers = await getAdminHeaders();
-      const res = await fetch(`http://localhost:5000/api/admin/users/${userId}/role`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/role`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ role: newRole })
@@ -1703,7 +1704,7 @@ export default function AdminPage() {
                       <tr key={p.id}>
                         <td>
                           {thumb ? (
-                            <img src={thumb} alt={p.name} className="admin-product-thumb" />
+                            <img src={sanitizeImageUrl(thumb)} alt={p.name} className="admin-product-thumb" />
                           ) : (
                             <div className="admin-product-thumb">BOX</div>
                           )}

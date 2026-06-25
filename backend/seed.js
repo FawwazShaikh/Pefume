@@ -1,4 +1,8 @@
 import { prisma } from './lib/prisma.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 
 const collectionsData = [
   {
@@ -345,8 +349,8 @@ async function main() {
         codEnabled: true,
         shippingCharges: 100,
         freeShippingThreshold: 1999,
-        razorpayKey: 'rzp_test_AtelierKey2026',
-        razorpaySecret: ''
+        razorpayKey: process.env.RAZORPAY_KEY_ID ? process.env.RAZORPAY_KEY_ID.replace(/^["']|["']$/g, '').trim() : 'rzp_test_AtelierKey2026',
+        razorpaySecret: process.env.RAZORPAY_KEY_SECRET ? process.env.RAZORPAY_KEY_SECRET.replace(/^["']|["']$/g, '').trim() : ''
       }
     });
     console.log('Default store settings seeded.');

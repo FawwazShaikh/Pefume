@@ -5,6 +5,7 @@ import { showToast } from '../utils/toast';
 import { collectionsData } from './SignatureCollection/CollectionData';
 import { addToCart } from '../utils/cartHelper';
 import './ProfilePage.css';
+import { API_BASE_URL } from '../utils/config.js';
 
 const statusStyles = {
   PENDING: 'status-pending',
@@ -157,7 +158,7 @@ export default function ProfilePage() {
       if (!token) return;
 
       // Profile details
-      const profileRes = await fetch('http://localhost:5000/api/user/profile', {
+      const profileRes = await fetch(`${API_BASE_URL}/api/user/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (profileRes.ok) {
@@ -170,7 +171,7 @@ export default function ProfilePage() {
       }
 
       // Addresses
-      const addrRes = await fetch('http://localhost:5000/api/addresses', {
+      const addrRes = await fetch(`${API_BASE_URL}/api/addresses`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (addrRes.ok) {
@@ -178,7 +179,7 @@ export default function ProfilePage() {
       }
 
       // Orders
-      const orderRes = await fetch('http://localhost:5000/api/orders', {
+      const orderRes = await fetch(`${API_BASE_URL}/api/orders`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (orderRes.ok) {
@@ -206,7 +207,7 @@ export default function ProfilePage() {
     setSavingProfile(true);
     try {
       const token = await getToken();
-      const res = await fetch('http://localhost:5000/api/user/profile', {
+      const res = await fetch(`${API_BASE_URL}/api/user/profile`, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json', 
@@ -238,8 +239,8 @@ export default function ProfilePage() {
     try {
       const token = await getToken();
       const url = editingAddressId 
-        ? `http://localhost:5000/api/addresses/${editingAddressId}` 
-        : 'http://localhost:5000/api/addresses';
+        ? `${API_BASE_URL}/api/addresses/${editingAddressId}` 
+        : `${API_BASE_URL}/api/addresses`;
       const method = editingAddressId ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -311,11 +312,26 @@ export default function ProfilePage() {
     setShowAddressForm(true);
   };
 
+  const handleDuplicateAddressClick = (addr) => {
+    setEditingAddressId(null);
+    setAddressFormData({
+      fullName: addr.fullName,
+      phone: addr.phone,
+      addressLine1: addr.addressLine1,
+      addressLine2: addr.addressLine2 || '',
+      city: addr.city,
+      state: addr.state,
+      postalCode: addr.postalCode,
+      isDefault: false
+    });
+    setShowAddressForm(true);
+  };
+
   const handleDeleteAddress = async (id) => {
     if (!confirm('Are you sure you want to delete this address?')) return;
     try {
       const token = await getToken();
-      const res = await fetch(`http://localhost:5000/api/addresses/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/addresses/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -334,7 +350,7 @@ export default function ProfilePage() {
   const handleSetDefaultAddress = async (id) => {
     try {
       const token = await getToken();
-      const res = await fetch(`http://localhost:5000/api/addresses/${id}/default`, {
+      const res = await fetch(`${API_BASE_URL}/api/addresses/${id}/default`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -576,52 +592,99 @@ export default function ProfilePage() {
                   </div>
 
                   {orders.length === 0 ? (
-                    <div className="py-12 text-center bg-white/40 border border-black/5">
-                      <p className="text-xs text-black/50 leading-relaxed font-body">You have not ordered any premium decants yet.</p>
+                    <div className="py-16 text-center bg-[#FEFCF9] border border-black/5 px-6">
+                      <div className="text-3xl text-black/20 mb-4">✦</div>
+                      <p className="text-xs text-black/50 leading-relaxed font-body">
+                        No orders yet. Find your next signature scent.
+                      </p>
                       <button
                         onClick={() => { window.location.hash = 'shop'; }}
-                        className="mt-6 py-2.5 px-6 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#B08A50] text-[0.65rem] font-bold tracking-widest uppercase transition-colors duration-300"
+                        className="mt-6 py-3 px-8 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#B08A50] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer shadow-sm"
                       >
-                        Browse Scents
+                        Explore Collections
                       </button>
                     </div>
                   ) : (
-                    <div className="divide-y divide-black/8">
+                    <div className="space-y-6">
                       {orders.map(order => {
                         const isExpanded = expandedOrderId === order.id;
+                        const itemsSummary = order.orderItems?.map(item => `${item.productName} (${item.size})`).join(', ') || '';
+                        
                         return (
-                          <div key={order.id} className="py-6 first:pt-0 last:pb-0">
-                            <div 
-                              onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
-                              className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:opacity-85 transition-opacity"
-                            >
+                          <div 
+                            key={order.id} 
+                            className="bg-[#FEFCF9] border border-black/5 hover:border-black/10 p-6 shadow-sm transition-all duration-300"
+                          >
+                            {/* Card Header Info */}
+                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pb-4 border-b border-black/5 items-center">
                               <div>
-                                <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block">Order ID</span>
-                                <h4 className="text-sm font-semibold tracking-wide text-[#1C1B18]">
-                                  #{order.id.slice(-8).toUpperCase()}
-                                </h4>
-                                <span className="text-[0.72rem] text-black/50 block mt-0.5">
-                                  {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                <span className="text-[0.55rem] font-bold text-black/35 uppercase tracking-widest block mb-0.5">Order Reference</span>
+                                <span className="text-xs font-bold text-[#1C1B18]">#{order.id.slice(-8).toUpperCase()}</span>
+                              </div>
+                              <div>
+                                <span className="text-[0.55rem] font-bold text-black/35 uppercase tracking-widest block mb-0.5">Placed On</span>
+                                <span className="text-xs text-black/60 font-medium">
+                                  {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                                 </span>
                               </div>
-                              
-                              <div className="flex items-center gap-8 justify-between sm:justify-end">
-                                <div>
-                                  <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block text-left sm:text-right">Total</span>
-                                  <span className="text-sm font-bold text-[#B08A50]">₹{Number(order.total).toLocaleString('en-IN')}</span>
-                                </div>
-                                <div className="text-left sm:text-right">
-                                  <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block mb-0.5">Status</span>
-                                  <span className={`status-pill ${statusStyles[order.status] || 'status-pending'}`}>
-                                    {order.status}
-                                  </span>
-                                </div>
-                                <span className="text-[#B08A50] text-xs font-bold hidden sm:inline">
-                                  {isExpanded ? 'Collapse' : 'Expand'}
+                              <div>
+                                <span className="text-[0.55rem] font-bold text-black/35 uppercase tracking-widest block mb-0.5">Total Amount</span>
+                                <span className="text-xs font-bold text-[#B08A50]">₹{Number(order.total).toLocaleString('en-IN')}</span>
+                              </div>
+                              <div className="sm:text-right">
+                                <span className={`status-pill ${statusStyles[order.status] || 'status-pending'}`}>
+                                  {order.status}
                                 </span>
                               </div>
                             </div>
 
+                            {/* Card Summary (Items Preview) */}
+                            <div className="py-4 flex justify-between items-center gap-4">
+                              <div className="flex-1">
+                                <span className="text-[0.55rem] font-bold text-black/35 uppercase tracking-widest block mb-1">Items Selections</span>
+                                <p className="text-xs text-black/65 font-medium line-clamp-1">
+                                  {itemsSummary || 'No items found in this order.'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Card Bottom CTA Actions */}
+                            <div className="pt-4 border-t border-black/5 flex flex-wrap gap-2.5 items-center justify-between">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                                  className="py-2 px-4 border border-black/10 text-black/70 hover:text-black hover:border-black/25 text-[0.62rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer bg-transparent"
+                                >
+                                  {isExpanded ? 'Hide Details' : 'View Details'}
+                                </button>
+                                {order.status !== 'CANCELLED' && (
+                                  <>
+                                    <button
+                                      onClick={() => showToast('Connecting to logistics server... Status: In Transit.', 'info')}
+                                      className="py-2 px-4 border border-black/10 text-black/70 hover:text-black hover:border-black/25 text-[0.62rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer bg-transparent"
+                                    >
+                                      Track Order
+                                    </button>
+                                    <button
+                                      onClick={() => showToast('Generating invoice download... PDF will start downloading shortly.', 'info')}
+                                      className="py-2 px-4 border border-black/10 text-black/70 hover:text-black hover:border-black/25 text-[0.62rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer bg-transparent"
+                                    >
+                                      Download Invoice
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                              
+                              {/* Reorder Button */}
+                              <button
+                                onClick={() => handleReorder(order)}
+                                className="py-2 px-4 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#B08A50] text-[0.62rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer shadow-sm ml-auto"
+                              >
+                                Reorder Items
+                              </button>
+                            </div>
+
+                            {/* Expanded Details section */}
                             <AnimatePresence>
                               {isExpanded && (
                                 <motion.div
@@ -631,28 +694,28 @@ export default function ProfilePage() {
                                   transition={{ duration: 0.25 }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="pt-6 mt-6 border-t border-black/5 grid grid-cols-1 md:grid-cols-2 gap-8 text-[0.78rem] text-black/75">
+                                  <div className="pt-6 mt-4 border-t border-black/5 grid grid-cols-1 md:grid-cols-2 gap-8 text-[0.78rem] text-black/75">
                                     <div>
                                       <h5 className="text-[0.65rem] font-bold uppercase tracking-wider text-[#1C1B18] mb-3">Delivery Address</h5>
                                       {order.address ? (
-                                        <div className="space-y-1 font-body">
+                                        <div className="space-y-1 font-body text-xs text-black/65">
                                           <p className="font-bold text-[#1C1B18]">{order.address.fullName}</p>
                                           <p>{order.address.addressLine1}</p>
                                           {order.address.addressLine2 && <p>{order.address.addressLine2}</p>}
                                           <p>{order.address.city}, {order.address.state} - {order.address.postalCode}</p>
-                                          <p className="mt-2 text-black/60">Phone: {order.address.phone}</p>
+                                          <p className="mt-2 text-black/40">📞 {order.address.phone}</p>
                                         </div>
                                       ) : (
-                                        <p className="text-black/40 italic">Address details unavailable.</p>
+                                        <p className="text-black/40 italic text-xs">Address details unavailable.</p>
                                       )}
                                     </div>
                                     <div>
                                       <h5 className="text-[0.65rem] font-bold uppercase tracking-wider text-[#1C1B18] mb-3">Invoice Details</h5>
-                                      <div className="space-y-1 font-body">
-                                        <p>Payment: <strong>{order.paymentMethod === 'COD' ? 'Cash on Delivery (COD)' : 'Simulated Card'}</strong></p>
+                                      <div className="space-y-1 font-body text-xs text-black/65">
+                                        <p>Payment Mode: <strong className="text-[#1C1B18]">{order.paymentMethod === 'COD' ? 'Cash on Delivery (COD)' : 'Razorpay Secure Checkout'}</strong></p>
                                         <p>Subtotal: ₹{Number(order.subtotal).toLocaleString('en-IN')}</p>
-                                        <p>Shipping: {Number(order.shippingFee) > 0 ? `₹${Number(order.shippingFee).toLocaleString('en-IN')}` : 'FREE'}</p>
-                                        {order.notes && <p className="mt-3 italic text-black/50">"Notes: {order.notes}"</p>}
+                                        <p>Shipping: {Number(order.shippingFee) > 0 ? `₹${Number(order.shippingFee).toLocaleString('en-IN')}` : 'Free Delivery'}</p>
+                                        {order.notes && <p className="mt-3 italic text-black/50">"Gift Note: {order.notes}"</p>}
                                       </div>
                                     </div>
                                   </div>
@@ -663,10 +726,10 @@ export default function ProfilePage() {
                                       {order.orderItems?.map(item => (
                                         <div key={item.id} className="flex justify-between items-center text-xs py-2 border-b border-black/5 last:border-0">
                                           <div>
-                                            <p className="font-bold">{item.productName}</p>
+                                            <p className="font-bold text-[#1C1B18]">{item.productName}</p>
                                             <span className="text-[0.68rem] text-black/45 block mt-0.5">Size: {item.size} • Qty: {item.quantity}</span>
                                           </div>
-                                          <span className="font-semibold">₹{Number(item.priceAtPurchase).toLocaleString('en-IN')}</span>
+                                          <span className="font-semibold text-[#1C1B18]">₹{Number(item.priceAtPurchase).toLocaleString('en-IN')}</span>
                                         </div>
                                       ))}
                                     </div>
@@ -862,7 +925,13 @@ export default function ProfilePage() {
                               onClick={() => handleEditAddressClick(addr)}
                               className="text-[0.62rem] font-bold uppercase tracking-widest text-[#B08A50] hover:text-[#1C1B18] transition-colors"
                             >
-                              Edit Details
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDuplicateAddressClick(addr)}
+                              className="text-[0.62rem] font-bold uppercase tracking-widest text-[#B08A50] hover:text-[#1C1B18] transition-colors"
+                            >
+                              Duplicate
                             </button>
                             <button
                               onClick={() => handleDeleteAddress(addr.id)}

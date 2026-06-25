@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { collectionsData } from './CollectionData';
 import { addToCart, updateQuantity } from '../../utils/cartHelper';
 import { showToast } from '../../utils/toast.js';
+import { CartStore, WishlistStore } from '../../utils/store.js';
+import { API_BASE_URL, sanitizeImageUrl } from '../../utils/config.js';
 
 const categoryBanners = {
   summer: {
@@ -111,38 +113,22 @@ export default function SignatureCollection({
     return () => window.removeEventListener('hashchange', handleUrlParams);
   }, []);
 
-  const [wishlist, setWishlist] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('wishlist') || '[]');
-    } catch (e) {
-      return [];
-    }
-  });
-
-  const [cartItems, setCartItems] = useState([]);
+  const [wishlist, setWishlist] = useState(() => WishlistStore.getState());
+  const [cartItems, setCartItems] = useState(() => CartStore.getState());
 
   useEffect(() => {
-    const syncCart = () => {
-      try {
-        setCartItems(JSON.parse(localStorage.getItem('cartItems') || '[]'));
-      } catch (e) {
-        console.error('Failed to sync cart in SignatureCollection:', e);
-      }
+    const unsubscribeCart = CartStore.subscribe(setCartItems);
+    const unsubscribeWishlist = WishlistStore.subscribe(setWishlist);
+    return () => {
+      unsubscribeCart();
+      unsubscribeWishlist();
     };
-    syncCart();
-    window.addEventListener('cart-updated', syncCart);
-    return () => window.removeEventListener('cart-updated', syncCart);
   }, []);
 
   const toggleWishlist = (itemId, e) => {
     e.stopPropagation();
-    setWishlist(prev => {
-      const exists = prev.includes(itemId);
-      const updated = exists ? prev.filter(id => id !== itemId) : [...prev, itemId];
-      localStorage.setItem('wishlist', JSON.stringify(updated));
-      showToast(exists ? 'Removed from your wishlist' : 'Added to your wishlist', 'success');
-      return updated;
-    });
+    const added = WishlistStore.toggle(itemId);
+    showToast(added ? 'Added to your wishlist' : 'Removed from your wishlist', 'success');
   };
 
   const handleUpdateQuantity = async (item, sizeOption, newQty, e) => {
@@ -196,7 +182,7 @@ export default function SignatureCollection({
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const res = await fetch('http://localhost:5000/api/categories');
+        const res = await fetch(`${API_BASE_URL}/api/categories`);
         if (res.ok) {
           const data = await res.json();
           setDbCategories(data);
@@ -328,16 +314,6 @@ export default function SignatureCollection({
         return bFeat - aFeat;
       });
     }
-    const countAfterSort = items.length;
-
-    console.log('[DEBUG FILTER TRACE]', {
-      totalProductsLoaded: initialCount,
-      activeCategory: currentCategory,
-      productsAfterCategoryFilter: countAfterCategory,
-      productsAfterSearchFilter: countAfterSearch,
-      productsAfterSortFilter: countAfterSort,
-      dbCategoriesCount: dbCategories.length
-    });
 
     return items;
   }, [activeCollection, currentCategory, products, searchQuery, sortBy, dbCategories]);
@@ -353,6 +329,17 @@ export default function SignatureCollection({
     setSelectedItem(null);
     document.body.style.overflow = '';
   };
+
+  // Accessibility: Escape key closes Quick View drawer
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && selectedItem) {
+        closeQuickView();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [selectedItem]);
 
   // Breadcrumb dynamic text
   const breadcrumbText = useMemo(() => {
@@ -408,7 +395,7 @@ export default function SignatureCollection({
               >
                 {/* Background image with safe object-fit for any uploaded image */}
                 <img 
-                  src={activeBanner.image} 
+                  src={sanitizeImageUrl(activeBanner.image)} 
                   alt=""
                   aria-hidden="true"
                   className="absolute inset-0 w-full h-full z-0"
@@ -597,9 +584,9 @@ export default function SignatureCollection({
               >
                 {/* Product Image and Badges */}
                 <div className="relative aspect-[4/5] overflow-hidden bg-[#F7F3ED]/30">
-                  {item.image ? (
+                  {item.image && item.image.trim() !== "" ? (
                     <img
-                      src={item.image}
+                      src={sanitizeImageUrl(item.image)}
                       alt={item.name}
                       loading="lazy"
                       decoding="async"

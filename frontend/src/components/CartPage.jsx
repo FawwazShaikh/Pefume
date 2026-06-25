@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth, SignInButton } from '@clerk/clerk-react';
+import { useAuth, useUser, SignInButton } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCart, updateQuantity, removeFromCart, clearCart, mergeCartToDb } from '../utils/cartHelper';
 import { showToast } from '../utils/toast';
 import './CartPage.css';
+import { API_BASE_URL, sanitizeImageUrl } from '../utils/config.js';
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -15,9 +16,13 @@ const loadRazorpayScript = () => {
   });
 };
 
+import { CartStore, WishlistStore } from '../utils/store.js';
+
 export default function CartPage({ onBackToShop, products = [] }) {
   const { isSignedIn, getToken } = useAuth();
+  const { user } = useUser();
   const [cartItems, setCartItems] = useState([]);
+  const [checkoutState, setCheckoutState] = useState('IDLE');
 
   // Checkout flow states
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -29,6 +34,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
   const [addressError, setAddressError] = useState('');
   const [savingAddress, setSavingAddress] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState(null);
   const [newAddress, setNewAddress] = useState({
     fullName: '',
     phone: '',
@@ -51,6 +57,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
       postalCode: '',
       isDefault: false
     });
+    setEditingAddressId(null);
   };
 
   // Delivery options
@@ -66,30 +73,26 @@ export default function CartPage({ onBackToShop, products = [] }) {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderPlacedSuccess, setOrderPlacedSuccess] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState('');
+  const [addressToDeleteId, setAddressToDeleteId] = useState(null);
+
+  const isCheckoutInProgress = ['CREATING_ORDER', 'OPENING_RAZORPAY', 'VERIFYING_PAYMENT'].includes(checkoutState);
 
   const [storeSettings, setStoreSettings] = useState(null);
 
   const FREE_SHIPPING_THRESHOLD = storeSettings ? parseFloat(storeSettings.freeShippingThreshold) : 1999;
   const SHIPPING_CHARGES = storeSettings ? parseFloat(storeSettings.shippingCharges) : 100;
 
-  // Sync cart items on load and list for updates
-  const loadCart = () => {
-    setCartItems(getCart());
-  };
-
+  // Sync cart items on load and list for updates via CartStore subscription
   useEffect(() => {
-    loadCart();
-    window.addEventListener('cart-updated', loadCart);
-    return () => {
-      window.removeEventListener('cart-updated', loadCart);
-    };
+    const unsubscribe = CartStore.subscribe(setCartItems);
+    return unsubscribe;
   }, []);
 
   // Fetch store settings on mount
   useEffect(() => {
     async function fetchSettings() {
       try {
-        const res = await fetch('http://localhost:5000/api/settings');
+        const res = await fetch(`${API_BASE_URL}/api/settings`);
         if (res.ok) {
           const data = await res.json();
           setStoreSettings(data);
@@ -101,10 +104,11 @@ export default function CartPage({ onBackToShop, products = [] }) {
     fetchSettings();
   }, []);
 
-  // Sync and merge cart when user logs in
+  // Sync and merge cart when user logs in (background synchronization work)
   useEffect(() => {
     async function syncAndMerge() {
       if (isSignedIn) {
+        setCheckoutState('LOADING_CART');
         try {
           const token = await getToken();
           if (token) {
@@ -112,6 +116,8 @@ export default function CartPage({ onBackToShop, products = [] }) {
           }
         } catch (err) {
           console.error('Error syncing cart on sign-in:', err);
+        } finally {
+          setCheckoutState('IDLE');
         }
       }
     }
@@ -131,10 +137,11 @@ export default function CartPage({ onBackToShop, products = [] }) {
 
   // Fetch addresses when checkout starts or is active
   const fetchAddresses = async () => {
+    setCheckoutState('LOADING_ADDRESSES');
     try {
       const token = await getToken();
       if (!token) return;
-      const res = await fetch('http://localhost:5000/api/addresses', {
+      const res = await fetch(`${API_BASE_URL}/api/addresses`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -150,6 +157,8 @@ export default function CartPage({ onBackToShop, products = [] }) {
       }
     } catch (err) {
       console.error('Error fetching addresses:', err);
+    } finally {
+      setCheckoutState('READY');
     }
   };
 
@@ -158,6 +167,64 @@ export default function CartPage({ onBackToShop, products = [] }) {
       fetchAddresses();
     }
   }, [isSignedIn, isCheckingOut]);
+
+  // Address CRUD Handlers for Checkout Step 1
+  const handleEditAddressClick = (addr, e) => {
+    if (e) e.stopPropagation();
+    setEditingAddressId(addr.id);
+    setNewAddress({
+      fullName: addr.fullName,
+      phone: addr.phone,
+      addressLine1: addr.addressLine1,
+      addressLine2: addr.addressLine2 || '',
+      city: addr.city,
+      state: addr.state,
+      postalCode: addr.postalCode,
+      isDefault: addr.isDefault
+    });
+    setShowAddAddressForm(true);
+  };
+
+  const handleDuplicateAddressClick = (addr, e) => {
+    if (e) e.stopPropagation();
+    setEditingAddressId(null);
+    setNewAddress({
+      fullName: addr.fullName,
+      phone: addr.phone,
+      addressLine1: addr.addressLine1,
+      addressLine2: addr.addressLine2 || '',
+      city: addr.city,
+      state: addr.state,
+      postalCode: addr.postalCode,
+      isDefault: false
+    });
+    setShowAddAddressForm(true);
+  };
+
+  const handleDeleteAddress = (id, e) => {
+    if (e) e.stopPropagation();
+    setAddressToDeleteId(id);
+  };
+
+  const handleSetDefaultAddress = async (id, e) => {
+    if (e) e.stopPropagation();
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_BASE_URL}/api/addresses/${id}/default`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        const updatedAddresses = addresses.map(a => a.id === id ? updated : { ...a, isDefault: false });
+        updatedAddresses.sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
+        setAddresses(updatedAddresses);
+        showToast('Default address updated.', 'success');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Calculate pricing totals
   const subtotal = useMemo(() => {
@@ -212,17 +279,25 @@ export default function CartPage({ onBackToShop, products = [] }) {
     if (!isSignedIn) return;
     setIsCheckingOut(true);
     setCheckoutStep(1);
+    window.dispatchEvent(new CustomEvent('checkout_started', {
+      detail: { cartCount: cartItems.length, subtotal }
+    }));
   };
 
-  // Save new address during checkout
+  // Save new address during checkout (handles both Edit PUT and Create POST)
   const handleCreateAddress = async (e) => {
     e.preventDefault();
     setAddressError('');
     setSavingAddress(true);
     try {
       const token = await getToken();
-      const res = await fetch('http://localhost:5000/api/addresses', {
-        method: 'POST',
+      const url = editingAddressId 
+        ? `${API_BASE_URL}/api/addresses/${editingAddressId}` 
+        : `${API_BASE_URL}/api/addresses`;
+      const method = editingAddressId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -230,23 +305,28 @@ export default function CartPage({ onBackToShop, products = [] }) {
         body: JSON.stringify(newAddress)
       });
       if (res.ok) {
-        const created = await res.json();
-        setAddresses([created, ...addresses.map(a => newAddress.isDefault ? { ...a, isDefault: false } : a)]);
-        setSelectedAddressId(created.id);
+        const saved = await res.json();
+        let updatedAddresses = [];
+        if (editingAddressId) {
+          updatedAddresses = addresses.map(a => 
+            a.id === editingAddressId ? saved : (newAddress.isDefault ? { ...a, isDefault: false } : a)
+          );
+        } else {
+          updatedAddresses = [
+            saved,
+            ...addresses.map(a => newAddress.isDefault ? { ...a, isDefault: false } : a)
+          ];
+        }
+        updatedAddresses.sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
+        setAddresses(updatedAddresses);
+        setSelectedAddressId(saved.id);
         setShowAddAddressForm(false);
-        setNewAddress({
-          fullName: '',
-          phone: '',
-          addressLine1: '',
-          addressLine2: '',
-          city: '',
-          state: '',
-          postalCode: '',
-          isDefault: false
-        });
+        setEditingAddressId(null);
+        resetAddressForm();
+        showToast('Address saved successfully.', 'success');
       } else {
         const errData = await res.json();
-        setAddressError(errData.error || 'Failed to create address.');
+        setAddressError(errData.error || 'Failed to save address.');
       }
     } catch (err) {
       console.error(err);
@@ -264,6 +344,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
     }
     const selectedAddress = addresses.find(a => a.id === selectedAddressId);
     setPlacingOrder(true);
+    setCheckoutState('CREATING_ORDER');
     try {
       const token = await getToken();
       const items = cartItems.map(item => {
@@ -283,7 +364,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
         };
       });
 
-      const res = await fetch('http://localhost:5000/api/orders', {
+      const res = await fetch(`${API_BASE_URL}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -301,23 +382,49 @@ export default function CartPage({ onBackToShop, products = [] }) {
         const orderData = await res.json();
         
         if (paymentMethod === 'RAZORPAY') {
-          const scriptLoaded = await loadRazorpayScript();
-          if (!scriptLoaded) {
+          // Explicitly validate order response data before instantiating Razorpay
+          if (!orderData || !orderData.razorpayOrderId || !orderData.total || !orderData.currency) {
+            console.error("Invalid order response structure from server:", orderData);
+            showToast('Invalid payment details returned from the server.', 'error');
+            setPlacingOrder(false);
+            setCheckoutState('READY');
+            return;
+          }
+
+          setCheckoutState('OPENING_RAZORPAY');
+
+          // Verify SDK availability on window before opening the checkout popup
+          const scriptLoaded = typeof window.Razorpay !== 'undefined' ? true : await loadRazorpayScript();
+          if (!scriptLoaded || typeof window.Razorpay === 'undefined') {
             showToast('Razorpay Checkout SDK failed to load. Please verify your connection.', 'error');
             setPlacingOrder(false);
+            setCheckoutState('READY');
+            return;
+          }
+
+          // Enforce loading credentials strictly from environment variable
+          let rzpKey = import.meta.env.VITE_RAZORPAY_KEY_ID || '';
+          rzpKey = rzpKey.replace(/^["']|["']$/g, '').trim();
+
+          if (!rzpKey || rzpKey === 'rzp_test_placeholder') {
+            console.error("Razorpay VITE_RAZORPAY_KEY_ID is missing or set to placeholder in frontend.");
+            showToast('Payment gateway configuration error. Please contact support.', 'error');
+            setPlacingOrder(false);
+            setCheckoutState('READY');
             return;
           }
 
           const options = {
-            key: storeSettings ? storeSettings.razorpayKey : 'rzp_test_AtelierKey2026',
+            key: rzpKey,
             amount: Math.round(orderData.total * 100),
             currency: 'INR',
             name: storeSettings ? storeSettings.storeName : 'Decant Atelier',
             description: 'Luxury Fragrance Purchase',
             order_id: orderData.razorpayOrderId,
             handler: async function (response) {
+              setCheckoutState('VERIFYING_PAYMENT');
               try {
-                const verifyRes = await fetch('http://localhost:5000/api/payments/verify', {
+                const verifyRes = await fetch(`${API_BASE_URL}/api/payments/verify`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -328,24 +435,28 @@ export default function CartPage({ onBackToShop, products = [] }) {
                     razorpayPaymentId: response.razorpay_payment_id,
                     razorpaySignature: response.razorpay_signature,
                     orderId: orderData.id
-                    })
+                  })
                 });
                 if (verifyRes.ok) {
-                  setPlacedOrderId(orderData.id);
-                  clearCart();
-                  setOrderPlacedSuccess(true);
+                  setCheckoutState('SUCCESS');
+                  window.location.hash = `payment-success?orderId=${orderData.id}&paymentId=${response.razorpay_payment_id}`;
                 } else {
                   const errData = await verifyRes.json();
                   showToast(errData.error || 'Payment verification failed.', 'error');
+                  setCheckoutState('FAILURE');
+                  window.location.hash = `payment-failure?orderId=${orderData.id}&reason=failed`;
                 }
               } catch (verifyErr) {
                 console.error('Error verifying payment:', verifyErr);
                 showToast('Verification error. Please contact support with Order ID: ' + orderData.id, 'error');
+                setCheckoutState('FAILURE');
+                window.location.hash = `payment-failure?orderId=${orderData.id}&reason=failed`;
               }
             },
             prefill: {
-              name: selectedAddress ? selectedAddress.fullName : '',
-              contact: selectedAddress ? selectedAddress.phone : ''
+              name: selectedAddress?.fullName || user?.fullName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || '',
+              email: user?.primaryEmailAddress?.emailAddress || '',
+              contact: selectedAddress?.phone || user?.primaryPhoneNumber?.phoneNumber || ''
             },
             theme: {
               color: '#1C1B18'
@@ -353,8 +464,10 @@ export default function CartPage({ onBackToShop, products = [] }) {
             modal: {
               ondismiss: async function () {
                 console.log('User closed payment gateway modal.');
+                setCheckoutState('READY');
+                setPlacingOrder(false);
                 try {
-                  await fetch('http://localhost:5000/api/payments/fail', {
+                  await fetch(`${API_BASE_URL}/api/payments/fail`, {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
@@ -364,6 +477,8 @@ export default function CartPage({ onBackToShop, products = [] }) {
                   });
                 } catch (failErr) {
                   console.error('Failed to notify payment failure:', failErr);
+                } finally {
+                  window.location.hash = `payment-failure?orderId=${orderData.id}&reason=cancelled`;
                 }
               }
             }
@@ -371,10 +486,19 @@ export default function CartPage({ onBackToShop, products = [] }) {
 
           const rzp = new window.Razorpay(options);
           rzp.on('payment.failed', async function (response) {
-            console.error('Payment gateway payment failed:', response.error);
+            console.error('Payment gateway payment failed. Raw Response:', response);
+            console.error("Razorpay Error Details:", {
+              message: response.error?.message,
+              description: response.error?.description,
+              error: response.error,
+              statusCode: response.error?.statusCode,
+              raw: response
+            });
             showToast('Payment failed: ' + response.error.description, 'error');
+            setCheckoutState('READY');
+            setPlacingOrder(false);
             try {
-              await fetch('http://localhost:5000/api/payments/fail', {
+              await fetch(`${API_BASE_URL}/api/payments/fail`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -384,6 +508,8 @@ export default function CartPage({ onBackToShop, products = [] }) {
               });
             } catch (failErr) {
               console.error('Failed to notify payment failure:', failErr);
+            } finally {
+              window.location.hash = `payment-failure?orderId=${orderData.id}&reason=failed`;
             }
           });
           rzp.open();
@@ -391,15 +517,20 @@ export default function CartPage({ onBackToShop, products = [] }) {
           // COD placement flow completes immediately
           setPlacedOrderId(orderData.id);
           clearCart();
+          setCheckoutState('SUCCESS');
           setOrderPlacedSuccess(true);
         }
       } else {
         const errData = await res.json();
+        console.error("Order creation HTTP failure status:", res.status);
+        console.error("Order creation error body:", errData);
         showToast(errData.error || 'Failed to place order', 'error');
+        setCheckoutState('READY');
       }
     } catch (err) {
       console.error(err);
       showToast('Network error placing order', 'error');
+      setCheckoutState('READY');
     } finally {
       setPlacingOrder(false);
     }
@@ -440,6 +571,64 @@ export default function CartPage({ onBackToShop, products = [] }) {
             </button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Render loading skeleton for cart items to avoid empty-cart flicker
+  if (checkoutState === 'LOADING_CART') {
+    return (
+      <div className="luxury-cart-container min-h-screen bg-[#F7F3ED] font-body text-[#1C1B18] pb-24 select-none">
+        <section className="page-hero">
+          <div className="page-hero-bg-text">ATELIER BAG</div>
+          <div className="page-hero-content">
+            <span className="page-hero-eyebrow">Decant Atelier</span>
+            <h1 className="page-hero-title">Loading Your Bag</h1>
+            <p className="page-hero-subtitle">Preparing your niche and luxury fragrance selections...</p>
+            <div className="page-hero-divider" />
+          </div>
+        </section>
+        
+        <main className="max-w-[1440px] mx-auto px-4 md:px-12 pt-12">
+          <div className="luxury-cart-grid">
+            <div className="luxury-cart-left-pane space-y-6">
+              {[1, 2].map((idx) => (
+                <div key={idx} className="product-row py-6 first:pt-0 border-b border-black/5">
+                  <div className="flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-left w-full">
+                    <div className="w-20 h-24 bg-black/5 shimmer-bg flex-shrink-0" />
+                    <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+                      <div className="space-y-2 w-full max-w-[200px] flex flex-col items-center md:items-start">
+                        <div className="h-3 w-16 bg-black/10 shimmer-bg rounded" />
+                        <div className="h-5 w-40 bg-black/10 shimmer-bg rounded" />
+                        <div className="h-3.5 w-24 bg-black/10 shimmer-bg rounded" />
+                      </div>
+                      <div className="flex items-center gap-8 justify-center md:justify-end w-full max-w-[300px]">
+                        <div className="h-8 w-16 bg-black/5 shimmer-bg rounded" />
+                        <div className="h-8 w-20 bg-black/5 shimmer-bg rounded" />
+                        <div className="h-8 w-8 bg-black/5 shimmer-bg rounded" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="luxury-cart-summary-pane">
+              <div className="luxury-summary-card space-y-6">
+                <div className="h-4 w-24 bg-black/10 shimmer-bg rounded mb-6" />
+                <div className="space-y-4">
+                  <div className="flex justify-between"><div className="h-3.5 w-16 bg-black/5 shimmer-bg rounded" /><div className="h-3.5 w-12 bg-black/5 shimmer-bg rounded" /></div>
+                  <div className="flex justify-between"><div className="h-3.5 w-16 bg-black/5 shimmer-bg rounded" /><div className="h-3.5 w-12 bg-black/5 shimmer-bg rounded" /></div>
+                  <div className="flex justify-between"><div className="h-3.5 w-24 bg-black/5 shimmer-bg rounded" /><div className="h-3.5 w-12 bg-black/5 shimmer-bg rounded" /></div>
+                </div>
+                <div className="border-t border-black/8 pt-6 flex justify-between">
+                  <div className="h-4 w-12 bg-black/10 shimmer-bg rounded" />
+                  <div className="h-6 w-20 bg-black/10 shimmer-bg rounded" />
+                </div>
+                <div className="h-12 w-full bg-black/15 shimmer-bg rounded" />
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -532,7 +721,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
         <div className="page-hero-content">
           <span className="page-hero-eyebrow">Decant Atelier</span>
           <h1 className="page-hero-title">
-            {isCheckingOut ? `Checkout (Step ${checkoutStep}/4)` : 'Your Shopping Bag'}
+            {isCheckingOut ? `Checkout (Step ${checkoutStep}/3)` : 'Your Shopping Bag'}
           </h1>
           <p className="page-hero-subtitle">
             {isCheckingOut 
@@ -545,8 +734,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
       </section>
       
       <main className="max-w-[1440px] mx-auto px-4 md:px-12 pt-12">
-        {isCheckingOut && (
-          <button 
+        <button 
             onClick={() => {
               if (checkoutStep > 1) {
                 setCheckoutStep(checkoutStep - 1);
@@ -554,16 +742,31 @@ export default function CartPage({ onBackToShop, products = [] }) {
                 setIsCheckingOut(false);
               }
             }} 
-            className="mb-8 text-[0.65rem] font-bold tracking-widest uppercase hover:text-[#B08A50] transition-colors cursor-pointer"
+            className={`mb-6 text-[0.65rem] font-bold tracking-widest uppercase hover:text-[#B08A50] transition-colors cursor-pointer ${isCheckoutInProgress ? 'checkout-disabled-element' : ''}`}
           >
-            ← Back to Bag
+            ← Back
           </button>
-        )}
+
+          {/* Premium Checkout Progress Breadcrumb */}
+          <div className={`checkout-progress-bar mb-10 ${isCheckoutInProgress ? 'checkout-disabled-element' : ''}`}>
+            {['Bag', 'Address', 'Shipping', 'Payment'].map((step, idx) => {
+              const stepNum = idx + 1;
+              const isActive = isCheckingOut ? (stepNum === checkoutStep + 1) : (stepNum === 1);
+              const isPast = isCheckingOut && stepNum < checkoutStep + 1;
+              return (
+                <div key={step} className="progress-step-item">
+                  <div className={`progress-step-dot ${isActive ? 'active' : ''} ${isPast ? 'past' : ''}`}>{isPast ? '✓' : stepNum}</div>
+                  <span className={`progress-step-label ${isActive ? 'active' : ''}`}>{step}</span>
+                  {idx < 3 && <div className={`progress-step-line ${isPast ? 'past' : ''}`} />}
+                </div>
+              );
+            })}
+          </div>
 
         <div className="luxury-cart-grid">
           
           {/* LEFT PANEL: Cart Rows or Multi-Step Form */}
-          <div className="luxury-cart-left-pane">
+          <div className={`luxury-cart-left-pane ${isCheckoutInProgress ? 'checkout-disabled-element' : ''}`}>
             {!isCheckingOut ? (
               /* SHOPPING BAG PRODUCT LIST */
               <div className="space-y-6">
@@ -596,7 +799,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                     const fullProduct = products.find(p => p.id === item.productId || p.id === item.id);
                     const gallery = fullProduct?.images || [item.image];
                     const activeImgIdx = galleryIndexMap[itemKey] || 0;
-                    const activeImage = gallery[activeImgIdx] || item.image;
+                    const activeImage = (gallery[activeImgIdx] || item.image) || '/images/perfume_placeholder.jpeg';
 
                     return (
                       <div key={itemKey} className="product-row py-6 first:pt-0">
@@ -617,7 +820,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                                       activeImgIdx === gIdx ? 'border-[#B08A50] scale-110' : 'border-neutral-200 opacity-60 hover:opacity-100'
                                     }`}
                                   >
-                                    <img src={gImg} className="w-full h-full object-cover" alt="mini-thumb" />
+                                    <img src={gImg || '/images/perfume_placeholder.jpeg'} className="w-full h-full object-cover" alt="mini-thumb" />
                                   </button>
                                 ))}
                               </div>
@@ -741,7 +944,23 @@ export default function CartPage({ onBackToShop, products = [] }) {
                       <p className="text-xs text-black/45 font-body">Select one of your saved delivery addresses or specify a new shipping destination.</p>
                     </div>
 
-                    {addresses.length > 0 && !showAddAddressForm && (
+                    {checkoutState === 'LOADING_ADDRESSES' ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[1, 2].map((idx) => (
+                          <div key={idx} className="checkout-address-select-box border border-black/5 p-6 space-y-3 bg-[#FEFCF9] animate-pulse">
+                            <div className="flex justify-between items-center mb-2">
+                              <div className="h-4 w-24 bg-black/10 shimmer-bg rounded" />
+                              <div className="h-4 w-12 bg-black/10 shimmer-bg rounded" />
+                            </div>
+                            <div className="space-y-2">
+                              <div className="h-3 w-full bg-black/5 shimmer-bg rounded" />
+                              <div className="h-3 w-3/4 bg-black/5 shimmer-bg rounded" />
+                            </div>
+                            <div className="h-3 w-28 bg-black/5 shimmer-bg rounded" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : addresses.length > 0 && !showAddAddressForm ? (
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {addresses.map(addr => (
@@ -761,6 +980,36 @@ export default function CartPage({ onBackToShop, products = [] }) {
                                 {addr.city}, {addr.state} - {addr.postalCode}
                               </p>
                               <span className="text-[0.58rem] font-bold tracking-wider text-black/45 block mt-2">📞 {addr.phone}</span>
+                              
+                              {/* CRUD Triggers */}
+                              <div className="address-card-actions">
+                                <button
+                                  onClick={(e) => handleEditAddressClick(addr, e)}
+                                  className="address-action-btn edit"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={(e) => handleDuplicateAddressClick(addr, e)}
+                                  className="address-action-btn edit"
+                                >
+                                  Duplicate
+                                </button>
+                                <button
+                                  onClick={(e) => handleDeleteAddress(addr.id, e)}
+                                  className="address-action-btn delete"
+                                >
+                                  Delete
+                                </button>
+                                {!addr.isDefault && (
+                                  <button
+                                    onClick={(e) => handleSetDefaultAddress(addr.id, e)}
+                                    className="address-action-btn default"
+                                  >
+                                    Set Default
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -775,9 +1024,9 @@ export default function CartPage({ onBackToShop, products = [] }) {
                           + Deliver to New Address
                         </button>
                       </div>
-                    )}
+                    ) : null}
 
-                    {(addresses.length === 0 || showAddAddressForm) && (
+                    {checkoutState !== 'LOADING_ADDRESSES' && (addresses.length === 0 || showAddAddressForm) && (
                       <div className="bg-[#FEFCF9] border border-black/5 p-6 max-w-xl">
                         <h4 className="font-heading text-lg font-light uppercase tracking-wide mb-5">
                           New Delivery Address
@@ -896,18 +1145,18 @@ export default function CartPage({ onBackToShop, products = [] }) {
                       </div>
                     )}
 
-                    {/* Step Actions */}
-                    <div className="pt-8 border-t border-black/8 flex items-center justify-between">
+                    {/* Step 1 Actions */}
+                    <div className="checkout-step-actions">
                       <button
                         onClick={() => setIsCheckingOut(false)}
-                        className="text-[0.65rem] font-bold tracking-widest uppercase text-black/45 hover:text-black transition-colors"
+                        className="checkout-back-btn"
                       >
                         Cancel Checkout
                       </button>
                       <button
                         disabled={!selectedAddressId}
                         onClick={() => setCheckoutStep(2)}
-                        className="py-3 px-8 bg-[#1C1B18] hover:bg-[#B08A50] text-[#FEFCF9] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="checkout-primary-btn"
                       >
                         Continue to Delivery
                       </button>
@@ -953,17 +1202,20 @@ export default function CartPage({ onBackToShop, products = [] }) {
                       </div>
                     </div>
 
-                    {/* Step Actions */}
-                    <div className="pt-8 border-t border-black/8 flex items-center justify-between">
+                    {/* Step 2 Actions */}
+                    <div className="checkout-step-actions">
                       <button
                         onClick={() => setCheckoutStep(1)}
-                        className="text-[0.65rem] font-bold tracking-widest uppercase text-black/45 hover:text-black transition-colors"
+                        className="checkout-back-btn"
                       >
                         Back to Address
                       </button>
                       <button
-                        onClick={() => setCheckoutStep(3)}
-                        className="py-3 px-8 bg-[#1C1B18] hover:bg-[#B08A50] text-[#FEFCF9] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300"
+                        onClick={() => {
+                          setCheckoutStep(3);
+                          window.dispatchEvent(new CustomEvent('shipping_selected', { detail: { method: deliveryMethod } }));
+                        }}
+                        className="checkout-primary-btn"
                       >
                         Continue to Payment
                       </button>
@@ -975,118 +1227,70 @@ export default function CartPage({ onBackToShop, products = [] }) {
                 {checkoutStep === 3 && (
                   <div className="space-y-6">
                     <div className="step-header pb-4 border-b border-black/8">
-                      <h3 className="font-heading text-2xl font-light uppercase tracking-wide">3. Payment Details</h3>
-                      <p className="text-xs text-black/45 font-body">Choose a transaction gateway to authenticate order validation.</p>
+                      <h3 className="font-heading text-2xl font-light uppercase tracking-wide">3. Payment Method</h3>
+                      <p className="text-xs text-black/45 font-body">Select your preferred payment method to complete your order.</p>
                     </div>
 
+                    {/* Payment Method Selection */}
                     <div className="space-y-3 max-w-xl">
                       <div 
-                        onClick={() => setPaymentMethod('COD')}
-                        className={`payment-option-box ${paymentMethod === 'COD' ? 'active' : ''}`}
+                        onClick={() => {
+                          setPaymentMethod('RAZORPAY');
+                          window.dispatchEvent(new CustomEvent('payment_method_selected', { detail: { method: 'RAZORPAY' } }));
+                        }}
+                        className={`payment-option-box ${paymentMethod === 'RAZORPAY' ? 'active' : ''}`}
+                        role="radio"
+                        aria-checked={paymentMethod === 'RAZORPAY'}
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && setPaymentMethod('RAZORPAY')}
                       >
-                        <span className="text-xs font-bold block mb-1">Cash on Delivery (COD)</span>
-                        <p className="text-[0.68rem] text-black/60 leading-relaxed font-body">
-                          Settle your transaction in cash directly upon receipt of packages. No added fee.
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${paymentMethod === 'RAZORPAY' ? 'border-[#1C1B18]' : 'border-black/20'}`}>
+                            {paymentMethod === 'RAZORPAY' && <div className="w-2 h-2 rounded-full bg-[#1C1B18]" />}
+                          </div>
+                          <span className="text-xs font-bold">Secure Online Payment</span>
+                        </div>
+                        <p className="text-[0.68rem] text-black/60 leading-relaxed font-body pl-7">
+                          Cards • UPI • Net Banking • Wallets
                         </p>
                       </div>
 
-                      <div 
-                        onClick={() => setPaymentMethod('RAZORPAY')}
-                        className={`payment-option-box ${paymentMethod === 'RAZORPAY' ? 'active' : ''}`}
-                      >
-                        <span className="text-xs font-bold block mb-1">Simulated Card Validation</span>
-                        <p className="text-[0.68rem] text-black/60 leading-relaxed font-body">
-                          Simulated Razorpay transaction for instant and secure ledger logging.
-                        </p>
-                      </div>
+                      {storeSettings?.codEnabled !== false && (
+                        <div 
+                          onClick={() => {
+                            setPaymentMethod('COD');
+                            window.dispatchEvent(new CustomEvent('payment_method_selected', { detail: { method: 'COD' } }));
+                          }}
+                          className={`payment-option-box ${paymentMethod === 'COD' ? 'active' : ''}`}
+                          role="radio"
+                          aria-checked={paymentMethod === 'COD'}
+                          tabIndex={0}
+                          onKeyDown={(e) => e.key === 'Enter' && setPaymentMethod('COD')}
+                        >
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${paymentMethod === 'COD' ? 'border-[#1C1B18]' : 'border-black/20'}`}>
+                              {paymentMethod === 'COD' && <div className="w-2 h-2 rounded-full bg-[#1C1B18]" />}
+                            </div>
+                            <span className="text-xs font-bold">Cash on Delivery</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Step Actions */}
-                    <div className="pt-8 border-t border-black/8 flex items-center justify-between">
+                    {/* Step 3 Actions */}
+                    <div className="checkout-step-actions">
                       <button
                         onClick={() => setCheckoutStep(2)}
-                        className="text-[0.65rem] font-bold tracking-widest uppercase text-black/45 hover:text-black transition-colors"
+                        className="checkout-back-btn"
                       >
                         Back to Delivery
                       </button>
                       <button
-                        onClick={() => setCheckoutStep(4)}
-                        className="py-3 px-8 bg-[#1C1B18] hover:bg-[#B08A50] text-[#FEFCF9] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300"
-                      >
-                        Continue to Review
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 4: REVIEW ORDER */}
-                {checkoutStep === 4 && (
-                  <div className="space-y-6">
-                    <div className="step-header pb-4 border-b border-black/8">
-                      <h3 className="font-heading text-2xl font-light uppercase tracking-wide">4. Review and Place</h3>
-                      <p className="text-xs text-black/45 font-body">Verify all delivery and ledger parameters before validating purchase.</p>
-                    </div>
-
-                    <div className="space-y-6 text-xs text-black/75">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#FEFCF9] border border-black/5 p-6">
-                        <div>
-                          <h4 className="font-bold text-[0.62rem] uppercase tracking-wider text-black/50 mb-2">Shipping Destination</h4>
-                          {selectedAddress ? (
-                            <div className="space-y-1 font-body">
-                              <p className="font-bold text-[#1C1B18]">{selectedAddress.fullName}</p>
-                              <p>{selectedAddress.addressLine1}</p>
-                              {selectedAddress.addressLine2 && <p>{selectedAddress.addressLine2}</p>}
-                              <p>{selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postalCode}</p>
-                              <p className="pt-1 text-black/50">📞 {selectedAddress.phone}</p>
-                            </div>
-                          ) : (
-                            <p className="text-[#FF003C] italic">No address selected.</p>
-                          )}
-                        </div>
-
-                        <div className="space-y-4">
-                          <div>
-                            <h4 className="font-bold text-[0.62rem] uppercase tracking-wider text-black/50 mb-1">Delivery Speed</h4>
-                            <p className="font-bold">
-                              {deliveryMethod === 'EXPRESS' ? 'Express Courier (1-2 business days)' : 'Standard Delivery (3-5 business days)'}
-                            </p>
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-[0.62rem] uppercase tracking-wider text-black/50 mb-1">Ledger Method</h4>
-                            <p className="font-bold">
-                              {paymentMethod === 'RAZORPAY' ? 'Simulated Card Payment' : 'Cash on Delivery (COD)'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Optional Notes */}
-                      <div className="space-y-1">
-                        <label className="text-[0.58rem] font-bold uppercase tracking-wider text-black/50 block">Atelier Notes (Optional)</label>
-                        <textarea
-                          rows="2"
-                          value={notes}
-                          onChange={(e) => setNotes(e.target.value)}
-                          placeholder="e.g. Any batch, decanting, or shipping instructions..."
-                          className="checkout-luxury-textarea"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Step Actions */}
-                    <div className="pt-8 border-t border-black/8 flex items-center justify-between">
-                      <button
-                        onClick={() => setCheckoutStep(3)}
-                        className="text-[0.65rem] font-bold tracking-widest uppercase text-black/45 hover:text-black transition-colors"
-                      >
-                        Back to Payment
-                      </button>
-                      <button
                         onClick={handlePlaceOrder}
                         disabled={placingOrder || !selectedAddressId}
-                        className="py-3.5 px-8 bg-[#1C1B18] hover:bg-[#B08A50] text-[#FEFCF9] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 shadow-md"
+                        className="checkout-primary-btn"
                       >
-                        {placingOrder ? 'Processing Purchase...' : 'Complete Purchase'}
+                        {paymentMethod === 'RAZORPAY' ? 'Continue to Secure Payment' : 'Complete Purchase'}
                       </button>
                     </div>
                   </div>
@@ -1097,7 +1301,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
           </div>
 
           {/* RIGHT PANEL: Sticky Order Summary */}
-          <div className="luxury-cart-summary-pane">
+          <div className={`luxury-cart-summary-pane ${isCheckoutInProgress ? 'checkout-disabled-element' : ''}`}>
             <div className="luxury-summary-card">
               <h2 className="font-body text-xs font-bold tracking-[2px] uppercase mb-6 pb-2.5 border-b border-black/8">
                 Order Summary
@@ -1179,6 +1383,65 @@ export default function CartPage({ onBackToShop, products = [] }) {
 
         </div>
       </main>
+
+      {/* Custom Address Deletion Confirmation Modal */}
+      {addressToDeleteId && (
+        <div className="fixed inset-0 z-[11000] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#FEFCF9] border border-black/10 p-6 max-w-sm w-full text-center space-y-4 shadow-xl">
+            <h4 className="font-heading text-lg uppercase tracking-wide">Delete Address?</h4>
+            <p className="text-xs text-black/60 font-body">Are you sure you want to permanently remove this delivery destination?</p>
+            <div className="flex justify-center gap-4 pt-2">
+              <button
+                onClick={async () => {
+                  const id = addressToDeleteId;
+                  setAddressToDeleteId(null);
+                  try {
+                    const token = await getToken();
+                    const res = await fetch(`${API_BASE_URL}/api/addresses/${id}`, {
+                      method: 'DELETE',
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                      setAddresses(addresses.filter(a => a.id !== id));
+                      if (selectedAddressId === id) {
+                        setSelectedAddressId('');
+                      }
+                      showToast('Address deleted successfully.', 'success');
+                    } else {
+                      const errData = await res.json();
+                      showToast(errData.error || 'Failed to delete address.', 'error');
+                    }
+                  } catch (err) {
+                    console.error(err);
+                    showToast('Network error. Failed to delete address.', 'error');
+                  }
+                }}
+                className="py-2 px-5 bg-[#FF003C] hover:bg-[#D00030] text-[#FEFCF9] text-[0.65rem] font-bold tracking-widest uppercase transition-colors"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setAddressToDeleteId(null)}
+                className="py-2 px-5 border border-black/10 text-black/60 hover:text-black text-[0.65rem] font-bold tracking-widest uppercase transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Checkout State Loading Overlay */}
+      {isCheckoutInProgress && (
+        <div className="checkout-overlay-loading">
+          <div className="checkout-loading-spinner" />
+          <div className="checkout-loading-text">
+            {checkoutState === 'CREATING_ORDER' && 'Securing your fragrance order...'}
+            {checkoutState === 'OPENING_RAZORPAY' && 'Initializing payment gateway...'}
+            {checkoutState === 'VERIFYING_PAYMENT' && 'Verifying transaction signature...'}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
  * animated entrance, and luxury card styling.
  */
 import { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../utils/config.js';
 
 export default function PolicyContent({ policy }) {
   const Icon = policy.icon;
@@ -15,7 +16,7 @@ export default function PolicyContent({ policy }) {
   useEffect(() => {
     async function fetchSettings() {
       try {
-        const res = await fetch('http://localhost:5000/api/settings');
+        const res = await fetch(`${API_BASE_URL}/api/settings`);
         if (res.ok) {
           const data = await res.json();
           setSettings({

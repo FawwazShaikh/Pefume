@@ -4,11 +4,23 @@ import dotenv from 'dotenv';
 import { ClerkExpressWithAuth } from '@clerk/clerk-sdk-node';
 import { Webhook } from 'svix';
 import { prisma } from './lib/prisma.js';
-import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import Razorpay from 'razorpay';
 
 // Load environment variables
 dotenv.config();
+
+console.log('====== STARTUP ENV DIAGNOSTIC ======');
+console.log('process.cwd():', process.cwd());
+console.log('RAZORPAY_KEY_ID:', process.env.RAZORPAY_KEY_ID);
+console.log('RAZORPAY_KEY_SECRET length:', process.env.RAZORPAY_KEY_SECRET?.length);
+console.log('RAZORPAY_KEY_ID JSON:', JSON.stringify(process.env.RAZORPAY_KEY_ID));
+console.log('====================================');
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -25,6 +37,46 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Standalone Razorpay Authentication Debug Route
+app.get('/api/debug/razorpay', async (req, res) => {
+  console.log('====== DEBUG RAZORPAY AUTHENTICATION ======');
+  console.log('process.cwd():', process.cwd());
+  console.log('Key ID:', process.env.RAZORPAY_KEY_ID);
+  console.log('Secret Length:', process.env.RAZORPAY_KEY_SECRET?.length);
+
+  try {
+    const rzp = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
+    const rzpOrder = await rzp.orders.create({
+      amount: 100,
+      currency: "INR",
+      receipt: "debug_test"
+    });
+
+    console.log('Debug Order Creation Success:', rzpOrder);
+    return res.json(rzpOrder);
+  } catch (err) {
+    console.error('Debug Order Creation Failure:');
+    console.error('statusCode:', err?.statusCode);
+    console.error('message:', err?.message);
+    console.error('description:', err?.description || err?.error?.description);
+    console.error('error:', err?.error);
+    console.error('stack:', err?.stack || err);
+    console.error('============================================');
+    return res.status(err?.statusCode || 400).json({
+      success: false,
+      statusCode: err?.statusCode,
+      message: err?.message,
+      description: err?.description || err?.error?.description,
+      error: err?.error,
+      stack: err?.stack || err
+    });
+  }
+});
 
 // Webhook endpoint uses raw body parser for svix signature verification
 app.post('/api/webhooks/clerk', express.raw({ type: 'application/json' }), async (req, res) => {
@@ -201,6 +253,9 @@ function formatOrder(order) {
     subtotal: parseFloat(order.subtotal),
     shippingFee: parseFloat(order.shippingFee),
     total: parseFloat(order.total),
+    amount: parseFloat(order.total),
+    currency: 'INR',
+    success: true
   };
   
   if (order.orderItems) {
@@ -430,25 +485,7 @@ app.get('/api/orders', requireAuth, async (req, res) => {
   }
 });
 
-const getRazorpayInstance = (storeSettings) => {
-  const keyId = process.env.RAZORPAY_KEY_ID || (storeSettings ? storeSettings.razorpayKey : null);
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
-  if (!keyId || !keySecret) {
-    console.warn("Razorpay credentials missing. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
-    return null;
-  }
-
-  try {
-    return new Razorpay({
-      key_id: keyId,
-      key_secret: keySecret
-    });
-  } catch (err) {
-    console.error("Failed to initialize Razorpay:", err);
-    return null;
-  }
-};
+// Reusable Razorpay instance is imported from ./lib/razorpay.js
 
 // POST place order
 app.post('/api/orders', requireAuth, async (req, res) => {
@@ -575,54 +612,111 @@ app.post('/api/orders', requireAuth, async (req, res) => {
         }
       });
 
-      // If Razorpay, generate order ID from payment gateway
-      let rzpOrderId = null;
-      if (paymentMethod === 'RAZORPAY') {
-        const rzp = getRazorpayInstance(storeSettings);
-        if (!rzp) {
-          throw new Error('Payment gateway configuration is missing. Razorpay cannot be initialized.');
-        }
-        try {
-          const rzpOrder = await rzp.orders.create({
-            amount: Math.round(total * 100),
-            currency: 'INR',
-            receipt: `rcpt_${newOrder.id.slice(-10)}`
-          });
-          rzpOrderId = rzpOrder.id;
-        } catch (rzpErr) {
-          console.error('Razorpay order creation failed:', rzpErr);
-          throw new Error('Failed to create payment gateway order: ' + rzpErr.message);
-        }
-      }
-
-      // If we generated a Razorpay order ID, update the order in the database
-      let finalOrder = newOrder;
-      if (rzpOrderId) {
-        finalOrder = await tx.order.update({
-          where: { id: newOrder.id },
-          data: { razorpayOrderId: rzpOrderId },
-          include: {
-            orderItems: true
-          }
-        });
-      }
-
       // 5. Clear user cart in DB
       await tx.cartItem.deleteMany({
         where: { userId: dbUser.id }
       });
 
       return tx.order.findUnique({
-        where: { id: finalOrder.id },
+        where: { id: newOrder.id },
         include: {
           orderItems: true,
           payment: true
         }
       });
+    }, {
+      timeout: 15000
     });
 
-    console.log(`Order placed successfully: ${order.id}`);
-    return res.status(201).json(formatOrder(order));
+    if (paymentMethod === 'RAZORPAY') {
+      let rzpOrder = null;
+      try {
+        console.log('====== RAZORPAY ORDERS API CALL ======');
+        console.log('Client Config:');
+        console.log('  Key ID:', razorpay.key_id);
+        console.log('  Secret Length:', razorpay.key_secret?.length);
+        console.log('Request Payload:');
+        console.log('  amount:', Math.round(total * 100));
+        console.log('  currency:', 'INR');
+        console.log('  receipt:', `rcpt_${order.id.slice(-10)}`);
+        console.log('======================================');
+
+        rzpOrder = await razorpay.orders.create({
+          amount: Math.round(total * 100),
+          currency: 'INR',
+          receipt: `rcpt_${order.id.slice(-10)}`
+        });
+        console.log('Razorpay Orders API Response:', rzpOrder);
+      } catch (rzpErr) {
+        console.error('====== RAZORPAY ORDER CREATION FAILED ======');
+        console.error('statusCode:', rzpErr?.statusCode);
+        console.error('message:', rzpErr?.message);
+        console.error('description:', rzpErr?.description || rzpErr?.error?.description);
+        console.error('error:', rzpErr?.error);
+        console.error('raw:', rzpErr);
+        console.error('============================================');
+        
+        // Roll back database changes since external payment gateway order creation failed
+        await prisma.$transaction(async (tx) => {
+          await tx.order.update({
+            where: { id: order.id },
+            data: { status: 'CANCELLED' }
+          });
+          await tx.payment.update({
+            where: { orderId: order.id },
+            data: { status: 'FAILED' }
+          });
+          
+          // Restore variant stock
+          for (const item of order.orderItems) {
+            const variant = await tx.productVariant.findUnique({
+              where: { id: item.variantId }
+            });
+            if (variant) {
+              const oldStock = variant.stock;
+              const newStock = oldStock + item.quantity;
+              await tx.productVariant.update({
+                where: { id: item.variantId },
+                data: { stock: newStock }
+              });
+              await tx.inventoryLog.create({
+                data: {
+                  variantId: item.variantId,
+                  oldStock,
+                  newStock,
+                  changeType: 'RESTOCK',
+                  note: `Order #${order.id.slice(-8).toUpperCase()} placement rolled back due to Razorpay order creation failure`
+                }
+              });
+            }
+          }
+        }, {
+          timeout: 15000
+        });
+
+        const errorMsg = (rzpErr && rzpErr.description) || 
+                         (rzpErr && rzpErr.error && rzpErr.error.description) || 
+                         (rzpErr && rzpErr.message) || 
+                         (typeof rzpErr === 'string' ? rzpErr : JSON.stringify(rzpErr));
+        return res.status(400).json({ error: 'Failed to create payment gateway order: ' + errorMsg });
+      }
+
+      // If we generated a Razorpay order ID, update the order in the database
+      const updatedOrder = await prisma.order.update({
+        where: { id: order.id },
+        data: { razorpayOrderId: rzpOrder.id },
+        include: {
+          orderItems: true,
+          payment: true
+        }
+      });
+      
+      console.log(`Order placed successfully with Razorpay: ${updatedOrder.id}`);
+      return res.status(201).json(formatOrder(updatedOrder));
+    } else {
+      console.log(`Order placed successfully: ${order.id}`);
+      return res.status(201).json(formatOrder(order));
+    }
   } catch (err) {
     console.error('Failed to place order:', err);
     return res.status(500).json({ error: err.message || 'Failed to place order' });
@@ -641,61 +735,130 @@ app.post('/api/payments/verify', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'Missing payment verification details' });
   }
 
+  const isDev = process.env.NODE_ENV === 'development';
+  if (isDev) {
+    console.log('Razorpay Verification Request Payload:', { razorpayOrderId, razorpayPaymentId, razorpaySignature, orderId });
+  }
+
   try {
     const dbUser = await getOrCreateDbUser(req.auth.userId);
 
-    // Fetch order from DB
+    // Fetch order from DB including payment and items
     const order = await prisma.order.findFirst({
-      where: { id: orderId, userId: dbUser.id }
+      where: { id: orderId, userId: dbUser.id },
+      include: { payment: true, orderItems: true }
     });
 
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
 
+    // Duplicate payment / verification protection
+    if (order.status === 'CONFIRMED' || order.payment?.status === 'SUCCESS') {
+      return res.status(200).json({ success: true, message: 'Payment already verified and order confirmed.' });
+    }
+
+    // Block verification on already cancelled / failed orders
+    if (order.status === 'CANCELLED' || order.payment?.status === 'FAILED') {
+      return res.status(400).json({ error: 'Order or payment has already been cancelled/failed.' });
+    }
+
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keySecret) {
-      console.error("Razorpay secret missing. Cannot verify signature.");
+    const cleanedSecret = keySecret ? keySecret.replace(/^["']|["']$/g, '').trim() : '';
+
+    if (!cleanedSecret || cleanedSecret === 'placeholder_secret' || cleanedSecret === 'rzp_secret_placeholder') {
+      console.error("Razorpay secret missing or set to placeholder. Cannot verify signature.");
       return res.status(500).json({ error: 'Payment verification is unavailable. Gateway secret is missing.' });
     }
 
     // Verify signature using crypto
     const text = `${razorpayOrderId}|${razorpayPaymentId}`;
     const generatedSignature = crypto
-      .createHmac('sha256', keySecret)
+      .createHmac('sha256', cleanedSecret)
       .update(text)
       .digest('hex');
 
     if (generatedSignature !== razorpaySignature) {
-      // Signature mismatch
-      await prisma.$transaction([
-        prisma.order.update({
+      // Signature mismatch - cancel order and restore stock inside transaction
+      await prisma.$transaction(async (tx) => {
+        const txOrder = await tx.order.findUnique({
           where: { id: orderId },
-          data: { status: 'PENDING' } // Order remains pending
-        }),
-        prisma.payment.update({
+          include: { payment: true, orderItems: true }
+        });
+
+        // Double stock restoration check: skip if already failed/cancelled
+        if (!txOrder || txOrder.status === 'CANCELLED' || txOrder.payment?.status === 'FAILED') {
+          return;
+        }
+
+        await tx.order.update({
+          where: { id: orderId },
+          data: { status: 'CANCELLED' }
+        });
+
+        await tx.payment.update({
           where: { orderId: orderId },
           data: { status: 'FAILED' }
-        })
-      ]);
+        });
+
+        // Restore variant stock
+        for (const item of txOrder.orderItems) {
+          const variant = await tx.productVariant.findUnique({
+            where: { id: item.variantId }
+          });
+          if (variant) {
+            const oldStock = variant.stock;
+            const newStock = oldStock + item.quantity;
+
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stock: newStock }
+            });
+
+            await tx.inventoryLog.create({
+              data: {
+                variantId: item.variantId,
+                oldStock,
+                newStock,
+                changeType: 'RESTOCK',
+                note: `Order #${orderId.slice(-8).toUpperCase()} signature verification failed`
+              }
+            });
+          }
+        }
+      }, {
+        timeout: 15000
+      });
       return res.status(400).json({ error: 'Payment signature verification failed. Possible fraud.' });
     }
 
-    // Verification successful
-    await prisma.$transaction([
-      prisma.order.update({
+    // Verification successful - update order and payment inside transaction
+    await prisma.$transaction(async (tx) => {
+      const txOrder = await tx.order.findUnique({
+        where: { id: orderId },
+        include: { payment: true }
+      });
+
+      if (!txOrder || txOrder.status === 'CONFIRMED' || txOrder.payment?.status === 'SUCCESS') {
+        return;
+      }
+
+      await tx.order.update({
         where: { id: orderId },
         data: { status: 'CONFIRMED' }
-      }),
-      prisma.payment.update({
+      });
+
+      await tx.payment.update({
         where: { orderId: orderId },
         data: {
           status: 'SUCCESS',
           transactionId: razorpayPaymentId,
           paidAt: new Date()
         }
-      })
-    ]);
+      });
+    }, {
+      timeout: 15000
+    });
 
     return res.status(200).json({ success: true, message: 'Payment verified and order confirmed.' });
   } catch (err) {
@@ -710,24 +873,203 @@ app.post('/api/payments/fail', requireAuth, async (req, res) => {
   if (!orderId) {
     return res.status(400).json({ error: 'Missing orderId' });
   }
+  const isDev = process.env.NODE_ENV === 'development';
+  if (isDev) {
+    console.log('Razorpay Failure Notification Request Payload:', { orderId });
+  }
   try {
     const dbUser = await getOrCreateDbUser(req.auth.userId);
     const order = await prisma.order.findFirst({
-      where: { id: orderId, userId: dbUser.id }
+      where: { id: orderId, userId: dbUser.id },
+      include: { payment: true, orderItems: true }
     });
+
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    await prisma.payment.update({
-      where: { orderId },
-      data: { status: 'FAILED' }
+    // Double stock restoration check: skip if already failed/cancelled
+    if (order.status === 'CANCELLED' || order.payment?.status === 'FAILED') {
+      return res.status(200).json({ success: true, message: 'Payment already recorded as failed/cancelled.' });
+    }
+
+    // Cancel order and restore stock inside transaction
+    await prisma.$transaction(async (tx) => {
+      const txOrder = await tx.order.findUnique({
+        where: { id: orderId },
+        include: { payment: true, orderItems: true }
+      });
+
+      if (!txOrder || txOrder.status === 'CANCELLED' || txOrder.payment?.status === 'FAILED') {
+        return;
+      }
+
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: 'CANCELLED' }
+      });
+
+      await tx.payment.update({
+        where: { orderId },
+        data: { status: 'FAILED' }
+      });
+
+      // Restore variant stock
+      for (const item of txOrder.orderItems) {
+        const variant = await tx.productVariant.findUnique({
+          where: { id: item.variantId }
+        });
+        if (variant) {
+          const oldStock = variant.stock;
+          const newStock = oldStock + item.quantity;
+
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stock: newStock }
+          });
+
+          await tx.inventoryLog.create({
+            data: {
+              variantId: item.variantId,
+              oldStock,
+              newStock,
+              changeType: 'RESTOCK',
+              note: `Order #${orderId.slice(-8).toUpperCase()} payment failure notification`
+            }
+          });
+        }
+      }
+    }, {
+      timeout: 15000
     });
 
-    return res.status(200).json({ success: true, message: 'Payment recorded as failed.' });
+    return res.status(200).json({ success: true, message: 'Payment recorded as failed and stock restored.' });
   } catch (err) {
     console.error('Failed to record payment failure:', err);
     return res.status(500).json({ error: 'Failed to record payment failure' });
+  }
+});
+
+// POST Razorpay Webhooks (Optional/mocked, signature verified)
+app.post('/api/webhooks/razorpay', express.json(), async (req, res) => {
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  const signature = req.headers['x-razorpay-signature'];
+
+  if (!secret || secret === 'webhook_secret_placeholder') {
+    console.log('Razorpay webhook secret is not configured. Webhook event ignored.');
+    return res.status(200).json({ status: 'ignored', reason: 'unconfigured' });
+  }
+
+  if (!signature) {
+    return res.status(400).json({ error: 'Missing x-razorpay-signature header' });
+  }
+
+  try {
+    const shasum = crypto.createHmac('sha256', secret);
+    shasum.update(JSON.stringify(req.body));
+    const digest = shasum.digest('hex');
+
+    if (digest !== signature) {
+      console.warn('Razorpay webhook signature mismatch.');
+      return res.status(400).json({ error: 'Invalid signature' });
+    }
+
+    const event = req.body.event;
+    console.log(`Razorpay webhook event received: ${event}`);
+
+    if (event === 'payment.captured' || event === 'order.paid') {
+      const payload = req.body.payload;
+      const paymentObj = payload.payment?.entity;
+      const rzpOrderId = paymentObj?.order_id;
+      const transactionId = paymentObj?.id;
+
+      if (rzpOrderId) {
+        const order = await prisma.order.findFirst({
+          where: { razorpayOrderId: rzpOrderId },
+          include: { payment: true }
+        });
+
+        if (order && order.status !== 'CONFIRMED') {
+          await prisma.$transaction(async (tx) => {
+            await tx.order.update({
+              where: { id: order.id },
+              data: { status: 'CONFIRMED' }
+            });
+
+            await tx.payment.update({
+              where: { orderId: order.id },
+              data: {
+                status: 'SUCCESS',
+                transactionId: transactionId || order.payment?.transactionId,
+                paidAt: new Date()
+              }
+            });
+          }, {
+            timeout: 15000
+          });
+          console.log(`Order ${order.id} confirmed via webhook event ${event}.`);
+        }
+      }
+    } else if (event === 'payment.failed') {
+      const payload = req.body.payload;
+      const paymentObj = payload.payment?.entity;
+      const rzpOrderId = paymentObj?.order_id;
+
+      if (rzpOrderId) {
+        const order = await prisma.order.findFirst({
+          where: { razorpayOrderId: rzpOrderId },
+          include: { payment: true, orderItems: true }
+        });
+
+        if (order && order.status !== 'CANCELLED') {
+          await prisma.$transaction(async (tx) => {
+            await tx.order.update({
+              where: { id: order.id },
+              data: { status: 'CANCELLED' }
+            });
+
+            await tx.payment.update({
+              where: { orderId: order.id },
+              data: { status: 'FAILED' }
+            });
+
+            // Restore variant stock
+            for (const item of order.orderItems) {
+              const variant = await tx.productVariant.findUnique({
+                where: { id: item.variantId }
+              });
+              if (variant) {
+                const oldStock = variant.stock;
+                const newStock = oldStock + item.quantity;
+
+                await tx.productVariant.update({
+                  where: { id: item.variantId },
+                  data: { stock: newStock }
+                });
+
+                await tx.inventoryLog.create({
+                  data: {
+                    variantId: item.variantId,
+                    oldStock,
+                    newStock,
+                    changeType: 'RESTOCK',
+                    note: `Order #${order.id.slice(-8).toUpperCase()} payment failed via webhook`
+                  }
+                });
+              }
+            }
+          }, {
+            timeout: 15000
+          });
+          console.log(`Order ${order.id} cancelled via webhook event payment.failed.`);
+        }
+      }
+    }
+
+    return res.status(200).json({ status: 'ok' });
+  } catch (err) {
+    console.error('Error handling Razorpay webhook:', err);
+    return res.status(500).json({ error: 'Webhook processing error' });
   }
 });
 
@@ -2267,4 +2609,11 @@ app.listen(PORT, () => {
   console.log('CLERK_PUBLISHABLE_KEY:', process.env.CLERK_PUBLISHABLE_KEY);
   console.log('Current Cwd:', process.cwd());
   console.log('==============================================\n');
+
+  console.log('\n====== RAZORPAY CONFIGURATION ======');
+  console.log({
+    key: process.env.RAZORPAY_KEY_ID,
+    secretLength: process.env.RAZORPAY_KEY_SECRET?.length
+  });
+  console.log('====================================\n');
 });

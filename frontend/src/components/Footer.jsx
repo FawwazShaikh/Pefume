@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import './Footer.css';
+import { API_BASE_URL } from '../utils/config.js';
 
 export default function Footer({ onNavigate }) {
   const [settings, setSettings] = useState({
@@ -11,7 +12,7 @@ export default function Footer({ onNavigate }) {
   useEffect(() => {
     async function fetchSettings() {
       try {
-        const res = await fetch('http://localhost:5000/api/settings');
+        const res = await fetch(`${API_BASE_URL}/api/settings`);
         if (res.ok) {
           const data = await res.json();
           setSettings({

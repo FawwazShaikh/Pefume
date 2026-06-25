@@ -443,3 +443,378 @@
     font-size: 0.78rem;
   }
 }
+
+/* ── Checkout Progress Breadcrumb ── */
+.checkout-progress-bar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.progress-step-item {
+  display: flex;
+  align-items: center;
+  /* Each step takes equal space; the dot+label shrink as needed */
+  flex: 1;
+  min-width: 0;
+}
+
+/* Last item doesn't flex-grow (no trailing line) */
+.progress-step-item:last-child {
+  flex: 0 0 auto;
+}
+
+.progress-step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(28, 27, 24, 0.08);
+  color: rgba(28, 27, 24, 0.35);
+  font-size: 0.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+.progress-step-dot.active {
+  background: #1C1B18;
+  color: #FEFCF9;
+}
+
+.progress-step-dot.past {
+  background: #B08A50;
+  color: #FEFCF9;
+}
+
+.progress-step-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(28, 27, 24, 0.35);
+  transition: color 0.25s ease;
+  margin-left: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progress-step-label.active {
+  color: #1C1B18;
+}
+
+/* Connector line fills all available space between items */
+.progress-step-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(28, 27, 24, 0.12);
+  margin: 0 6px;
+  transition: background 0.25s ease;
+  min-width: 12px;
+}
+
+.progress-step-line.past {
+  background: #B08A50;
+}
+
+/* ── Checkout Step Action Rows ── */
+/* Applied to every "Back | Continue" footer row inside checkout steps */
+.checkout-step-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(28, 27, 24, 0.08);
+  gap: 16px;
+}
+
+.checkout-step-actions .checkout-back-btn {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(28, 27, 24, 0.45);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0;
+  white-space: nowrap;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+}
+
+.checkout-step-actions .checkout-back-btn:hover {
+  color: #1C1B18;
+}
+
+.checkout-step-actions .checkout-primary-btn {
+  padding: 0.875rem 2rem;
+  background-color: #1C1B18;
+  color: #FEFCF9;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  white-space: nowrap;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkout-step-actions .checkout-primary-btn:hover {
+  background-color: #B08A50;
+}
+
+.checkout-step-actions .checkout-primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─────────────────────────────────────────────────────────
+   MOBILE RESPONSIVE  (<768px)
+   All changes below are mobile-only. Desktop is unaffected.
+   ───────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* 1. Container padding */
+  .luxury-cart-container > main,
+  .luxury-cart-container .max-w-\[1440px\] {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  /* 2. Stepper: hide labels on small screens so circles stay visible */
+  .progress-step-label {
+    display: none;
+  }
+
+  /* 3. Step action rows — stack vertically, primary CTA full width */
+  .checkout-step-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .checkout-step-actions .checkout-back-btn {
+    text-align: center;
+    justify-content: center;
+    width: 100%;
+    border: 1px solid rgba(28, 27, 24, 0.12);
+    padding: 0 1rem;
+  }
+
+  .checkout-step-actions .checkout-primary-btn {
+    width: 100%;
+  }
+
+  /* 4. Left pane padding */
+  .luxury-cart-left-pane {
+    padding: 1.25rem;
+  }
+
+  /* 5. Checkout form step sections: full width, no overflow */
+  .checkout-steps-form,
+  .checkout-steps-form > div,
+  .step-header {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 6. Address & payment cards: full width */
+  .checkout-address-select-box,
+  .delivery-option-box,
+  .payment-option-box {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 7. Address form: single-column grids */
+  .checkout-steps-form .grid-cols-2,
+  .checkout-steps-form .grid.grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .checkout-steps-form .grid-cols-3,
+  .checkout-steps-form .grid.grid-cols-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* 8. Section headings: smaller on mobile */
+  .step-header h3 {
+    font-size: 1.15rem;
+    letter-spacing: 0.04em;
+  }
+
+  .step-header p {
+    font-size: 0.7rem;
+    margin-top: 4px;
+  }
+
+  /* 9. Address form container: full width, no max-width cap */
+  .checkout-steps-form .max-w-xl {
+    max-width: 100%;
+  }
+
+  /* 10. Summary card: reduce padding */
+  .luxury-summary-card {
+    padding: 1.25rem;
+  }
+
+  /* 11. Order summary pane: full width, no sticky on mobile */
+  .luxury-cart-summary-pane {
+    position: static;
+    width: 100%;
+  }
+
+  /* 12. Address card grid: single column on mobile */
+  .checkout-address-select-box {
+    padding: 1rem;
+  }
+
+  /* 13. Action buttons in address cards: wrap nicely */
+  .address-card-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+/* Extra-small phones (320-360px) */
+@media (max-width: 390px) {
+
+  .luxury-cart-left-pane {
+    padding: 1rem;
+  }
+
+  .luxury-summary-card {
+    padding: 1rem;
+  }
+
+  /* Stepper dots: slightly smaller */
+  .progress-step-dot {
+    width: 24px;
+    height: 24px;
+    font-size: 0.55rem;
+  }
+
+  /* Checkout buttons: ensure they fill width at all sizes */
+  .checkout-step-actions .checkout-primary-btn,
+  .checkout-step-actions .checkout-back-btn {
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+  }
+
+  /* Summary total heading */
+  .luxury-summary-card h2 {
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+  }
+}
+
+
+/* Free Shipping Progress bar */
+.free-shipping-progress {
+  width: 100%;
+  height: 2px;
+  background: rgba(28, 27, 24, 0.08);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.free-shipping-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #B08A50, #C9A46A);
+  transition: width 0.5s ease;
+  border-radius: 1px;
+}
+
+/* Address CRUD buttons styling inside checkout Step 1 */
+.address-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(28, 27, 24, 0.05);
+}
+
+.address-action-btn {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+  transition: color 0.2s ease;
+}
+.address-action-btn.edit {
+  color: #B08A50;
+}
+.address-action-btn.edit:hover {
+  color: #1C1B18;
+}
+.address-action-btn.delete {
+  color: rgba(28, 27, 24, 0.45);
+}
+.address-action-btn.delete:hover {
+  color: #FF003C;
+}
+.address-action-btn.default {
+  color: #B08A50;
+  margin-left: auto;
+}
+.address-action-btn.default:hover {
+  color: #1C1B18;
+}
+
+/* Spinner and global checkout overlay */
+.checkout-overlay-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(247, 243, 237, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.checkout-loading-text {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #1C1B18;
+  text-align: center;
+}
+
+.checkout-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgba(176, 138, 80, 0.15);
+  border-top-color: #B08A50;
+  border-radius: 50%;
+  animation: spinnerRotate 0.8s linear infinite;
+}
+
+@keyframes spinnerRotate {
+  to { transform: rotate(360deg); }
+}
+
+.checkout-disabled-element {
+  pointer-events: none !important;
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}

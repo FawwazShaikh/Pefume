@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { addToCart, getCart, updateQuantity } from '../utils/cartHelper';
 import { showToast } from '../utils/toast';
 import { collectionsData } from './SignatureCollection/CollectionData';
+import { WishlistStore, CartStore } from '../utils/store.js';
+import { API_BASE_URL, sanitizeImageUrl } from '../utils/config.js';
 
 export default function ProductPage({ product: initialProduct, products = [], onBackToShop }) {
   const { isSignedIn, getToken } = useAuth();
@@ -13,7 +15,17 @@ export default function ProductPage({ product: initialProduct, products = [], on
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
   const [selectedBottle, setSelectedBottle] = useState('classic');
   const [isAdding, setIsAdding] = useState(false);
-  const [cartItems, setCartItems] = useState(getCart());
+  const [cartItems, setCartItems] = useState(() => CartStore.getState());
+  const [wishlist, setWishlist] = useState(() => WishlistStore.getState());
+
+  useEffect(() => {
+    const unsubscribeCart = CartStore.subscribe(setCartItems);
+    const unsubscribeWishlist = WishlistStore.subscribe(setWishlist);
+    return () => {
+      unsubscribeCart();
+      unsubscribeWishlist();
+    };
+  }, []);
   const [detectedAspect, setDetectedAspect] = useState('aspect-[1/1]');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(true);
@@ -47,7 +59,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
       const slug = hash.replace('product-', '');
       setLoading(true);
       try {
-        const res = await fetch(`http://localhost:5000/api/products/${slug}`);
+        const res = await fetch(`${API_BASE_URL}/api/products/${slug}`);
         if (res.ok) {
           const dbProduct = await res.json();
 
@@ -274,7 +286,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
         return;
       }
 
-      const res = await fetch('http://localhost:5000/api/reviews', {
+      const res = await fetch(`${API_BASE_URL}/api/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -763,7 +775,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                     <motion.img
                       ref={imageRef}
                       key={activeImageIndex}
-                      src={galleryImages[activeImageIndex]}
+                      src={sanitizeImageUrl(galleryImages[activeImageIndex])}
                       alt={product.name}
                       loading={activeImageIndex === 0 ? "eager" : "lazy"}
                       decoding="async"
@@ -846,7 +858,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                       }`}
                     >
                       <img
-                        src={imgUrl}
+                        src={sanitizeImageUrl(imgUrl)}
                         alt={`Thumbnail preview ${idx + 1}`}
                         loading="lazy"
                         className="w-full h-full object-cover object-center"
@@ -879,12 +891,22 @@ export default function ProductPage({ product: initialProduct, products = [], on
                   {product.name}
                 </h1>
                 
-                <button
-                  onClick={() => showToast("Added to your collection wishlist.", "success")}
-                  className="flex items-center justify-center gap-1.5 px-4 py-2 border border-black/8 rounded-full text-[0.62rem] font-bold tracking-wider uppercase hover:border-black/30 hover:bg-black/[0.02] transition-all select-none cursor-pointer min-h-[44px] min-w-[44px] whitespace-nowrap"
-                >
-                  <i className="far fa-heart"></i> Wishlist
-                </button>
+                {(() => {
+                  const isWishlisted = wishlist.includes(product?.id);
+                  return (
+                    <button
+                      onClick={() => {
+                        if (product?.id) {
+                          const added = WishlistStore.toggle(product.id);
+                          showToast(added ? "Added to your wishlist." : "Removed from your wishlist.", "success");
+                        }
+                      }}
+                      className="flex items-center justify-center gap-1.5 px-4 py-2 border border-black/8 rounded-full text-[0.62rem] font-bold tracking-wider uppercase hover:border-black/30 hover:bg-black/[0.02] transition-all select-none cursor-pointer min-h-[44px] min-w-[44px] whitespace-nowrap"
+                    >
+                      <i className={isWishlisted ? "fas fa-heart text-[#FF003C]" : "far fa-heart"}></i> {isWishlisted ? "Wishlisted" : "Wishlist"}
+                    </button>
+                  );
+                })()}
               </div>
 
               {/* Verified Provenance Inline Badge (Mobile & Desktop Accent) */}
@@ -1118,7 +1140,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
         {renderReviewsSection()}
 
         {/* SECTION 7: Unified discovery recommendations */}
-        {similarProducts.length > 0 && (
+        {(similarProducts.length > 0 || products.length === 0) && (
           <div className="mt-20 pt-16 border-t border-black/6">
             <div className="mb-12 text-center">
               <span className="text-[0.62rem] font-bold tracking-[3px] text-[#B08A50] uppercase block mb-2">
@@ -1133,35 +1155,52 @@ export default function ProductPage({ product: initialProduct, products = [], on
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-              {similarProducts.map((simProd) => (
-                <div
-                  key={simProd.id}
-                  onClick={() => {
-                    window.location.hash = `product-${simProd.slug || simProd.id}`;
-                  }}
-                  className="group h-full flex flex-col bg-white border border-black/5 hover:border-black/20 shadow-sm transition-all duration-500 ease-out hover:-translate-y-1 overflow-hidden cursor-pointer"
-                >
-                  <div className="relative aspect-[4/5] overflow-hidden bg-[#F7F3ED]/30 border-b border-black/5">
-                    <img
-                      src={simProd.image}
-                      alt={simProd.name}
-                      loading="lazy"
-                      className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-103"
-                    />
-                  </div>
-                  <div className="p-4 flex flex-col flex-1 text-left">
-                    <span className="text-[0.55rem] font-bold tracking-[2px] text-black/40 block mb-1 uppercase">
-                      {simProd.brand}
-                    </span>
-                    <h4 className="font-heading text-xs font-normal text-[#1C1B18] mb-1.5 tracking-wide leading-tight group-hover:text-[#B08A50] transition-colors duration-300 line-clamp-2 min-h-[2rem]">
-                      {simProd.name}
-                    </h4>
-                    <div className="text-xs font-semibold text-[#B08A50] mt-auto">
-                      ₹{simProd.price.toLocaleString('en-IN')}
+              {products.length > 0 ? (
+                similarProducts.map((simProd) => (
+                  <div
+                    key={simProd.id}
+                    onClick={() => {
+                      window.location.hash = `product-${simProd.slug || simProd.id}`;
+                    }}
+                    className="group h-full flex flex-col bg-white border border-black/5 hover:border-black/20 shadow-sm transition-all duration-500 ease-out hover:-translate-y-1 overflow-hidden cursor-pointer"
+                  >
+                    <div className="relative aspect-[4/5] overflow-hidden bg-[#F7F3ED]/30 border-b border-black/5">
+                      <img
+                        src={sanitizeImageUrl(simProd.image)}
+                        alt={simProd.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-103"
+                      />
+                    </div>
+                    <div className="p-4 flex flex-col flex-1 text-left">
+                      <span className="text-[0.55rem] font-bold tracking-[2px] text-black/40 block mb-1 uppercase">
+                        {simProd.brand}
+                      </span>
+                      <h4 className="font-heading text-xs font-normal text-[#1C1B18] mb-1.5 tracking-wide leading-tight group-hover:text-[#B08A50] transition-colors duration-300 line-clamp-2 min-h-[2rem]">
+                        {simProd.name}
+                      </h4>
+                      <div className="text-xs font-semibold text-[#B08A50] mt-auto">
+                        ₹{simProd.price.toLocaleString('en-IN')}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="group h-full flex flex-col bg-white border border-black/5 shadow-sm overflow-hidden"
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    <div className="relative aspect-[4/5] overflow-hidden shimmer-bg border-b border-black/5" />
+                    <div className="p-4 flex flex-col flex-1 text-left space-y-2">
+                      <div className="skeleton-text short shimmer-bg" />
+                      <div className="skeleton-text title shimmer-bg" style={{ height: '12px' }} />
+                      <div className="skeleton-text shimmer-bg" style={{ marginTop: 'auto' }} />
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -1303,7 +1342,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                   <AnimatePresence mode="wait">
                     <motion.img
                       key={activeImageIndex}
-                      src={galleryImages[activeImageIndex]}
+                      src={sanitizeImageUrl(galleryImages[activeImageIndex])}
                       alt={`${product.name} — view ${activeImageIndex + 1}`}
                       decoding="async"
                       initial={{ opacity: 0, scale: 0.97 }}
@@ -1402,7 +1441,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                       }}
                     >
                       <img
-                        src={imgUrl}
+                        src={sanitizeImageUrl(imgUrl)}
                         alt={`Thumbnail ${idx + 1}`}
                         loading="lazy"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}

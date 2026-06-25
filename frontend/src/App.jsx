@@ -15,6 +15,10 @@ import DailyOfferPopup from './components/DailyOfferPopup';
 import AdminPage from './components/AdminPage';
 import GiftingPage from './components/GiftingPage';
 import { collectionsData } from './components/SignatureCollection/CollectionData';
+import PaymentSuccessPage from './components/PaymentSuccessPage';
+import PaymentFailurePage from './components/PaymentFailurePage';
+import MiniBag from './components/MiniBag';
+
 
 function App() {
   const getPageFromHash = () => {
@@ -31,6 +35,8 @@ function App() {
     if (hash === 'categories') return 'categories';
     if (hash === 'gifting') return 'gifting';
     if (hash.startsWith('product-')) return 'product';
+    if (hash === 'payment-success') return 'payment-success';
+    if (hash === 'payment-failure') return 'payment-failure';
 
     return 'home';
   };
@@ -160,6 +166,9 @@ function App() {
   return (
     <div className="flex flex-col gap-0 min-h-screen">
       {activePage !== 'admin' && activePage !== 'cart' && activePage !== 'profile' && <DailyOfferPopup />}
+
+      {/* Mini Bag — Global slide-out drawer, mounted at root so it overlays any page */}
+      <MiniBag products={products} />
       
       {activePage !== 'admin' && (
         <Navbar
@@ -214,6 +223,14 @@ function App() {
 
           {activePage === 'profile' && (
             <ProfilePage />
+          )}
+
+          {activePage === 'payment-success' && (
+            <PaymentSuccessPage />
+          )}
+
+          {activePage === 'payment-failure' && (
+            <PaymentFailurePage />
           )}
 
           {activePage === 'admin' && (
