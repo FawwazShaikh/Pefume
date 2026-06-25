@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { ClerkExpressWithAuth } from '@clerk/clerk-sdk-node';
 import { Webhook } from 'svix';
-import { prisma } from './lib/prisma.js';
+import { prisma, verifyDatabaseSchema } from './lib/prisma.js';
 import crypto from 'crypto';
 import Razorpay from 'razorpay';
 
@@ -25,21 +25,85 @@ const razorpay = new Razorpay({
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS for frontend Vite client (ports 5173 and 5174)
+// Enable CORS for localhost development, FRONTEND_URL, and dynamic Vercel previews/production
+const allowedOrigins = [
+  'http://localhost:5173', 
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174'
+];
+
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL.trim());
+}
+
 app.use(cors({
-  origin: [
-    'http://localhost:5173', 
-    'http://127.0.0.1:5173',
-    'http://localhost:5174',
-    'http://127.0.0.1:5174'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.includes(origin) || 
+                      origin.endsWith('.vercel.app') || 
+                      /^http:\/\/localhost:\d+$/.test(origin) ||
+                      /^http:\/\/127\.0\.0\.1:\d+$/.test(origin);
+                      
+    if (isAllowed) {
+      return callback(null, true);
+    } else {
+      console.warn(`CORS blocked request from origin: ${origin}`);
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Production-grade structured API error logging
+function logApiError(route, method, req, err) {
+  console.error(`\n====== API ERROR TRACE ======`);
+  console.error(`Timestamp: ${new Date().toISOString()}`);
+  console.error(`Route: ${route}`);
+  console.error(`Method: ${method}`);
+  console.error(`Request URL: ${req.originalUrl}`);
+  console.error(`User ID: ${req.auth?.userId || 'N/A'}`);
+  if (err.code) {
+    console.error(`Prisma/DB Error Code: ${err.code}`);
+  }
+  console.error(`Error Message: ${err.message || err}`);
+  console.error(`Stack Trace:`, err.stack || err);
+  console.error(`=============================\n`);
+}
+
+// Health Check Endpoint
+app.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRawUnsafe('SELECT 1');
+    return res.status(200).json({
+      status: "ok",
+      database: "connected",
+      environment: process.env.NODE_ENV || "development",
+      version: "1.0.0"
+    });
+  } catch (err) {
+    console.error("Healthcheck database query failed:", err);
+    return res.status(500).json({
+      status: "error",
+      database: "disconnected",
+      environment: process.env.NODE_ENV || "development",
+      version: "1.0.0",
+      error: err.message
+    });
+  }
+});
+
 // Standalone Razorpay Authentication Debug Route
 app.get('/api/debug/razorpay', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('Blocked attempt to access debug Razorpay route in production.');
+    return res.status(404).json({ error: 'Not Found' });
+  }
+
   console.log('====== DEBUG RAZORPAY AUTHENTICATION ======');
   console.log('process.cwd():', process.cwd());
   console.log('Key ID:', process.env.RAZORPAY_KEY_ID);
@@ -60,20 +124,10 @@ app.get('/api/debug/razorpay', async (req, res) => {
     console.log('Debug Order Creation Success:', rzpOrder);
     return res.json(rzpOrder);
   } catch (err) {
-    console.error('Debug Order Creation Failure:');
-    console.error('statusCode:', err?.statusCode);
-    console.error('message:', err?.message);
-    console.error('description:', err?.description || err?.error?.description);
-    console.error('error:', err?.error);
-    console.error('stack:', err?.stack || err);
-    console.error('============================================');
+    logApiError('/api/debug/razorpay', 'GET', req, err);
     return res.status(err?.statusCode || 400).json({
       success: false,
-      statusCode: err?.statusCode,
-      message: err?.message,
-      description: err?.description || err?.error?.description,
-      error: err?.error,
-      stack: err?.stack || err
+      message: 'Debug order creation failed.'
     });
   }
 });
@@ -1237,7 +1291,7 @@ app.get('/api/products', async (req, res) => {
 
     return res.status(200).json(response);
   } catch (err) {
-    console.error('Failed to fetch products:', err);
+    logApiError('/api/products', 'GET', req, err);
     return res.status(500).json({ error: 'Failed to fetch products' });
   }
 });
@@ -1286,7 +1340,7 @@ app.get('/api/products/:slug', async (req, res) => {
 
     return res.status(200).json(product);
   } catch (err) {
-    console.error('Failed to fetch product by slug:', err);
+    logApiError('/api/products/:slug', 'GET', req, err);
     return res.status(500).json({ error: 'Failed to fetch product' });
   }
 });
@@ -1461,7 +1515,7 @@ app.get('/api/categories', async (req, res) => {
     }
     return res.status(200).json(categories);
   } catch (err) {
-    console.error('Failed to fetch categories:', err);
+    logApiError('/api/categories', 'GET', req, err);
     return res.status(500).json({ error: 'Failed to fetch categories' });
   }
 });
@@ -1847,7 +1901,7 @@ app.get('/api/settings', async (req, res) => {
     const { razorpaySecret, ...publicSettings } = settings;
     return res.status(200).json(publicSettings);
   } catch (err) {
-    console.error('Failed to fetch store settings:', err);
+    logApiError('/api/settings', 'GET', req, err);
     return res.status(500).json({ error: 'Failed to fetch store settings' });
   }
 });
@@ -2498,6 +2552,27 @@ app.get('/api/status', (req, res) => {
   return res.json({ status: 'healthy', database: 'connected' });
 });
 
+// Health Check Endpoint
+app.get('/health', async (req, res) => {
+  try {
+    // Perform simple query to verify db connectivity
+    await prisma.$queryRaw`SELECT 1`;
+    return res.status(200).json({
+      status: 'ok',
+      database: 'connected',
+      environment: process.env.NODE_ENV || 'development',
+      version: '1.0.0'
+    });
+  } catch (err) {
+    logApiError('/health', 'GET', req, err);
+    return res.status(500).json({
+      status: 'unhealthy',
+      database: 'disconnected',
+      error: 'Database connection failed'
+    });
+  }
+});
+
 
 // ─────────────────────────────────────────────────
 // CAMPAIGN MANAGER ROUTES
@@ -2520,7 +2595,7 @@ app.get('/api/campaigns/active', async (req, res) => {
     if (!valid) return res.status(204).end();
     return res.json(valid);
   } catch (err) {
-    console.error('Failed to fetch active campaign:', err);
+    logApiError('/api/campaigns/active', 'GET', req, err);
     return res.status(500).json({ error: 'Failed to fetch active campaign' });
   }
 });
@@ -2600,9 +2675,12 @@ app.delete('/api/admin/campaigns/:id', requireAuth, requireAdmin, async (req, re
 });
 
 // Start listening
-
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Express API server running on http://localhost:${PORT}`);
+  
+  // Run startup database and schema verification
+  await verifyDatabaseSchema();
+  
   console.log('\n====== CLERK AUTH PROCESS CONFIGURATION ======');
   console.log('CLERK_SECRET_KEY Present:', !!process.env.CLERK_SECRET_KEY);
   console.log('CLERK_SECRET_KEY Value:', process.env.CLERK_SECRET_KEY);
@@ -2617,3 +2695,4 @@ app.listen(PORT, () => {
   });
   console.log('====================================\n');
 });
+

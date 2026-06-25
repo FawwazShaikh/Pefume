@@ -15,12 +15,9 @@
   },
   "dependencies": {
     "@clerk/clerk-sdk-node": "^4.13.23",
-    "@neondatabase/serverless": "^1.1.0",
-    "@prisma/adapter-neon": "^7.8.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "razorpay": "^2.9.6",
-    "svix": "^1.95.2",
-    "ws": "^8.21.0"
+    "svix": "^1.95.2"
   }
 }

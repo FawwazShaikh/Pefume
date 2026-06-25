@@ -18,6 +18,7 @@ import { collectionsData } from './components/SignatureCollection/CollectionData
 import PaymentSuccessPage from './components/PaymentSuccessPage';
 import PaymentFailurePage from './components/PaymentFailurePage';
 import MiniBag from './components/MiniBag';
+import { API_BASE_URL } from './utils/config.js';
 
 
 function App() {
@@ -62,7 +63,7 @@ function App() {
   useEffect(() => {
     async function loadProducts() {
       try {
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch(`${API_BASE_URL}/api/products`);
         if (res.ok) {
           const dbProducts = await res.json();
           // Merge with static data for details not present in the DB schema (e.g. pyramid, characteristics, notes)
