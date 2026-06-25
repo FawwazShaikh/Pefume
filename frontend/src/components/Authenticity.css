@@ -25,7 +25,7 @@
   font-weight: 600;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: #B08A50;
+  color: #8B672F;
   display: block;
   margin-bottom: 0.75rem;
 }
@@ -73,7 +73,7 @@
 
 .auth-badge:hover {
   background: #FEFCF9;
-  border-color: #B08A50;
+  border-color: #8B672F;
   transform: translateY(-4px);
   box-shadow: 0 20px 45px rgba(176, 138, 80, 0.1);
 }
@@ -92,7 +92,7 @@
   font-weight: 600;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: #B08A50;
+  color: #8B672F;
   line-height: 1;
 }
 
@@ -136,7 +136,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #B08A50;
+  color: #8B672F;
   font-size: 0.95rem;
 }
 
@@ -178,7 +178,7 @@
 }
 
 .cert-list li i {
-  color: #B08A50;
+  color: #8B672F;
   font-size: 0.85rem;
   flex-shrink: 0;
 }

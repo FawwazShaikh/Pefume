@@ -94,12 +94,12 @@
 }
 
 .checkout-address-select-box.active {
-  border-color: #B08A50;
+  border-color: #8B672F;
   background-color: rgba(176, 138, 80, 0.03);
 }
 
 .default-indicator-tag {
-  background-color: #B08A50;
+  background-color: #8B672F;
   color: #FEFCF9;
   font-size: 0.5rem;
   font-weight: 700;
@@ -123,7 +123,7 @@
 }
 
 .checkout-luxury-input:focus {
-  border-color: #B08A50;
+  border-color: #8B672F;
 }
 
 .checkout-luxury-textarea {
@@ -141,7 +141,7 @@
 }
 
 .checkout-luxury-textarea:focus {
-  border-color: #B08A50;
+  border-color: #8B672F;
 }
 
 /* Delivery & Payment select boxes */
@@ -159,7 +159,7 @@
 }
 
 .delivery-option-box.active, .payment-option-box.active {
-  border-color: #B08A50;
+  border-color: #8B672F;
   background-color: rgba(176, 138, 80, 0.03);
 }
 
@@ -207,8 +207,8 @@
 }
 
 .luxury-summary-checkout-btn:hover {
-  background-color: #B08A50;
-  border-color: #B08A50;
+  background-color: #8B672F;
+  border-color: #8B672F;
   color: #FEFCF9;
 }
 
@@ -282,7 +282,7 @@
 .empty-cart-divider {
   width: 36px;
   height: 1px;
-  background: #B08A50;
+  background: #8B672F;
   margin: 0 auto 1.5rem auto;
 }
 
@@ -322,14 +322,14 @@
 }
 
 .empty-cart-cta:hover {
-  background-color: #B08A50;
-  border-color: #B08A50;
+  background-color: #8B672F;
+  border-color: #8B672F;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(176, 138, 80, 0.25);
 }
 
 .empty-cart-cta:focus-visible {
-  outline: 2px solid #B08A50;
+  outline: 2px solid #8B672F;
   outline-offset: 3px;
 }
 
@@ -356,7 +356,7 @@
   cursor: pointer;
   font-family: inherit;
   font-size: inherit;
-  color: #B08A50;
+  color: #8B672F;
   text-decoration: underline;
   text-underline-offset: 3px;
   padding: 0;

@@ -368,7 +368,7 @@ export default function ProfilePage() {
   if (!authLoaded || !userLoaded) {
     return (
       <div className="profile-shell flex items-center justify-center min-h-screen bg-[#F7F3ED]">
-        <div className="text-center font-body text-xs tracking-widest text-[#B08A50] uppercase animate-pulse">
+        <div className="text-center font-body text-xs tracking-widest text-[#8B672F] uppercase animate-pulse">
           Loading Secure Account...
         </div>
       </div>
@@ -379,14 +379,14 @@ export default function ProfilePage() {
     return (
       <div className="profile-guest-shell min-h-screen bg-[#F7F3ED] flex items-center justify-center font-body px-4 select-none">
         <div className="max-w-md w-full text-center py-12 px-8 border border-black/5 bg-[#FEFCF9] shadow-sm">
-          <span className="text-[0.62rem] font-bold tracking-[3px] text-[#B08A50] uppercase block mb-3">Atelier Session</span>
+          <span className="text-[0.62rem] font-bold tracking-[3px] text-[#8B672F] uppercase block mb-3">Atelier Session</span>
           <h2 className="font-heading text-3xl font-light text-[#1C1B18] tracking-wide mb-4">My Account</h2>
           <p className="text-xs text-black/60 leading-relaxed mb-8">
             Please sign in to view your dynamic order history, delivery details, and saved billing destinations.
           </p>
           <SignInButton mode="modal">
             <button 
-              className="w-full py-3.5 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#B08A50] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 shadow-sm cursor-pointer"
+              className="w-full py-3.5 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#8B672F] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 shadow-sm cursor-pointer"
             >
               Authenticate Session
             </button>
@@ -456,7 +456,7 @@ export default function ProfilePage() {
               <div className="h-px bg-black/8 my-3" />
               
               <SignOutButton redirectUrl="/">
-                <button className="nav-tab-btn text-left text-[#B08A50] hover:text-[#1C1B18] w-full cursor-pointer">
+                <button className="nav-tab-btn text-left text-[#8B672F] hover:text-[#1C1B18] w-full cursor-pointer">
                   Sign Out
                 </button>
               </SignOutButton>
@@ -489,7 +489,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="bg-[#FEFCF9] border border-black/5 p-5 flex flex-col justify-between">
                       <span className="text-[0.58rem] font-bold text-black/40 uppercase tracking-widest block mb-2">Lifetime Investment</span>
-                      <span className="text-3xl font-light font-heading text-[#B08A50]">₹{metrics.lifetimeSpend.toLocaleString('en-IN')}</span>
+                      <span className="text-3xl font-light font-heading text-[#8B672F]">₹{metrics.lifetimeSpend.toLocaleString('en-IN')}</span>
                     </div>
                     <div className="bg-[#FEFCF9] border border-black/5 p-5 flex flex-col justify-between">
                       <span className="text-[0.58rem] font-bold text-black/40 uppercase tracking-widest block mb-2">Olfactory Preference</span>
@@ -501,7 +501,7 @@ export default function ProfilePage() {
                   {metrics.lastOrder && (
                     <div className="bg-[#FEFCF9] border border-black/8 p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                       <div className="flex-1">
-                        <span className="text-[0.55rem] font-bold tracking-[2px] text-[#B08A50] uppercase block mb-1">Quick Reorder</span>
+                        <span className="text-[0.55rem] font-bold tracking-[2px] text-[#8B672F] uppercase block mb-1">Quick Reorder</span>
                         <h4 className="font-heading text-base font-medium text-[#1C1B18] uppercase tracking-wider">Reorder Your Recent Selection</h4>
                         <p className="text-[0.72rem] text-black/60 mt-1 leading-relaxed">
                           Re-add the scents from order #{metrics.lastOrder.id.slice(-8).toUpperCase()} ({metrics.lastOrder.orderItems?.map(item => item.productName).join(', ')}) back to your bag.
@@ -509,7 +509,7 @@ export default function ProfilePage() {
                       </div>
                       <button
                         onClick={() => handleReorder(metrics.lastOrder)}
-                        className="py-3 px-6 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#B08A50] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 w-full sm:w-auto cursor-pointer text-center"
+                        className="py-3 px-6 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#8B672F] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 w-full sm:w-auto cursor-pointer text-center"
                       >
                         Reorder Now
                       </button>
@@ -535,7 +535,7 @@ export default function ProfilePage() {
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#1C1B18] mb-6">Edit Profile Details</h3>
                     
                     {profileSuccess && (
-                      <div className="p-4 bg-[#B08A50]/10 text-[#B08A50] text-xs font-bold uppercase tracking-wider mb-6">
+                      <div className="p-4 bg-[#8B672F]/10 text-[#8B672F] text-xs font-bold uppercase tracking-wider mb-6">
                         {profileSuccess}
                       </div>
                     )}
@@ -568,7 +568,7 @@ export default function ProfilePage() {
                       <button
                         type="submit"
                         disabled={savingProfile}
-                        className="py-3 px-8 bg-[#1C1B18] hover:bg-[#B08A50] text-[#FEFCF9] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer shadow-sm"
+                        className="py-3 px-8 bg-[#1C1B18] hover:bg-[#8B672F] text-[#FEFCF9] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer shadow-sm"
                       >
                         {savingProfile ? 'Saving Details...' : 'Save Profile'}
                       </button>
@@ -599,7 +599,7 @@ export default function ProfilePage() {
                       </p>
                       <button
                         onClick={() => { window.location.hash = 'shop'; }}
-                        className="mt-6 py-3 px-8 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#B08A50] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer shadow-sm"
+                        className="mt-6 py-2.5 px-6 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#B08A50] text-[0.65rem] font-bold tracking-widest uppercase transition-colors duration-300"
                       >
                         Explore Collections
                       </button>
@@ -627,24 +627,21 @@ export default function ProfilePage() {
                                   {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                                 </span>
                               </div>
-                              <div>
-                                <span className="text-[0.55rem] font-bold text-black/35 uppercase tracking-widest block mb-0.5">Total Amount</span>
-                                <span className="text-xs font-bold text-[#B08A50]">₹{Number(order.total).toLocaleString('en-IN')}</span>
-                              </div>
-                              <div className="sm:text-right">
-                                <span className={`status-pill ${statusStyles[order.status] || 'status-pending'}`}>
-                                  {order.status}
+                              
+                              <div className="flex items-center gap-8 justify-between sm:justify-end">
+                                <div>
+                                  <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block text-left sm:text-right">Total</span>
+                                  <span className="text-sm font-bold text-[#B08A50]">₹{Number(order.total).toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="text-left sm:text-right">
+                                  <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block mb-0.5">Status</span>
+                                  <span className={`status-pill ${statusStyles[order.status] || 'status-pending'}`}>
+                                    {order.status}
+                                  </span>
+                                </div>
+                                <span className="text-[#B08A50] text-xs font-bold hidden sm:inline">
+                                  {isExpanded ? 'Collapse' : 'Expand'}
                                 </span>
-                              </div>
-                            </div>
-
-                            {/* Card Summary (Items Preview) */}
-                            <div className="py-4 flex justify-between items-center gap-4">
-                              <div className="flex-1">
-                                <span className="text-[0.55rem] font-bold text-black/35 uppercase tracking-widest block mb-1">Items Selections</span>
-                                <p className="text-xs text-black/65 font-medium line-clamp-1">
-                                  {itemsSummary || 'No items found in this order.'}
-                                </p>
                               </div>
                             </div>
 
@@ -862,7 +859,7 @@ export default function ProfilePage() {
                             type="checkbox"
                             checked={addressFormData.isDefault}
                             onChange={(e) => setAddressFormData({ ...addressFormData, isDefault: e.target.checked })}
-                            className="rounded-none accent-[#B08A50]"
+                            className="rounded-none accent-[#8B672F]"
                           />
                           <label htmlFor="isDefaultCheckbox" className="text-[0.68rem] tracking-wider text-black/60 uppercase cursor-pointer">
                             Set as default shipping address
@@ -873,7 +870,7 @@ export default function ProfilePage() {
                           <button
                             type="submit"
                             disabled={savingAddress}
-                            className="py-3 px-6 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#B08A50] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer"
+                            className="py-3 px-6 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#8B672F] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer"
                           >
                             {savingAddress ? 'Saving...' : 'Save Destination'}
                           </button>
@@ -898,7 +895,7 @@ export default function ProfilePage() {
                           resetAddressForm();
                           setShowAddressForm(true);
                         }}
-                        className="mt-6 py-2.5 px-6 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#B08A50] text-[0.65rem] font-bold tracking-widest uppercase transition-colors"
+                        className="mt-6 py-2.5 px-6 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#8B672F] text-[0.65rem] font-bold tracking-widest uppercase transition-colors"
                       >
                         Add Shipping Address
                       </button>
@@ -923,7 +920,7 @@ export default function ProfilePage() {
                           <div className="flex items-center gap-4 pt-3 border-t border-black/5">
                             <button
                               onClick={() => handleEditAddressClick(addr)}
-                              className="text-[0.62rem] font-bold uppercase tracking-widest text-[#B08A50] hover:text-[#1C1B18] transition-colors"
+                              className="text-[0.62rem] font-bold uppercase tracking-widest text-[#8B672F] hover:text-[#1C1B18] transition-colors"
                             >
                               Edit
                             </button>
@@ -942,7 +939,7 @@ export default function ProfilePage() {
                             {!addr.isDefault && (
                               <button
                                 onClick={() => handleSetDefaultAddress(addr.id)}
-                                className="text-[0.62rem] font-bold uppercase tracking-widest text-[#B08A50] hover:text-[#1C1B18] transition-colors ml-auto"
+                                className="text-[0.62rem] font-bold uppercase tracking-widest text-[#8B672F] hover:text-[#1C1B18] transition-colors ml-auto"
                               >
                                 Set Default
                               </button>
@@ -989,7 +986,7 @@ export default function ProfilePage() {
 
                         <div className="flex justify-between items-center text-xs py-2.5">
                           <span className="font-bold text-black/50 uppercase tracking-wider text-[0.62rem]">Primary Provider</span>
-                          <span className="uppercase tracking-wider text-[0.68rem] text-[#B08A50] font-bold">
+                          <span className="uppercase tracking-wider text-[0.68rem] text-[#8B672F] font-bold">
                             {user.externalAccounts?.[0]?.provider || 'Email / Password'}
                           </span>
                         </div>
@@ -999,7 +996,7 @@ export default function ProfilePage() {
                     {/* Right: Security Standards Editorial Card */}
                     <div className="border border-black/5 bg-[#FEFCF9] p-6 flex flex-col justify-between">
                       <div>
-                        <span className="text-[0.55rem] font-bold tracking-[2px] text-[#B08A50] uppercase block mb-2">
+                        <span className="text-[0.55rem] font-bold tracking-[2px] text-[#8B672F] uppercase block mb-2">
                           Security Standard
                         </span>
                         <h4 className="font-heading text-lg font-light text-[#1C1B18] tracking-wide mb-3">
@@ -1010,15 +1007,15 @@ export default function ProfilePage() {
                         </p>
                         <ul className="space-y-3.5 text-[0.68rem] text-black/65">
                           <li className="flex items-center gap-2">
-                            <i className="fa-solid fa-lock text-[#B08A50] text-[9px]"></i>
+                            <i className="fa-solid fa-lock text-[#8B672F] text-[9px]"></i>
                             <span>End-to-End Tokenized Encryption</span>
                           </li>
                           <li className="flex items-center gap-2">
-                            <i className="fa-solid fa-shield-halved text-[#B08A50] text-[9px]"></i>
+                            <i className="fa-solid fa-shield-halved text-[#8B672F] text-[9px]"></i>
                             <span>Compliant Account Management</span>
                           </li>
                           <li className="flex items-center gap-2">
-                            <i className="fa-solid fa-user-shield text-[#B08A50] text-[9px]"></i>
+                            <i className="fa-solid fa-user-shield text-[#8B672F] text-[9px]"></i>
                             <span>Authorized Handshakes & CORS Protections</span>
                           </li>
                         </ul>

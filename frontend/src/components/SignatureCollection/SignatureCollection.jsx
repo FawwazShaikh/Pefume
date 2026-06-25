@@ -365,7 +365,7 @@ export default function SignatureCollection({
   }, [currentCategory]);
 
   return (
-    <section className="relative bg-[#F7F3ED] pt-6 pb-16 md:pt-8 md:pb-20 lg:pt-10 lg:pb-24 overflow-hidden select-none font-body">
+    <section className="relative bg-[#F7F3ED] pt-6 pb-16 md:pt-8 md:pb-20 lg:pt-10 lg:pb-24 overflow-hidden select-none font-body text-[#1C1B18]">
       {/* Background visual graphics */}
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -454,8 +454,8 @@ export default function SignatureCollection({
           
           return (
             /* Normal Breadcrumbs */
-            <div className="text-[0.6rem] font-bold tracking-[3px] uppercase mb-3 text-left" style={{ color: '#746F69' }}>
-              HOME <span className="mx-1" style={{ color: '#C9A46A' }}>/</span> <span style={{ color: '#C9A46A' }}>{breadcrumbText}</span>
+            <div className="text-[0.6rem] font-bold tracking-[3px] uppercase mb-3 text-left" style={{ color: '#3A3632' }}>
+              HOME <span className="mx-1" style={{ color: '#8B672F' }}>/</span> <span style={{ color: '#8B672F' }}>{breadcrumbText}</span>
             </div>
           );
         })()}
@@ -466,17 +466,17 @@ export default function SignatureCollection({
             <h2 className="font-heading text-3xl lg:text-4xl font-light tracking-wide uppercase" style={{ color: '#2C2926' }}>
               My Wishlist
             </h2>
-            <p className="text-xs font-body mt-2 uppercase tracking-wider" style={{ color: '#746F69' }}>
+            <p className="text-xs font-body mt-2 uppercase tracking-wider" style={{ color: '#5A5550' }}>
               {filteredAndSortedItems.length} Saved Fragrance{filteredAndSortedItems.length !== 1 ? 's' : ''}
             </p>
-            <div className="mt-3 h-px w-16" style={{ backgroundColor: '#C9A46A' }} />
+            <div className="mt-3 h-px w-16" style={{ backgroundColor: '#8B672F' }} />
           </div>
         ) : !categoryBanners[currentCategory] && !activeCollection && (
           <div className="mb-8 text-left">
             <h2 className="font-heading text-3xl lg:text-4xl font-light tracking-wide" style={{ color: '#2C2926' }}>
               Fragrance Collection
             </h2>
-            <div className="mt-3 h-px w-16" style={{ backgroundColor: '#C9A46A' }} />
+            <div className="mt-3 h-px w-16" style={{ backgroundColor: '#8B672F' }} />
           </div>
         )}
 
@@ -499,7 +499,7 @@ export default function SignatureCollection({
                   color: '#2C2926',
                 }}
               />
-              <i className="fas fa-search absolute right-2 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style={{ color: '#746F69' }}></i>
+              <i className="fas fa-search absolute right-2 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style={{ color: '#3A3632' }}></i>
             </div>
 
             {/* Custom Sort Dropdown */}
@@ -520,7 +520,7 @@ export default function SignatureCollection({
                   {sortBy === 'price-low' && 'Price: Low to High'}
                   {sortBy === 'price-high' && 'Price: High to Low'}
                 </span>
-                <i className={`fas fa-chevron-down text-[8px] transition-transform duration-200 ${isSortOpen ? 'rotate-180' : ''}`} style={{ color: '#746F69' }} />
+                <i className={`fas fa-chevron-down text-[8px] transition-transform duration-200 ${isSortOpen ? 'rotate-180' : ''}`} style={{ color: '#3A3632' }} />
               </button>
 
               <AnimatePresence>
@@ -552,7 +552,7 @@ export default function SignatureCollection({
                           className="w-full text-left px-3 py-2 text-[0.75rem] font-medium cursor-pointer transition-colors duration-200 hover:bg-[#F7F3ED]/40"
                           style={{
                             backgroundColor: sortBy === opt.value ? '#F7F3ED' : 'transparent',
-                            color: sortBy === opt.value ? '#2C2926' : '#746F69',
+                            color: sortBy === opt.value ? '#2C2926' : '#5A5550',
                           }}
                         >
                           {opt.label}
@@ -594,10 +594,10 @@ export default function SignatureCollection({
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-[#F1ECE4] relative group-hover:scale-102 transition-transform duration-700 ease-out">
-                      <div className="text-4xl md:text-5xl font-heading font-light tracking-widest border rounded-full w-20 h-20 flex items-center justify-center bg-white/40 shadow-inner" style={{ color: '#C9A46A', borderColor: 'rgba(201,164,106,0.2)' }}>
+                      <div className="text-4xl md:text-5xl font-heading font-light tracking-widest border rounded-full w-20 h-20 flex items-center justify-center bg-white/40 shadow-inner" style={{ color: '#8B672F', borderColor: 'rgba(139,103,47,0.2)' }}>
                         {item.name ? item.name.charAt(0).toUpperCase() : 'A'}
                       </div>
-                      <div className="text-[0.65rem] tracking-[0.2em] font-body uppercase mt-4 font-semibold" style={{ color: '#C9A46A' }}>
+                      <div className="text-[0.65rem] tracking-[0.2em] font-body uppercase mt-4 font-semibold" style={{ color: '#8B672F' }}>
                         {item.brand || 'Decant Atelier'}
                       </div>
                     </div>
@@ -616,7 +616,7 @@ export default function SignatureCollection({
                   {/* Overlays Badges */}
                   <div className="absolute top-3 left-3 z-10 flex flex-col gap-1 pointer-events-none items-start">
                     {item.tags && item.tags.includes('featured') && (
-                      <span className="text-[0.55rem] font-bold tracking-[0.15em] uppercase bg-[#FEFCF9]/90 backdrop-blur-[2px] px-2 py-0.5" style={{ color: '#C9A46A' }}>
+                      <span className="text-[0.55rem] font-bold tracking-[0.15em] uppercase bg-[#FEFCF9]/90 backdrop-blur-[2px] px-2 py-0.5" style={{ color: '#8B672F' }}>
                         BESTSELLER
                       </span>
                     )}
@@ -641,18 +641,18 @@ export default function SignatureCollection({
                 {/* Info block */}
                 <div className="pt-4 flex flex-col flex-1">
                   {/* Brand / Category Badge */}
-                  <span className="text-[0.6rem] tracking-[0.15em] uppercase font-bold text-left block mb-1" style={{ color: '#C9A46A' }}>
+                  <span className="text-[0.6rem] tracking-[0.15em] uppercase font-bold text-left block mb-1" style={{ color: '#8B672F' }}>
                     {item.category === 'sets' ? 'CURATED SET' : (item.brand || 'FRAGRANCE')}
                   </span>
 
                   {/* Product Title */}
-                  <h3 className="font-heading text-[0.95rem] font-light mb-1 tracking-wide leading-tight group-hover:text-policy-gold transition-colors duration-300 line-clamp-1 text-left" style={{ color: '#3A3632' }}>
+                  <h3 className="font-heading text-[0.95rem] font-normal mb-1 tracking-wide leading-tight group-hover:text-policy-gold transition-colors duration-300 line-clamp-1 text-left" style={{ color: '#3A3632' }}>
                     {item.name}
                   </h3>
 
                   {/* Scent Profile notes */}
                   {item.notes && item.notes.length > 0 && (
-                    <div className="text-[0.7rem] text-left font-light tracking-wide mb-1.5 font-body" style={{ color: '#746F69' }}>
+                    <div className="text-[0.7rem] text-left font-light tracking-wide mb-1.5 font-body" style={{ color: '#5A5550' }}>
                       {item.notes.slice(0, 2).join(' • ')}
                     </div>
                   )}
@@ -695,7 +695,7 @@ export default function SignatureCollection({
                               className="relative py-1 text-[0.68rem] tracking-widest uppercase cursor-pointer select-none focus:outline-none transition-colors duration-300 min-h-[32px] flex items-center justify-center focus-visible:ring-1 focus-visible:ring-black/10 focus-visible:outline-none"
                             >
                               <span className="transition-colors duration-300 hover:text-policy-primary" style={{
-                                color: isSelected ? '#2C2926' : '#746F69',
+                                color: isSelected ? '#2C2926' : '#5A5550',
                                 fontWeight: isSelected ? 500 : 400
                               }}>
                                 {sizeLabel}
@@ -704,7 +704,7 @@ export default function SignatureCollection({
                                 <motion.div
                                   layoutId={`activeCardSizeUnderline-${item.id}`}
                                   className="absolute bottom-0 left-0 right-0 h-[1.5px]"
-                                  style={{ backgroundColor: '#C9A46A' }}
+                                  style={{ backgroundColor: '#8B672F' }}
                                   transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                                 />
                               )}
@@ -802,9 +802,9 @@ export default function SignatureCollection({
           </div>
         ) : currentCategory === 'wishlist' ? (
           <div className="text-center py-24 bg-[#FEFCF9] border rounded-none p-10 shadow-sm max-w-xl mx-auto" style={{ borderColor: '#D8D1C7' }}>
-            <i className="far fa-heart text-5xl mb-4 block" style={{ color: '#C9A46A' }}></i>
+            <i className="far fa-heart text-5xl mb-4 block" style={{ color: '#8B672F' }}></i>
             <h4 className="font-heading text-xl font-light mb-2 uppercase tracking-wide" style={{ color: '#3A3632' }}>Your wishlist is empty.</h4>
-            <p className="text-xs leading-relaxed mb-6 font-body" style={{ color: '#746F69' }}>
+            <p className="text-xs leading-relaxed mb-6 font-body" style={{ color: '#5A5550' }}>
               Explore our boutique decants and curate your personal fragrance wishlist.
             </p>
             <button
@@ -817,9 +817,9 @@ export default function SignatureCollection({
           </div>
         ) : (
           <div className="text-center py-24 bg-white/40 border rounded-none p-10 shadow-sm" style={{ borderColor: '#D8D1C7' }}>
-            <i className="fas fa-search text-5xl mb-4 block" style={{ color: '#746F69' }}></i>
+            <i className="fas fa-search text-5xl mb-4 block" style={{ color: '#5A5550' }}></i>
             <h4 className="font-heading text-xl font-light mb-2" style={{ color: '#3A3632' }}>No Scents Found</h4>
-            <p className="text-xs font-body" style={{ color: '#746F69' }}>
+            <p className="text-xs font-body" style={{ color: '#5A5550' }}>
               Try adjusting your filters, search term, or sorting option.
             </p>
             <button
@@ -860,7 +860,7 @@ export default function SignatureCollection({
             >
               {/* Header panel controls */}
               <div className="sticky top-0 bg-[#F7F3ED] z-30 flex-shrink-0 border-b border-black/8 p-6 sm:px-10 lg:px-12 flex items-center justify-between">
-                <span className="text-[0.62rem] font-bold tracking-[3px] uppercase" style={{ color: '#C9A46A' }}>
+                <span className="text-[0.62rem] font-bold tracking-[3px] uppercase" style={{ color: '#8B672F' }}>
                   Interactive Concierge Sizing
                 </span>
                 <button
@@ -896,12 +896,12 @@ export default function SignatureCollection({
                     {/* Sourcing certificate box */}
                     <div className="mt-6 p-4 rounded-none bg-[#EFE8DD]/70 border" style={{ borderColor: '#D8D1C7' }}>
                       <div className="flex gap-2.5 items-start">
-                        <ShieldCheckIcon className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C9A46A' }} />
+                        <ShieldCheckIcon className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#8B672F' }} />
                         <div>
                           <p className="text-[0.68rem] font-bold uppercase tracking-wider" style={{ color: '#2C2926' }}>
                             Authenticity Promise
                           </p>
-                          <p className="text-[0.65rem] leading-relaxed mt-1 font-body" style={{ color: '#5A5550' }}>
+                          <p className="text-[0.65rem] leading-relaxed mt-1 font-body" style={{ color: '#1C1B18' }}>
                             Sourced directly from batch-tracked original retail bottles. Hand-decanted to order.
                           </p>
                         </div>
@@ -912,16 +912,16 @@ export default function SignatureCollection({
                   {/* Right Column: Descriptions, Pyramids, and Size Selector */}
                   <div className="flex flex-col justify-between">
                     <div>
-                      <span className="text-[0.62rem] font-bold tracking-widest uppercase px-3 py-1 rounded-none inline-block mb-4" style={{ color: '#C9A46A', backgroundColor: 'rgba(201,164,106,0.08)' }}>
+                      <span className="text-[0.62rem] font-bold tracking-widest uppercase px-3 py-1 rounded-none inline-block mb-4" style={{ color: '#8B672F', backgroundColor: 'rgba(139,103,47,0.08)' }}>
                         {selectedItem.category === 'decants' ? 'Decant Scent' : selectedItem.category === 'sets' ? 'Collection Set' : 'Retail Bottle'}
                       </span>
                       <h3 className="font-heading text-3xl font-light mb-2 tracking-wide leading-tight" style={{ color: '#2C2926' }}>
                         {selectedItem.name}
                       </h3>
-                      <p className="text-[0.78rem] italic tracking-wide mb-4" style={{ color: '#C9A46A' }}>
+                      <p className="text-[0.78rem] italic tracking-wide mb-4" style={{ color: '#8B672F' }}>
                         {selectedItem.tagline}
                       </p>
-                      <p className="text-[0.82rem] leading-relaxed font-body mb-6" style={{ color: '#5A5550' }}>
+                      <p className="text-[0.82rem] leading-relaxed font-body mb-6" style={{ color: '#1C1B18' }}>
                         {selectedItem.description}
                       </p>
 
@@ -932,16 +932,16 @@ export default function SignatureCollection({
                         </h4>
                         <div className="space-y-3">
                           <div className="grid grid-cols-[85px_1fr] text-[0.72rem] leading-normal font-body">
-                            <span className="font-bold uppercase tracking-wide" style={{ color: '#C9A46A' }}>Top notes:</span>
-                            <span style={{ color: '#5A5550' }}>{selectedItem.pyramid.top}</span>
+                            <span className="font-bold uppercase tracking-wide" style={{ color: '#8B672F' }}>Top notes:</span>
+                            <span style={{ color: '#1C1B18' }}>{selectedItem.pyramid.top}</span>
                           </div>
                           <div className="grid grid-cols-[85px_1fr] text-[0.72rem] leading-normal font-body">
-                            <span className="font-bold uppercase tracking-wide" style={{ color: '#C9A46A' }}>Heart notes:</span>
-                            <span style={{ color: '#5A5550' }}>{selectedItem.pyramid.heart}</span>
+                            <span className="font-bold uppercase tracking-wide" style={{ color: '#8B672F' }}>Heart notes:</span>
+                            <span style={{ color: '#1C1B18' }}>{selectedItem.pyramid.heart}</span>
                           </div>
                           <div className="grid grid-cols-[85px_1fr] text-[0.72rem] leading-normal font-body">
-                            <span className="font-bold uppercase tracking-wide" style={{ color: '#C9A46A' }}>Base notes:</span>
-                            <span style={{ color: '#5A5550' }}>{selectedItem.pyramid.base}</span>
+                            <span className="font-bold uppercase tracking-wide" style={{ color: '#8B672F' }}>Base notes:</span>
+                            <span style={{ color: '#1C1B18' }}>{selectedItem.pyramid.base}</span>
                           </div>
                         </div>
                       </div>
@@ -964,14 +964,14 @@ export default function SignatureCollection({
                               }}
                             >
                               <div className="flex justify-between items-center mb-1">
-                                <span className="text-[0.72rem] font-bold" style={{ color: selectedSizeIndex === idx ? '#C9A46A' : '#2C2926' }}>
+                                <span className="text-[0.72rem] font-bold" style={{ color: selectedSizeIndex === idx ? '#FEFCF9' : '#2C2926' }}>
                                   {sz.size}
                                 </span>
                                 <span className="text-[0.8rem] font-bold">
                                   ₹{sz.price.toLocaleString('en-IN')}
                                 </span>
                               </div>
-                              <span className="text-[0.58rem] block" style={{ color: selectedSizeIndex === idx ? 'rgba(255,255,255,0.8)' : '#746F69' }}>
+                              <span className="text-[0.58rem] block" style={{ color: selectedSizeIndex === idx ? 'rgba(255,255,255,0.8)' : '#5A5550' }}>
                                 {sz.label}
                               </span>
                             </button>
@@ -989,7 +989,7 @@ export default function SignatureCollection({
                 style={{ borderTopColor: '#D8D1C7' }}
               >
                 <div>
-                  <span className="text-[0.62rem] uppercase tracking-wider block" style={{ color: '#746F69' }}>Selected Option Price</span>
+                  <span className="text-[0.62rem] uppercase tracking-wider block" style={{ color: '#5A5550' }}>Selected Option Price</span>
                   <span className="text-2xl font-semibold font-heading tracking-wide" style={{ color: '#2C2926' }}>
                     ₹{selectedItem.sizes[selectedSizeIndex]?.price.toLocaleString('en-IN')}
                   </span>
@@ -1005,7 +1005,7 @@ export default function SignatureCollection({
                     }}
                     className="
                       flex-1 px-6 py-4 rounded-none text-white min-h-[44px]
-                      hover:bg-[#C9A46A] border flex items-center justify-center gap-2 cursor-pointer
+                      hover:bg-[#8B672F] border flex items-center justify-center gap-2 cursor-pointer
                     "
                     style={{
                       backgroundColor: '#2C2926',

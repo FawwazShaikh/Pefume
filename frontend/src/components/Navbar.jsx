@@ -710,8 +710,8 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
               <li><a href="#categories" onClick={(e) => handleLinkClick(e, 'categories')}>All Collections</a></li>
               <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'summer')}>Summer</a></li>
               <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'winter')}>Winter</a></li>
-              <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'office')}>Office</a></li>
-              <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'datenight')}>Date Night</a></li>
+              {/* <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'office')}>Office</a></li> */}
+              {/* <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'datenight')}>Date Night</a></li> */}
               <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'her')}>For Her</a></li>
               <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'him')}>For Him</a></li>
             </ul>

@@ -546,7 +546,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
       <div className="luxury-cart-container min-h-screen bg-[#F7F3ED] font-body text-[#1C1B18] pb-24 select-none pt-12">
 
         <div className="max-w-xl mx-auto text-center px-4 py-12 bg-[#FEFCF9] border border-black/5 mt-12 shadow-sm">
-          <div className="text-3xl text-[#B08A50] mb-6">✦</div>
+          <div className="text-3xl text-[#8B672F] mb-6">✦</div>
           <h2 className="font-heading text-3xl font-light uppercase tracking-wide mb-4">Purchase Confirmed</h2>
           {placedOrderId && (
             <p className="text-[0.62rem] font-bold tracking-[2px] text-black/40 uppercase mb-6">
@@ -559,7 +559,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
               onClick={() => { window.location.hash = 'profile'; }} 
-              className="py-3 px-6 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#B08A50] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300"
+              className="py-3 px-6 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#8B672F] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300"
             >
               View Order Details
             </button>
@@ -661,7 +661,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 48 48"
                 fill="none"
-                stroke="#B08A50"
+                stroke="#8B672F"
                 strokeWidth="1.25"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -742,7 +742,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                 setIsCheckingOut(false);
               }
             }} 
-            className={`mb-6 text-[0.65rem] font-bold tracking-widest uppercase hover:text-[#B08A50] transition-colors cursor-pointer ${isCheckoutInProgress ? 'checkout-disabled-element' : ''}`}
+            className="mb-8 text-[0.65rem] font-bold tracking-widest uppercase hover:text-[#B08A50] transition-colors cursor-pointer"
           >
             ← Back
           </button>
@@ -776,7 +776,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                   <div className="flex justify-between items-center text-xs font-bold uppercase tracking-wider mb-2">
                     <span>
                       {subtotal >= FREE_SHIPPING_THRESHOLD ? (
-                        <span className="text-[#B08A50]">✦ Congratulations! You qualify for Free Shipping</span>
+                        <span className="text-[#8B672F]">✦ Congratulations! You qualify for Free Shipping</span>
                       ) : (
                         `Add ₹${(FREE_SHIPPING_THRESHOLD - subtotal).toLocaleString('en-IN')} more for Free Shipping`
                       )}
@@ -817,7 +817,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                                     key={gIdx}
                                     onClick={() => setGalleryIndexMap(prev => ({ ...prev, [itemKey]: gIdx }))}
                                     className={`w-4 h-4 rounded-md border overflow-hidden flex-shrink-0 transition-all cursor-pointer ${
-                                      activeImgIdx === gIdx ? 'border-[#B08A50] scale-110' : 'border-neutral-200 opacity-60 hover:opacity-100'
+                                      activeImgIdx === gIdx ? 'border-[#8B672F] scale-110' : 'border-neutral-200 opacity-60 hover:opacity-100'
                                     }`}
                                   >
                                     <img src={gImg || '/images/perfume_placeholder.jpeg'} className="w-full h-full object-cover" alt="mini-thumb" />
@@ -910,7 +910,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                     type="checkbox"
                     checked={giftWrapping}
                     onChange={(e) => setGiftWrapping(e.target.checked)}
-                    className="accent-[#B08A50] w-5 h-5 cursor-pointer ml-4"
+                    className="accent-[#8B672F] w-5 h-5 cursor-pointer ml-4"
                   />
                 </div>
 
@@ -927,7 +927,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                     placeholder="Enter your order notes or gift messages..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full bg-[#F7F3ED]/40 border border-black/8 p-3 text-xs text-[#1C1B18] placeholder-black/30 focus:outline-none focus:border-[#B08A50] resize-none"
+                    className="w-full bg-[#F7F3ED]/40 border border-black/8 p-3 text-xs text-[#1C1B18] placeholder-black/30 focus:outline-none focus:border-[#8B672F] resize-none"
                   />
                 </div>
 
@@ -1116,7 +1116,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                               type="checkbox"
                               checked={newAddress.isDefault}
                               onChange={(e) => setNewAddress({ ...newAddress, isDefault: e.target.checked })}
-                              className="accent-[#B08A50]"
+                              className="accent-[#8B672F]"
                             />
                             <label htmlFor="newAddressDefaultCheckbox" className="text-[0.62rem] tracking-wider text-black/60 uppercase cursor-pointer">
                               Set as default delivery address
@@ -1127,7 +1127,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                             <button
                               type="submit"
                               disabled={savingAddress}
-                              className="py-2.5 px-6 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#B08A50] text-[0.65rem] font-bold tracking-widest uppercase transition-colors"
+                              className="py-2.5 px-6 bg-[#1C1B18] text-[#FEFCF9] hover:bg-[#8B672F] text-[0.65rem] font-bold tracking-widest uppercase transition-colors"
                             >
                               {savingAddress ? 'Saving...' : 'Save and Select'}
                             </button>
@@ -1156,7 +1156,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                       <button
                         disabled={!selectedAddressId}
                         onClick={() => setCheckoutStep(2)}
-                        className="checkout-primary-btn"
+                        className="py-3 px-8 bg-[#1C1B18] hover:bg-[#B08A50] text-[#FEFCF9] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Continue to Delivery
                       </button>
@@ -1179,7 +1179,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                       >
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-xs font-bold">Standard Atelier Delivery</span>
-                          <span className="text-xs font-bold text-[#B08A50]">
+                          <span className="text-xs font-bold text-[#8B672F]">
                             {subtotal >= FREE_SHIPPING_THRESHOLD ? 'FREE' : `₹${SHIPPING_CHARGES}`}
                           </span>
                         </div>
@@ -1194,7 +1194,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                       >
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-xs font-bold">Express Direct Air courier</span>
-                          <span className="text-xs font-bold text-[#B08A50]">₹150</span>
+                          <span className="text-xs font-bold text-[#8B672F]">₹150</span>
                         </div>
                         <p className="text-[0.68rem] text-black/60 leading-relaxed font-body">
                           Guaranteed priority shipment. Arrives in 1-2 business days.
@@ -1211,11 +1211,8 @@ export default function CartPage({ onBackToShop, products = [] }) {
                         Back to Address
                       </button>
                       <button
-                        onClick={() => {
-                          setCheckoutStep(3);
-                          window.dispatchEvent(new CustomEvent('shipping_selected', { detail: { method: deliveryMethod } }));
-                        }}
-                        className="checkout-primary-btn"
+                        onClick={() => setCheckoutStep(3)}
+                        className="py-3 px-8 bg-[#1C1B18] hover:bg-[#B08A50] text-[#FEFCF9] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300"
                       >
                         Continue to Payment
                       </button>
@@ -1255,26 +1252,41 @@ export default function CartPage({ onBackToShop, products = [] }) {
                         </p>
                       </div>
 
-                      {storeSettings?.codEnabled !== false && (
-                        <div 
-                          onClick={() => {
-                            setPaymentMethod('COD');
-                            window.dispatchEvent(new CustomEvent('payment_method_selected', { detail: { method: 'COD' } }));
-                          }}
-                          className={`payment-option-box ${paymentMethod === 'COD' ? 'active' : ''}`}
-                          role="radio"
-                          aria-checked={paymentMethod === 'COD'}
-                          tabIndex={0}
-                          onKeyDown={(e) => e.key === 'Enter' && setPaymentMethod('COD')}
-                        >
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${paymentMethod === 'COD' ? 'border-[#1C1B18]' : 'border-black/20'}`}>
-                              {paymentMethod === 'COD' && <div className="w-2 h-2 rounded-full bg-[#1C1B18]" />}
-                            </div>
-                            <span className="text-xs font-bold">Cash on Delivery</span>
-                          </div>
-                        </div>
-                      )}
+                      <div 
+                        onClick={() => setPaymentMethod('RAZORPAY')}
+                        className={`payment-option-box ${paymentMethod === 'RAZORPAY' ? 'active' : ''}`}
+                      >
+                        <span className="text-xs font-bold block mb-1">Simulated Card Validation</span>
+                        <p className="text-[0.68rem] text-black/60 leading-relaxed font-body">
+                          Simulated Razorpay transaction for instant and secure ledger logging.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step Actions */}
+                    <div className="pt-8 border-t border-black/8 flex items-center justify-between">
+                      <button
+                        onClick={() => setCheckoutStep(2)}
+                        className="text-[0.65rem] font-bold tracking-widest uppercase text-black/45 hover:text-black transition-colors"
+                      >
+                        Back to Delivery
+                      </button>
+                      <button
+                        onClick={() => setCheckoutStep(4)}
+                        className="py-3 px-8 bg-[#1C1B18] hover:bg-[#B08A50] text-[#FEFCF9] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300"
+                      >
+                        Continue to Review
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 4: REVIEW ORDER */}
+                {checkoutStep === 4 && (
+                  <div className="space-y-6">
+                    <div className="step-header pb-4 border-b border-black/8">
+                      <h3 className="font-heading text-2xl font-light uppercase tracking-wide">4. Review and Place</h3>
+                      <p className="text-xs text-black/45 font-body">Verify all delivery and ledger parameters before validating purchase.</p>
                     </div>
 
                     {/* Step 3 Actions */}
@@ -1288,7 +1300,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                       <button
                         onClick={handlePlaceOrder}
                         disabled={placingOrder || !selectedAddressId}
-                        className="checkout-primary-btn"
+                        className="py-3.5 px-8 bg-[#1C1B18] hover:bg-[#B08A50] text-[#FEFCF9] text-[0.68rem] font-bold tracking-widest uppercase transition-all duration-300 shadow-md"
                       >
                         {paymentMethod === 'RAZORPAY' ? 'Continue to Secure Payment' : 'Complete Purchase'}
                       </button>
@@ -1328,7 +1340,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
 
                 <div className="flex justify-between items-center">
                   <span className="text-black/50">SHIPPING</span>
-                  <span className="font-semibold text-[#B08A50]">
+                  <span className="font-semibold text-[#8B672F]">
                     {shipping === 0 ? 'FREE' : `₹${shipping.toLocaleString('en-IN')}`}
                   </span>
                 </div>
@@ -1343,13 +1355,13 @@ export default function CartPage({ onBackToShop, products = [] }) {
               {subtotal > 0 && !isCheckingOut && (
                 <div className="summary-promo-banner mb-6">
                   {subtotal >= FREE_SHIPPING_THRESHOLD ? (
-                    <div className="text-[0.62rem] font-bold text-center text-[#B08A50] tracking-wider uppercase py-1">
+                    <div className="text-[0.62rem] font-bold text-center text-[#8B672F] tracking-wider uppercase py-1">
                       <i className="fas fa-circle-check mr-1"></i> Complimentary Shipping Unlocked
                     </div>
                   ) : (
                     <div className="flex justify-between items-center text-[0.62rem] font-bold text-black/60 tracking-wider uppercase">
                       <span>Add ₹{(FREE_SHIPPING_THRESHOLD - subtotal).toLocaleString('en-IN')} for Free Delivery</span>
-                      <button onClick={handleBackToShop} className="underline text-[#B08A50] hover:text-[#1C1B18] cursor-pointer">
+                      <button onClick={handleBackToShop} className="underline text-[#8B672F] hover:text-[#1C1B18] cursor-pointer">
                         Add
                       </button>
                     </div>
@@ -1359,7 +1371,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
 
               <div className="border-t border-black/8 pt-6 mb-8 flex justify-between items-center">
                 <span className="font-body text-xs font-bold tracking-wider uppercase">Total</span>
-                <span className="font-heading text-2xl font-semibold text-[#B08A50]">
+                <span className="font-heading text-2xl font-semibold text-[#8B672F]">
                   ₹{grandTotal.toLocaleString('en-IN')}
                 </span>
               </div>

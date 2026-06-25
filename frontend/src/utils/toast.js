@@ -93,7 +93,7 @@ export const showToast = (message, type = 'success') => {
     toast.style.color = '#FEFCF9';
     toast.style.border = '1px solid rgba(255,255,255,0.1)';
   } else if (type === 'warning') {
-    toast.style.background = '#B08A50'; // warm gold
+    toast.style.background = '#8B672F'; // warm gold
     toast.style.color = '#FEFCF9';
     toast.style.border = '1px solid rgba(255,255,255,0.1)';
   } else {

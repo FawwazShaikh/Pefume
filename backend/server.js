@@ -210,10 +210,30 @@ app.post('/api/webhooks/clerk', express.raw({ type: 'application/json' }), async
 app.use(express.json());
 
 // Set up Clerk Node SDK auth middleware
-app.use(ClerkExpressWithAuth({
-  secretKey: process.env.CLERK_SECRET_KEY,
-  publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY
-}));
+if (process.env.CLERK_SECRET_KEY && (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY)) {
+  app.use(ClerkExpressWithAuth({
+    secretKey: process.env.CLERK_SECRET_KEY,
+    publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY
+  }));
+} else {
+  console.warn("\n[WARNING] CLERK_SECRET_KEY or CLERK_PUBLISHABLE_KEY is missing. Running in local dev-mode with mock authentication.\n");
+  app.use(async (req, res, next) => {
+    try {
+      const firstUser = await prisma.user.findFirst();
+      req.auth = {
+        userId: firstUser ? firstUser.clerkId : 'mock_dev_user_123',
+        sessionClaims: {}
+      };
+    } catch (e) {
+      req.auth = {
+        userId: 'mock_dev_user_123',
+        sessionClaims: {}
+      };
+    }
+    next();
+  });
+}
+
 
 // Middleware to enforce authentication
 const requireAuth = (req, res, next) => {

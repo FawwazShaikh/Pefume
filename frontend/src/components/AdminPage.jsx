@@ -1583,7 +1583,7 @@ export default function AdminPage() {
                     </text>
 
                     {/* Tier 2: Checkout */}
-                    <polygon points="62,45 338,45 288,77 112,77" fill="#B08A50" opacity="0.95" />
+                    <polygon points="62,45 338,45 288,77 112,77" fill="#8B672F" opacity="0.95" />
                     <text x="200" y="62" fill="#FEFCF9" textAnchor="middle" fontSize="10" fontWeight="bold" letterSpacing="0.5">
                       CHECKOUT: {orders.length} ({Math.round(orders.length / (orders.length * 1.5 + 3) * 100) || 0}%)
                     </text>

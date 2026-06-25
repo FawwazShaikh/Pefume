@@ -53,13 +53,13 @@
 
 .nav-tab-btn.active {
   color: #1C1B18;
-  border-left-color: #B08A50;
+  border-left-color: #8B672F;
   background-color: rgba(176, 138, 80, 0.04);
 }
 
 .nav-tab-btn.admin-badge {
   border-left-color: transparent;
-  color: #B08A50;
+  color: #8B672F;
   font-weight: 700;
   margin-top: 1.5rem;
   border-top: 1px dashed rgba(176, 138, 80, 0.2);
@@ -99,7 +99,7 @@
 }
 
 .luxury-input:focus {
-  border-color: #B08A50;
+  border-color: #8B672F;
   background-color: #FEFCF9;
 }
 
@@ -118,7 +118,7 @@
 
 .status-pending {
   background-color: rgba(176, 138, 80, 0.08);
-  color: #B08A50;
+  color: #8B672F;
   border-color: rgba(176, 138, 80, 0.2);
 }
 
@@ -162,12 +162,12 @@
 }
 
 .address-display-box.default {
-  border-color: #B08A50;
+  border-color: #8B672F;
   box-shadow: 0 4px 12px rgba(176, 138, 80, 0.04);
 }
 
 .default-tag {
-  background-color: #B08A50;
+  background-color: #8B672F;
   color: #FEFCF9;
   font-size: 0.5rem;
   font-weight: 700;

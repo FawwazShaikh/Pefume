@@ -91,7 +91,7 @@
 
 .footer-links li a:hover {
   opacity: 1;
-  color: var(--color-lux-accent, #B08A50);
+  color: var(--color-lux-accent, #8B672F);
   transform: translateX(4px);
 }
 
@@ -112,7 +112,7 @@
 }
 
 .footer-contact-list li i {
-  color: var(--color-lux-accent, #B08A50);
+  color: var(--color-lux-accent, #8B672F);
   font-size: 0.85rem;
   margin-top: 3px;
   flex-shrink: 0;
@@ -191,7 +191,7 @@
 
 .footer-bottom-links a:hover {
   opacity: 1;
-  color: var(--color-lux-accent, #B08A50);
+  color: var(--color-lux-accent, #8B672F);
 }
 
 /* Responsive: tablet */

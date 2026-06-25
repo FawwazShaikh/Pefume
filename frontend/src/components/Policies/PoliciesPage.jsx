@@ -63,7 +63,7 @@ export default function PoliciesPage() {
           className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage:
-              'linear-gradient(to right, #B08A50 1px, transparent 1px), linear-gradient(to bottom, #B08A50 1px, transparent 1px)',
+              'linear-gradient(to right, #8B672F 1px, transparent 1px), linear-gradient(to bottom, #8B672F 1px, transparent 1px)',
             backgroundSize: '80px 80px',
           }}
         />

@@ -26,7 +26,7 @@
   font-weight: 600;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: var(--color-lux-accent, #B08A50);
+  color: var(--color-lux-accent, #8B672F);
 }
 
 .gift-title {
@@ -42,7 +42,7 @@
 .gift-gold-divider {
   width: 40px;
   height: 1px;
-  background: var(--color-lux-accent, #B08A50);
+  background: var(--color-lux-accent, #8B672F);
   margin: 0.5rem 0;
 }
 
