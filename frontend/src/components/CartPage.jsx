@@ -528,7 +528,13 @@ export default function CartPage({ onBackToShop, products = [] }) {
           addressId: selectedAddressId,
           items,
           paymentMethod,
-          notes
+          // Append bottle selections to order notes so admin can see packaging preferences
+          notes: [
+            notes,
+            ...cartItems
+              .filter(item => item.bottleName)
+              .map(item => `${item.name} (${item.size}): Bottle — ${item.bottleName}${item.bottlePrice > 0 ? ` (+₹${item.bottlePrice})` : ''}`)
+          ].filter(Boolean).join('\n') || undefined
         })
       });
 
@@ -1046,6 +1052,13 @@ export default function CartPage({ onBackToShop, products = [] }) {
                                <span className="text-[0.72rem] text-black/50 block font-body text-center md:text-left">
                                  Size: {item.size} {item.label && `(${item.label})`}
                                </span>
+                               {item.bottleName && (
+                                 <span className="text-[0.65rem] text-[#8B672F] font-bold uppercase tracking-wider block text-center md:text-left">
+                                   <i className="fa-solid fa-spray-can-sparkles mr-1" aria-hidden="true" />
+                                   {item.bottleName}
+                                   {item.bottlePrice > 0 && <span className="text-black/40 font-semibold ml-1">(+₹{item.bottlePrice})</span>}
+                                 </span>
+                               )}
                              </div>
  
                              {/* Price & Quantity Selector Column */}

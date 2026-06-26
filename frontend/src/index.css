@@ -1442,26 +1442,35 @@ html {
   gap: 0.625rem;
 }
 
+/* Base: 2 columns (for 5ml — 2 bottles) */
 .pdp-bottle-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+  gap: 0.625rem;
   width: 100%;
 }
 
-/* 5ml grid: always 2 columns (only 2 options) */
-.pdp-bottle-grid--2col {
-  grid-template-columns: repeat(2, 1fr);
+/* 4-column layout for 10ml (4 bottles) on desktop */
+@media (min-width: 1024px) {
+  .pdp-bottle-grid[data-cols="4"] {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
 }
 
+/* Tablet: 10ml wraps to 2 per row */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .pdp-bottle-grid[data-cols="4"] {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.625rem;
+  }
+}
+
+/* Mobile: all stacked vertically */
 @media (max-width: 599px) {
   .pdp-bottle-grid {
     grid-template-columns: 1fr;
-    gap: 0.625rem;
-  }
-  /* On mobile, 5ml 2-col grid also stacks vertically */
-  .pdp-bottle-grid--2col {
-    grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
 }
 
@@ -1547,6 +1556,68 @@ html {
   transform: scale(1.6);
 }
 
+.pdp-bottle-img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(28, 27, 24, 0.40);
+  font-size: 1.25rem;
+  transition: color 0.2s ease;
+}
+
+.pdp-bottle-card--active .pdp-bottle-img-placeholder {
+  color: #8B672F;
+}
+
+.pdp-bottle-card__name {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #1C1B18;
+  flex: 1;
+  text-align: left;
+  line-height: 1.3;
+}
+
+.pdp-bottle-card__price {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #8B672F;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* On 4-column desktop layout (10ml), switch to vertical/column orientation */
+@media (min-width: 1024px) {
+  .pdp-bottle-grid[data-cols="4"] .pdp-bottle-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0.875rem 0.5rem 0.75rem;
+    gap: 0.5rem;
+    min-height: 110px;
+  }
+  .pdp-bottle-grid[data-cols="4"] .pdp-bottle-img-wrap {
+    width: 48px;
+    height: 48px;
+  }
+  .pdp-bottle-grid[data-cols="4"] .pdp-bottle-card__name {
+    text-align: center;
+    font-size: 0.575rem;
+    letter-spacing: 0.02em;
+  }
+  .pdp-bottle-grid[data-cols="4"] .pdp-bottle-card__price {
+    font-size: 0.6rem;
+  }
+}
+
+/* Legacy class aliases kept for compatibility */
 .pdp-bottle-info {
   display: flex;
   flex-direction: column;

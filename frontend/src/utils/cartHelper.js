@@ -109,7 +109,10 @@ export const addToCart = async (product, sizeOption, quantity = 1, token = null)
       size: sizeLabel,
       price: sizeOption.price || product.price,
       quantity: quantity,
-      label: sizeOption.label || ''
+      label: sizeOption.label || '',
+      // Bottle packaging selection (optional — only present for 5ml and 10ml sizes)
+      bottleName: sizeOption.bottleName || null,
+      bottlePrice: sizeOption.bottlePrice || 0,
     });
   }
   

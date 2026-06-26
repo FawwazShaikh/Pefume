@@ -7,13 +7,39 @@ import { collectionsData } from './SignatureCollection/CollectionData';
 import { WishlistStore, CartStore } from '../utils/store.js';
 import { API_BASE_URL, sanitizeImageUrl } from '../utils/config.js';
 
+// ── Bottle Options (frontend-only, packaging choice) ────────────────────────
+// Drop image files into: frontend/public/bottles/
+// Supported formats: .webp (preferred), .png, .jpg
+const BOTTLE_OPTIONS = {
+  '5ml': [
+    { id: 'classic-mini-black', name: 'Classic Mini Spray (Black)', additionalPrice: 0, image: '/decant_images/bottle_5ml_black.png' },
+    { id: 'classic-mini-gold', name: 'Classic Mini Spray (Gold)', additionalPrice: 0, image: '/decant_images/bottle_5ml_gold.png' },
+  ],
+  '10ml': [
+    { id: 'metal-atomizer-black', name: 'Classic Metal Atomizer (Black)', additionalPrice: 0, image: '/decant_images/bottle_10ml_black.png' },
+    { id: 'metal-atomizer-gold', name: 'Classic Metal Atomizer (Gold)', additionalPrice: 0, image: '/decant_images/bottle_10ml_gold.png' },
+    { id: 'premium-metal-atomizer', name: 'Premium Classic Metal Atomizer', additionalPrice: 55, image: '/decant_images/bottle_10ml_premium.png' },
+    { id: 'travel-safe', name: 'Travel-Safe', additionalPrice: 199, image: '/decant_images/bottle_10ml_travel.png' },
+  ],
+};
+
+// Derive which bottle key ('5ml' | '10ml' | null) a size string maps to
+function getBottleKey(sizeStr) {
+  if (!sizeStr) return null;
+  const s = sizeStr.toLowerCase();
+  if (s.includes('5ml')) return '5ml';
+  if (s.includes('10ml')) return '10ml';
+  return null;
+}
+
 export default function ProductPage({ product: initialProduct, products = [], onBackToShop }) {
   const { isSignedIn, getToken } = useAuth();
   const [product, setProduct] = useState(initialProduct);
   const [loading, setLoading] = useState(false);
 
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
-  const [selectedBottle, setSelectedBottle] = useState('classic');
+  // selectedBottle holds the bottle option id, or null when no bottle applies
+  const [selectedBottle, setSelectedBottle] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [cartItems, setCartItems] = useState(() => getCart());
   const [mutatingItems, setMutatingItems] = useState(new Set());
@@ -78,7 +104,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
             : [];
           const normalizedImage = normalizedImages[0] || dbProduct.image || null;
 
-          const staticProd = collectionsData.find(sp => sp.slug === dbProduct.slug || sp.id === dbProduct.id);
+          const staticProd = collectionsData.find(sp => sp.id === dbProduct.slug || sp.id === dbProduct.id);
 
           let merged = {};
           if (staticProd) {
@@ -182,6 +208,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
     setIsLightboxOpen(false);
     setIsZoomed(false);
     setIsImageLoading(true);
+    setSelectedBottle(null);
   }, [product]);
 
   // Set image loading state to true on active image change, but check if already complete/cached
@@ -199,18 +226,47 @@ export default function ProductPage({ product: initialProduct, products = [], on
     return product.sizes[selectedSizeIndex] || product.sizes[0];
   }, [product, selectedSizeIndex]);
 
+  // Which bottle list applies for the currently selected size
+  const bottleKey = useMemo(() => {
+    if (!selectedOption) return null;
+    return getBottleKey(selectedOption.size);
+  }, [selectedOption]);
+
+  // Auto-select first bottle when size changes to one that has bottles
+  useEffect(() => {
+    if (bottleKey && BOTTLE_OPTIONS[bottleKey]) {
+      setSelectedBottle(BOTTLE_OPTIONS[bottleKey][0].id);
+    } else {
+      setSelectedBottle(null);
+    }
+  }, [bottleKey]);
+
+  // The currently selected bottle object
+  const selectedBottleObj = useMemo(() => {
+    if (!bottleKey || !selectedBottle) return null;
+    return (BOTTLE_OPTIONS[bottleKey] || []).find(b => b.id === selectedBottle) || null;
+  }, [bottleKey, selectedBottle]);
+
+  // Additional price from the chosen bottle
+  const bottleAdditionalPrice = useMemo(() => {
+    return selectedBottleObj ? selectedBottleObj.additionalPrice : 0;
+  }, [selectedBottleObj]);
+
   const existingCartItem = useMemo(() => {
     if (!product || !selectedOption) return null;
     const sizeLabel = selectedOption.size || 'Default Size';
     return cartItems.find(item => {
       if (item.variantId && selectedOption.variantId && item.variantId === selectedOption.variantId) {
-        return true;
+        // Also match bottle if present
+        const itemBottle = item.bottleName || null;
+        const currentBottle = selectedBottleObj ? selectedBottleObj.name : null;
+        return itemBottle === currentBottle;
       }
       const itemProdId = item.productId || item.id;
       const currProdId = product.id || product.productId;
       return itemProdId === currProdId && item.size === sizeLabel;
     });
-  }, [cartItems, product, selectedOption]);
+  }, [cartItems, product, selectedOption, selectedBottleObj]);
 
   const cartQuantity = useMemo(() => {
     return existingCartItem ? existingCartItem.quantity : 0;
@@ -443,18 +499,34 @@ export default function ProductPage({ product: initialProduct, products = [], on
       return;
     }
 
+    // If a size with bottles is selected, require a bottle choice
+    if (bottleKey && !selectedBottle) {
+      showToast('Please choose your bottle type.', 'warning');
+      return;
+    }
+
     setIsAdding(true);
     try {
       const token = isSignedIn ? await getToken() : null;
       let result;
-      
+
+      // Build the sizeOption with bottle metadata baked in
+      const sizeOptionWithBottle = selectedOption
+        ? {
+          ...selectedOption,
+          price: selectedOption.price + bottleAdditionalPrice,
+          bottleName: selectedBottleObj ? selectedBottleObj.name : null,
+          bottlePrice: bottleAdditionalPrice,
+        }
+        : selectedOption;
+
       // If quantity matches existing, no need to update
       if (existingCartItem && existingCartItem.quantity === selectedQty) {
         result = { success: true, reason: 'NO_OP' };
       } else if (existingCartItem) {
         result = await updateQuantity(selectedOption.variantId || product.id, selectedOption.size, selectedQty, token);
       } else {
-        result = await addToCart(product, selectedOption, selectedQty, token);
+        result = await addToCart(product, sizeOptionWithBottle, selectedQty, token);
       }
 
       if (result && (result.success || result.reason === 'NO_OP')) {
@@ -470,18 +542,19 @@ export default function ProductPage({ product: initialProduct, products = [], on
 
   // Pricing calculations
   const bottleRetailPrice = product.retailPrice || (product.price * 20);
-  const selectedSizePrice = selectedOption ? selectedOption.price : product.price;
+  // Total price = size base price + any bottle surcharge
+  const selectedSizePrice = selectedOption ? selectedOption.price + bottleAdditionalPrice : product.price;
 
   const savingsAmount = competitorPriceForSize - selectedSizePrice;
   const savingsPercent = Math.round((savingsAmount / competitorPriceForSize) * 100);
 
   const renderTrustSection = () => {
     const trustItems = [
-      { icon: 'fa-flask',           title: 'Sterile Filling',  desc: 'Medical-grade siphoning process.' },
-      { icon: 'fa-microscope',      title: 'Batch Verified',   desc: 'Tracked to original retail source.' },
-      { icon: 'fa-magnifying-glass',title: 'Hand Inspected',   desc: 'Every bottle checked before dispatch.' },
-      { icon: 'fa-shield-halved',   title: 'Leak Tested',      desc: 'Pressure-tested before shipment.' },
-      { icon: 'fa-sun',             title: 'UV Protected',     desc: 'Amber glass preserves fragrance quality.' },
+      { icon: 'fa-flask', title: 'Sterile Filling', desc: 'Medical-grade siphoning process.' },
+      { icon: 'fa-microscope', title: 'Batch Verified', desc: 'Tracked to original retail source.' },
+      { icon: 'fa-magnifying-glass', title: 'Hand Inspected', desc: 'Every bottle checked before dispatch.' },
+      { icon: 'fa-shield-halved', title: 'Leak Tested', desc: 'Pressure-tested before shipment.' },
+      { icon: 'fa-sun', title: 'UV Protected', desc: 'Amber glass preserves fragrance quality.' },
     ];
     return (
       <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid rgba(28,27,24,0.10)' }}>
@@ -862,11 +935,10 @@ export default function ProductPage({ product: initialProduct, products = [], on
                         setActiveImageIndex(idx);
                         setIsZoomed(false);
                       }}
-                      className={`relative overflow-hidden rounded-[12px] border min-w-[56px] min-h-[56px] w-16 h-16 bg-white flex items-center justify-center cursor-pointer transition-all duration-300 ${
-                        isActive
-                          ? 'border-[#B08A50] ring-1 ring-[#B08A50] scale-[1.02]'
-                          : 'border-black/5 hover:border-black/20 hover:scale-102'
-                      }`}
+                      className={`relative overflow-hidden rounded-[12px] border min-w-[56px] min-h-[56px] w-16 h-16 bg-white flex items-center justify-center cursor-pointer transition-all duration-300 ${isActive
+                        ? 'border-[#B08A50] ring-1 ring-[#B08A50] scale-[1.02]'
+                        : 'border-black/5 hover:border-black/20 hover:scale-102'
+                        }`}
                     >
                       <img
                         src={imgUrl}
@@ -883,14 +955,14 @@ export default function ProductPage({ product: initialProduct, products = [], on
 
           {/* RIGHT COLUMN: Buy Box, Scent Pyramid, Specs Grid */}
           <div className="space-y-6 lg:space-y-8 text-left">
-            
+
             {/* Header Product Details */}
             <div className="space-y-2">
               <span className="text-[0.62rem] font-bold tracking-[3px] text-black/45 uppercase block">
                 {product.brand.toUpperCase()}
               </span>
               <div className="flex justify-between items-start gap-4">
-                <h1 
+                <h1
                   className="font-heading font-light text-[#1C1B18] tracking-wide uppercase leading-tight"
                   style={{
                     fontSize: 'clamp(1.75rem, 6vw, 3rem)',
@@ -901,7 +973,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                 >
                   {product.name}
                 </h1>
-                
+
                 <button
                   onClick={() => showToast("Added to your collection wishlist.", "success")}
                   className="flex items-center justify-center gap-1.5 px-4 py-2 border border-black/8 rounded-full text-[0.62rem] font-bold tracking-wider uppercase hover:border-black/30 hover:bg-black/[0.02] transition-all select-none cursor-pointer min-h-[44px] min-w-[44px] whitespace-nowrap"
@@ -967,8 +1039,58 @@ export default function ProductPage({ product: initialProduct, products = [], on
                 </div>
               </div>
 
-              {/* Vial Spray (decants only) */}
-              {product.category === 'decants' && (
+              {/* ── Bottle Selector (only for 5ml and 10ml) ── */}
+              {bottleKey && BOTTLE_OPTIONS[bottleKey] && (
+                <div>
+                  <span className="pdp-field-label">
+                    {bottleKey === '5ml' ? '5ML' : '10ML'} — Choose Your Bottle
+                  </span>
+                  <div
+                    className="pdp-bottle-grid"
+                    role="group"
+                    aria-label={`Choose your ${bottleKey} bottle`}
+                    data-cols={BOTTLE_OPTIONS[bottleKey].length}
+                  >
+                    {BOTTLE_OPTIONS[bottleKey].map((bottle) => {
+                      const isActive = selectedBottle === bottle.id;
+                      return (
+                        <button
+                          key={bottle.id}
+                          id={`bottle-option-${bottle.id}`}
+                          onClick={() => setSelectedBottle(bottle.id)}
+                          disabled={isAdding || isItemMutating}
+                          aria-label={`${bottle.name}${bottle.additionalPrice > 0 ? `, +₹${bottle.additionalPrice}` : ', included'}`}
+                          aria-pressed={isActive}
+                          className={`pdp-bottle-card${isActive ? ' pdp-bottle-card--active' : ''}`}
+                        >
+                          <div className="pdp-bottle-img-wrap" aria-hidden="true">
+                            {bottle.image ? (
+                              <img
+                                src={bottle.image}
+                                alt={bottle.name}
+                                loading="lazy"
+                                className="pdp-bottle-img"
+                                draggable={false}
+                              />
+                            ) : (
+                              <div className="pdp-bottle-img-placeholder">
+                                <i className="fa-solid fa-spray-can-sparkles" />
+                              </div>
+                            )}
+                          </div>
+                          <span className="pdp-bottle-card__name">{bottle.name}</span>
+                          <span className="pdp-bottle-card__price">
+                            {bottle.additionalPrice === 0 ? '+₹0' : `+₹${bottle.additionalPrice}`}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Vial Spray (decants only, only when no bottle selector) */}
+              {product.category === 'decants' && !bottleKey && (
                 <div>
                   <span className="pdp-field-label">Vial Spray Setup</span>
                   <div className="pdp-vial-card">
@@ -1008,18 +1130,18 @@ export default function ProductPage({ product: initialProduct, products = [], on
                     <span className="pdp-sold-out-label" role="status">Sold Out</span>
                   )}
                 </div>
- 
+
                 <div className="pdp-avail-group">
                   <span className="pdp-avail-label">Availability</span>
                   <span
                     className={`pdp-avail-status ${selectedOption && selectedOption.stock > 0 ? 'pdp-avail-status--instock' : 'pdp-avail-status--outofstock'}`}
                     role="status"
                   >
-                  {selectedOption ? 'In Stock' : 'Unavailable'}
+                    {selectedOption ? 'In Stock' : 'Unavailable'}
                   </span>
                 </div>
               </div>
- 
+
               {/* ── Add to Bag CTA ── */}
               <button
                 onClick={handleAddToCart}

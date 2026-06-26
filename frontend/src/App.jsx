@@ -82,7 +82,7 @@ function App() {
           const dbProducts = await res.json();
           // Merge with static data for details not present in the DB schema (e.g. pyramid, characteristics, notes)
           const merged = dbProducts.map(dbProd => {
-            const staticProd = collectionsData.find(sp => sp.slug === dbProd.slug || sp.id === dbProd.id);
+            const staticProd = collectionsData.find(sp => sp.id === dbProd.slug || sp.id === dbProd.id);
             if (staticProd) {
               return {
                 ...staticProd,
@@ -115,7 +115,7 @@ function App() {
           // Verify that all CollectionData products exist in the database
           if (import.meta.env.DEV) {
             collectionsData.forEach(sp => {
-              const found = dbProducts.find(dp => dp.slug === sp.slug || dp.id === sp.id);
+              const found = dbProducts.find(dp => dp.slug === sp.id || dp.id === sp.id);
               if (!found) {
                 console.error(`[CRITICAL DEVELOPMENT ERROR] Product "${sp.name}" with slug/id "${sp.slug || sp.id}" is defined in CollectionData.js but is MISSING from the Neon Database!`);
               }

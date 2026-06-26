@@ -2653,7 +2653,7 @@ export default function AdminPage() {
                 </div>
                 {productForm.images.map((img, idx) => (
                   <div key={idx} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <input type="text" placeholder="Image URL (e.g. /images/perfume_x.jpeg)" required className="admin-input" style={{ flexGrow: 1 }} value={img.imageUrl} onChange={(e) => updateImageField(idx, 'imageUrl', e.target.value)} />
+                    <input type="text" placeholder="Image URL (e.g. /decant_images/perfume_x.jpeg)" required className="admin-input" style={{ flexGrow: 1 }} value={img.imageUrl} onChange={(e) => updateImageField(idx, 'imageUrl', e.target.value)} />
                     <input type="text" placeholder="Alt Text" className="admin-input" style={{ width: '8rem' }} value={img.altText} onChange={(e) => updateImageField(idx, 'altText', e.target.value)} />
                     <button type="button" onClick={() => removeImageField(idx)} disabled={productForm.images.length === 1} className="admin-btn-danger" style={{ padding: '0.25rem 0.5rem', opacity: productForm.images.length === 1 ? 0.5 : 1 }}>
                       Remove

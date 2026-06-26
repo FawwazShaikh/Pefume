@@ -9,7 +9,7 @@ export const API_BASE_URL = base;
  */
 export const sanitizeImageUrl = (url) => {
   if (!url || typeof url !== 'string' || url.trim() === '') {
-    return '/images/perfume_placeholder.jpeg';
+    return '/decant_images/perfume_placeholder.jpeg';
   }
   const trimmed = url.trim();
   // Relative paths

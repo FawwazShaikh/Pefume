@@ -982,7 +982,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
                           >
                             <img
                               className="search-result-img"
-                              src={sanitizeImageUrl(product.image || '/images/perfume_placeholder.jpeg')}
+                              src={sanitizeImageUrl(product.image || '/decant_images/perfume_placeholder.jpeg')}
                               alt={product.name}
                               loading="lazy"
                             />
