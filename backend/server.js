@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import clerk, { ClerkExpressWithAuth } from '@clerk/clerk-sdk-node';
+import { ClerkExpressWithAuth, createClerkClient } from '@clerk/clerk-sdk-node';
 import { Webhook } from 'svix';
 import { prisma, verifyDatabaseSchema } from './lib/prisma.js';
 import crypto from 'crypto';
@@ -20,6 +20,10 @@ console.log('====================================');
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY,
 });
 
 const app = express();
@@ -324,7 +328,7 @@ function extractClerkProfile(user) {
 
 async function fetchClerkProfile(clerkId) {
   try {
-    const clerkUser = await clerk.users.getUser(clerkId);
+    const clerkUser = await clerkClient.users.getUser(clerkId);
     return extractClerkProfile(clerkUser);
   } catch (err) {
     console.warn(`Unable to fetch Clerk profile for ${clerkId}:`, err.message);
