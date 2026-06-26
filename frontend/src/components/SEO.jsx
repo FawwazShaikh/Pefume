@@ -1,0 +1,321 @@
+import { useEffect } from 'react';
+
+/**
+ * Helper to dynamically create/update meta tags in document head.
+ */
+function updateMetaTag(propertyOrName, value, content) {
+  if (!content) return;
+  const attribute = propertyOrName.startsWith('og:') ? 'property' : 'name';
+  let element = document.querySelector(`meta[${attribute}="${propertyOrName}"]`);
+  if (!element) {
+    element = document.createElement('meta');
+    element.setAttribute(attribute, propertyOrName);
+    document.head.appendChild(element);
+  }
+  element.setAttribute('content', content);
+}
+
+/**
+ * Helper to update canonical link in document head.
+ */
+function updateCanonicalLink(url) {
+  let element = document.querySelector('link[rel="canonical"]');
+  if (!element) {
+    element = document.createElement('link');
+    element.setAttribute('rel', 'canonical');
+    document.head.appendChild(element);
+  }
+  element.setAttribute('href', url);
+}
+
+/**
+ * Helper to update JSON-LD scripts in document head.
+ */
+function updateJsonLd(id, schemaData) {
+  let element = document.getElementById(id);
+  if (schemaData) {
+    if (!element) {
+      element = document.createElement('script');
+      element.id = id;
+      element.type = 'application/ld+json';
+      document.head.appendChild(element);
+    }
+    element.text = JSON.stringify(schemaData);
+  } else {
+    if (element) {
+      element.remove();
+    }
+  }
+}
+
+const CATEGORY_TITLES = {
+  bestsellers: 'Best Sellers',
+  newarrivals: 'New Arrivals',
+  decants: 'Perfume Decants',
+  sets: 'Gift Sets',
+  fullbottles: 'Full Bottles',
+  summer: 'Summer Fragrances',
+  winter: 'Winter Fragrances',
+  'for-him': 'Fragrances for Him',
+  him: 'Fragrances for Him',
+  'for-her': 'Fragrances for Her',
+  her: 'Fragrances for Her',
+  luxury: 'Luxury Collection'
+};
+
+export default function SEO({ activePage, activeCategory, selectedProduct }) {
+  useEffect(() => {
+    let title = 'Decant Atelier | Luxury Perfume Decants in India';
+    let description = 'Buy authentic luxury perfume decants in India. Explore Dior, Chanel, Tom Ford, Maison Francis Kurkdjian, Creed and more.';
+    let canonical = 'https://decantatelier.in/';
+    let ogType = 'website';
+    let ogImage = 'https://decantatelier.in/og-image.png';
+
+    // JSON-LD schema containers
+    let websiteSchema = null;
+    let organizationSchema = null;
+    let localBusinessSchema = null;
+    let productSchema = null;
+    let breadcrumbSchema = null;
+
+    // Organization details
+    const organizationData = {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      '@id': 'https://decantatelier.in/#organization',
+      'name': 'Decant Atelier',
+      'url': 'https://decantatelier.in/',
+      'logo': 'https://decantatelier.in/decantatelierlogo.png',
+      'contactPoint': {
+        '@type': 'ContactPoint',
+        'telephone': '+91-98205-83776',
+        'contactType': 'customer support',
+        'email': 'faheem@decantatelier.in',
+        'areaServed': 'IN',
+        'availableLanguage': ['en', 'hi']
+      }
+    };
+
+    // Website details
+    const websiteData = {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      '@id': 'https://decantatelier.in/#website',
+      'name': 'Decant Atelier',
+      'url': 'https://decantatelier.in/',
+      'potentialAction': {
+        '@type': 'SearchAction',
+        'target': {
+          '@type': 'EntryPoint',
+          'urlTemplate': 'https://decantatelier.in/#shop?search={search_term_string}'
+        },
+        'query-input': 'required name=search_term_string'
+      }
+    };
+
+    // LocalBusiness details (targeting India location/currency)
+    const localBusinessData = {
+      '@context': 'https://schema.org',
+      '@type': 'LocalBusiness',
+      '@id': 'https://decantatelier.in/#localbusiness',
+      'name': 'Decant Atelier',
+      'image': 'https://decantatelier.in/og-image.png',
+      'url': 'https://decantatelier.in/',
+      'telephone': '+91-98205-83776',
+      'email': 'faheem@decantatelier.in',
+      'priceRange': '₹₹',
+      'address': {
+        '@type': 'PostalAddress',
+        'addressCountry': 'IN',
+        'addressLocality': 'Mumbai',
+        'addressRegion': 'Maharashtra'
+      },
+      'currenciesAccepted': 'INR',
+      'paymentAccepted': 'UPI, Credit Card, Debit Card, Net Banking'
+    };
+
+    if (activePage === 'home') {
+      title = 'Luxury Perfume Decants in India | Decant Atelier';
+      description = 'Buy authentic luxury perfume decants in India. Explore Dior, Chanel, Tom Ford, Maison Francis Kurkdjian, Creed and more with proportional fair pricing.';
+      canonical = 'https://decantatelier.in/';
+      
+      websiteSchema = websiteData;
+      organizationSchema = organizationData;
+      localBusinessSchema = localBusinessData;
+
+    } else if (activePage === 'shop') {
+      const catKey = (activeCategory || 'all').toLowerCase();
+      if (catKey !== 'all') {
+        const catTitle = CATEGORY_TITLES[catKey] || catKey.charAt(0).toUpperCase() + catKey.slice(1);
+        title = `${catTitle} Collection | Decant Atelier`;
+        description = `Explore our premium ${catTitle} collection at Decant Atelier. Genuine hand-poured decants and luxury fragrance options in India.`;
+        canonical = `https://decantatelier.in/#shop?category=${catKey}`;
+      } else {
+        title = 'Shop Luxury Perfume Decants | Decant Atelier';
+        description = 'Browse our full catalogue of authentic designer and niche perfume decants. Hand-poured in sterile conditions with fast delivery across India.';
+        canonical = 'https://decantatelier.in/#shop';
+      }
+
+    } else if (activePage === 'product' && selectedProduct) {
+      title = `${selectedProduct.name} | Decant Atelier`;
+      
+      const cleanDesc = selectedProduct.description 
+        ? selectedProduct.description.replace(/\r?\n|\r/g, ' ') 
+        : 'Buy authentic luxury perfume decants in India.';
+      description = `Buy authentic decants of ${selectedProduct.name} by ${selectedProduct.brand || 'Premium Brand'} online in India. ${cleanDesc.substring(0, 110)}...`;
+      
+      const productSlug = selectedProduct.slug || selectedProduct.id;
+      canonical = `https://decantatelier.in/#product/${productSlug}`;
+      ogType = 'product';
+      
+      if (selectedProduct.image) {
+        ogImage = selectedProduct.image.startsWith('http') 
+          ? selectedProduct.image 
+          : `https://decantatelier.in${selectedProduct.image}`;
+      }
+
+      // Generate dynamic Product schema directly from live database properties
+      const defaultVariant = selectedProduct.sizes && selectedProduct.sizes.length > 0 
+        ? selectedProduct.sizes[0] 
+        : null;
+      const productPrice = defaultVariant ? defaultVariant.price : (selectedProduct.price || 0);
+      const isOutOfStock = defaultVariant && defaultVariant.stock === 0;
+
+      productSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        '@id': `https://decantatelier.in/#product-${selectedProduct.id}`,
+        'name': selectedProduct.name,
+        'image': ogImage,
+        'description': cleanDesc,
+        'brand': {
+          '@type': 'Brand',
+          'name': selectedProduct.brand || 'Luxury Fragrances'
+        },
+        'sku': defaultVariant?.sku || `DA-${selectedProduct.id.toUpperCase()}`,
+        'offers': {
+          '@type': 'Offer',
+          'price': productPrice,
+          'priceCurrency': 'INR',
+          'availability': isOutOfStock ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+          'url': canonical,
+          'priceValidUntil': '2027-12-31'
+        }
+      };
+
+      // Rich Breadcrumb List schema
+      breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        'itemListElement': [
+          {
+            '@type': 'ListItem',
+            'position': 1,
+            'name': 'Home',
+            'item': 'https://decantatelier.in/'
+          },
+          {
+            '@type': 'ListItem',
+            'position': 2,
+            'name': 'Shop',
+            'item': 'https://decantatelier.in/#shop'
+          },
+          {
+            '@type': 'ListItem',
+            'position': 3,
+            'name': selectedProduct.brand || 'Brands',
+            'item': `https://decantatelier.in/#shop?category=${(selectedProduct.brand || '').toLowerCase().replace(/\s+/g, '-')}`
+          },
+          {
+            '@type': 'ListItem',
+            'position': 4,
+            'name': selectedProduct.name,
+            'item': canonical
+          }
+        ]
+      };
+
+    } else if (activePage === 'wishlist') {
+      title = 'Wishlist | Decant Atelier';
+      description = 'View your curated collection of favorite luxury perfumes and decants at Decant Atelier.';
+      canonical = 'https://decantatelier.in/#wishlist';
+
+    } else if (activePage === 'cart') {
+      title = 'Shopping Cart | Decant Atelier';
+      description = 'Review your luxury perfume decants and proceed to secure checkout at Decant Atelier.';
+      canonical = 'https://decantatelier.in/#cart';
+
+    } else if (activePage === 'profile') {
+      title = 'My Account | Decant Atelier';
+      description = 'Manage your profile, order history, and account settings at Decant Atelier.';
+      canonical = 'https://decantatelier.in/#profile';
+
+    } else if (activePage === 'admin') {
+      title = 'Admin Console | Decant Atelier';
+      description = 'Manage products, orders, users, and shop settings.';
+      canonical = 'https://decantatelier.in/#admin';
+
+    } else if (activePage === 'categories') {
+      title = 'Fragrance Categories | Decant Atelier';
+      description = 'Explore luxury fragrances by category, gender, season, and scent family.';
+      canonical = 'https://decantatelier.in/#categories';
+
+    } else if (activePage === 'gifting') {
+      title = 'Luxury Scent Gifting | Decant Atelier';
+      description = 'Discover our handpicked luxury perfume gifting sets and custom curated options.';
+      canonical = 'https://decantatelier.in/#gifting';
+
+    } else if (activePage === 'policies') {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'privacy') {
+        title = 'Privacy Policy | Decant Atelier';
+        description = 'Read our privacy policy to understand how Decant Atelier collects, uses, and safeguards your personal information.';
+        canonical = 'https://decantatelier.in/#privacy';
+      } else if (hash === 'returns') {
+        title = 'Refund Policy | Decant Atelier';
+        description = 'Read our return and refund policy to understand eligibility, damaged orders, and cancellations at Decant Atelier.';
+        canonical = 'https://decantatelier.in/#returns';
+      } else if (hash === 'shipping') {
+        title = 'Shipping Policy | Decant Atelier';
+        description = 'Read our shipping policy regarding processing times, packaging standards, and tracking for domestic shipping in India.';
+        canonical = 'https://decantatelier.in/#shipping';
+      } else if (hash === 'terms') {
+        title = 'Terms & Conditions | Decant Atelier';
+        description = 'Read our terms and conditions governing purchases, pricing, intellectual property, and liability at Decant Atelier.';
+        canonical = 'https://decantatelier.in/#terms';
+      } else if (hash === 'about') {
+        title = 'About Us | Decant Atelier';
+        description = 'Learn about Decant Atelier\'s story, our values, and our uncompromising standards for authentic hand-poured perfume decants in India.';
+        canonical = 'https://decantatelier.in/#about';
+      } else if (hash === 'authenticity') {
+        title = 'Authenticity & Sourcing | Decant Atelier';
+        description = 'Learn how we source, verify, and decant our luxury fragrances to guarantee 100% authenticity.';
+        canonical = 'https://decantatelier.in/#authenticity';
+      } else {
+        title = 'Our Policies | Decant Atelier';
+        description = 'Transparency, integrity, and care — the pillars of every interaction with Decant Atelier.';
+        canonical = 'https://decantatelier.in/#about';
+      }
+    }
+
+    // Apply head changes dynamically
+    document.title = title;
+    updateMetaTag('description', description);
+    updateCanonicalLink(canonical);
+    updateMetaTag('og:title', title);
+    updateMetaTag('og:description', description);
+    updateMetaTag('og:image', ogImage);
+    updateMetaTag('og:url', canonical);
+    updateMetaTag('og:type', ogType);
+
+    // Apply JSON-LD structured schemas
+    updateJsonLd('seo-website-jsonld', websiteSchema);
+    updateJsonLd('seo-organization-jsonld', organizationSchema);
+    updateJsonLd('seo-localbusiness-jsonld', localBusinessSchema);
+    updateJsonLd('seo-product-jsonld', productSchema);
+    updateJsonLd('seo-breadcrumb-jsonld', breadcrumbSchema);
+
+  }, [activePage, activeCategory, selectedProduct]);
+
+  return null;
+}

@@ -742,7 +742,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
       >
         <div className="mobile-menu-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img src="/decantatelierlogo.png" alt="" className="nav-logo-img" style={{ height: '24px', width: 'auto', objectFit: 'contain' }} />
+            <img src="/decantatelierlogo.png" alt="Decant Atelier Logo" className="nav-logo-img" style={{ height: '24px', width: 'auto', objectFit: 'contain' }} />
             <span className="brand-name" style={{ fontSize: '15px' }}>DECANT ATELIER</span>
           </div>
           <button className="mobile-close" onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu">

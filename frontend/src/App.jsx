@@ -22,9 +22,18 @@ import MiniBag from './components/MiniBag';
 import { API_BASE_URL } from './utils/config.js';
 import { clearCart } from './utils/cartHelper.js';
 import { CartStore } from './utils/store.js';
+import SEO from './components/SEO';
 
 
 function App() {
+  // TODO: V2 SEO & Routing Roadmap:
+  // 1. Replace client-side hash routing (#) with React Router BrowserRouter for real URLs (/shop, /product/slug, etc.).
+  // 2. Generate sitemap.xml dynamically from PostgreSQL backend.
+  // 3. Generate JSON-LD schema dynamically.
+  // 4. Generate OG preview images automatically using dynamic HTML-to-image canvas.
+  // 5. Implement Google Merchant Center catalog feed integration.
+  // 6. Implement FAQ Schema.
+  // 7. Implement Review Schema.
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
 
   const getPageFromHash = () => {
@@ -179,6 +188,7 @@ function App() {
 
   return (
     <div className="flex flex-col gap-0 min-h-screen">
+      <SEO activePage={activePage} activeCategory={activeCategory} selectedProduct={selectedProduct} />
       {activePage !== 'admin' && activePage !== 'cart' && activePage !== 'profile' && <DailyOfferPopup />}
 
       {/* Mini Bag — Global slide-out drawer, mounted at root so it overlays any page */}
