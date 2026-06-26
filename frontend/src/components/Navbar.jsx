@@ -692,7 +692,8 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
           </div>
 
           {/* Center: Brand Logo */}
-          <div className="logo-container" onClick={(e) => handleLinkClick(e, '')}>
+          <div className="logo-container" onClick={(e) => handleLinkClick(e, '')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* <img src="/decantatelierlogo.png" alt="" className="nav-logo-img" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} /> */}
             <span className="brand-name">DECANT ATELIER</span>
           </div>
 
@@ -740,7 +741,10 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
         aria-label="Navigation menu"
       >
         <div className="mobile-menu-header">
-          <span className="brand-name">DECANT ATELIER</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <img src="/decantatelierlogo.png" alt="" className="nav-logo-img" style={{ height: '24px', width: 'auto', objectFit: 'contain' }} />
+            <span className="brand-name" style={{ fontSize: '15px' }}>DECANT ATELIER</span>
+          </div>
           <button className="mobile-close" onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu">
             <i className="fas fa-times" />
           </button>

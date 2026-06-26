@@ -5,8 +5,8 @@ import { API_BASE_URL } from '../utils/config.js';
 export default function Footer({ onNavigate }) {
   const [settings, setSettings] = useState({
     storeName: 'DECANT ATELIER',
-    supportPhone: '+91 97681 88453',
-    supportEmail: 'orders@decantatelier.in'
+    supportPhone: '+91 98205 83776',
+    supportEmail: 'faheem@decantatelier.in'
   });
 
   useEffect(() => {
@@ -17,8 +17,8 @@ export default function Footer({ onNavigate }) {
           const data = await res.json();
           setSettings({
             storeName: data.storeName || 'DECANT ATELIER',
-            supportPhone: data.supportPhone || '+91 97681 88453',
-            supportEmail: data.supportEmail || 'orders@decantatelier.in'
+            supportPhone: data.supportPhone || '+91 98205 83776',
+            supportEmail: data.supportEmail || 'faheem@decantatelier.in'
           });
         }
       } catch (err) {

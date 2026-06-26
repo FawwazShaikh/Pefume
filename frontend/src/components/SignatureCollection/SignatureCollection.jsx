@@ -172,6 +172,7 @@ export default function SignatureCollection({
 
   const [selectedCardSizes, setSelectedCardSizes] = useState({});
   const [addingItemId, setAddingItemId] = useState(null);
+  const [isWishlistCtaHovered, setIsWishlistCtaHovered] = useState(false);
 
   const getCardSizeIndex = (itemId) => {
     return selectedCardSizes[itemId] !== undefined ? selectedCardSizes[itemId] : 0;
@@ -851,10 +852,21 @@ export default function SignatureCollection({
             </p>
             <button
               onClick={() => { window.location.hash = 'collection'; }}
-              className="px-6 py-3 rounded-none text-white text-[0.7rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer shadow-sm"
-              style={{ backgroundColor: '#2C2926' }}
+              onMouseEnter={() => setIsWishlistCtaHovered(true)}
+              onMouseLeave={() => setIsWishlistCtaHovered(false)}
+              className="px-6 py-3 rounded-none text-[0.7rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer shadow-sm"
+              style={{
+                backgroundColor: isWishlistCtaHovered ? '#8B672F' : '#1C1B18',
+                color: '#ffffff',
+                fill: '#ffffff',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px'
+              }}
             >
               DISCOVER SCENTS
+              <span style={{ display: 'inline-block', transition: 'transform 0.3s ease', transform: isWishlistCtaHovered ? 'translateX(4px)' : 'none' }}>→</span>
             </button>
           </div>
         ) : (
