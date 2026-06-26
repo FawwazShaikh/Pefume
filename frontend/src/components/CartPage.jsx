@@ -8,6 +8,20 @@ import { API_BASE_URL, sanitizeImageUrl } from '../utils/config.js';
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
+    if (typeof window.Razorpay !== 'undefined') {
+      resolve(true);
+      return;
+    }
+    const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existingScript) {
+      if (window.Razorpay) {
+        resolve(true);
+      } else {
+        existingScript.addEventListener('load', () => resolve(true));
+        existingScript.addEventListener('error', () => resolve(false));
+      }
+      return;
+    }
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.onload = () => resolve(true);
@@ -542,13 +556,13 @@ export default function CartPage({ onBackToShop, products = [] }) {
             return;
           }
 
-          // Enforce loading credentials strictly from environment variable
-          let rzpKey = import.meta.env.VITE_RAZORPAY_KEY_ID || '';
+          // Enforce loading credentials from order response payload, falling back to environment variable
+          let rzpKey = orderData.razorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID || '';
           rzpKey = rzpKey.replace(/^["']|["']$/g, '').trim();
 
-          if (!rzpKey || rzpKey === 'rzp_test_placeholder') {
-            console.error("Razorpay VITE_RAZORPAY_KEY_ID is missing or set to placeholder in frontend.");
-            showToast('Payment gateway configuration error. Please contact support.', 'error');
+          if (!rzpKey || rzpKey === 'rzp_test_placeholder' || rzpKey === 'undefined') {
+            console.error("Razorpay Key ID is missing or set to placeholder in frontend.");
+            showToast('Payment configuration error: Public Key is missing or invalid.', 'error');
             setPlacingOrder(false);
             setCheckoutState('READY');
             return;
@@ -557,7 +571,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
           const options = {
             key: rzpKey,
             amount: Math.round(orderData.total * 100),
-            currency: 'INR',
+            currency: orderData.currency || 'INR',
             name: storeSettings ? storeSettings.storeName : 'Decant Atelier',
             description: 'Luxury Fragrance Purchase',
             order_id: orderData.razorpayOrderId,
@@ -623,6 +637,45 @@ export default function CartPage({ onBackToShop, products = [] }) {
               }
             }
           };
+
+          // Strict Runtime Validation of required properties before propagating to Razorpay SDK
+          if (!options.key || options.key === 'undefined') {
+            console.error("[CRITICAL] Razorpay Options Verification: 'key' is undefined or missing!", options);
+            showToast('Unable to initialize payment gateway: Key is invalid.', 'error');
+            setPlacingOrder(false);
+            setCheckoutState('READY');
+            return;
+          }
+          if (!options.order_id || options.order_id === 'undefined') {
+            console.error("[CRITICAL] Razorpay Options Verification: 'order_id' is undefined or missing!", options);
+            showToast('Unable to initialize payment gateway: Order ID is invalid.', 'error');
+            setPlacingOrder(false);
+            setCheckoutState('READY');
+            return;
+          }
+          if (!options.amount || isNaN(options.amount) || options.amount <= 0) {
+            console.error("[CRITICAL] Razorpay Options Verification: 'amount' is invalid or <= 0!", options);
+            showToast('Unable to initialize payment gateway: Invalid order amount.', 'error');
+            setPlacingOrder(false);
+            setCheckoutState('READY');
+            return;
+          }
+          if (!options.currency) {
+            console.error("[CRITICAL] Razorpay Options Verification: 'currency' is undefined or missing!", options);
+            showToast('Unable to initialize payment gateway: Currency is invalid.', 'error');
+            setPlacingOrder(false);
+            setCheckoutState('READY');
+            return;
+          }
+
+          if (import.meta.env.DEV) {
+            console.log("\n====== INITIALIZING RAZORPAY CHECKOUT ======");
+            console.log("Options payload:", {
+              ...options,
+              key: options.key ? `${options.key.slice(0, 12)}...` : 'N/A' // obfuscate key in console log
+            });
+            console.log("============================================\n");
+          }
 
           const rzp = new window.Razorpay(options);
           rzp.on('payment.failed', async function (response) {
@@ -939,7 +992,11 @@ export default function CartPage({ onBackToShop, products = [] }) {
                     const fullProduct = products.find(p => p.id === item.productId || p.id === item.id);
                     const gallery = fullProduct?.images || [item.image];
                     const activeImgIdx = galleryIndexMap[itemKey] || 0;
-                    const activeImage = (gallery[activeImgIdx] || item.image) || '/images/perfume_placeholder.jpeg';
+                    
+                    // Audit and parse potentially complex object/string structure to guarantee valid URL
+                    const activeRawImg = gallery[activeImgIdx] || item.image;
+                    const activeImage = typeof activeRawImg === 'string' ? activeRawImg : (activeRawImg?.imageUrl || activeRawImg?.url || '');
+                    const activeImageSrc = sanitizeImageUrl(activeImage);
 
                     const itemMutating = mutatingItems.has(item.variantId) || 
                                          mutatingItems.has((item.variantId || item.id) + '_' + item.size) ||
@@ -952,21 +1009,26 @@ export default function CartPage({ onBackToShop, products = [] }) {
                           {/* Product Image and Thumbnail Gallery */}
                           <div className="flex flex-col gap-2 flex-shrink-0 items-center">
                             <div className="product-image-box border border-black/5 bg-white relative w-20 h-24 overflow-hidden flex items-center justify-center">
-                              <img src={activeImage} alt={item.name} className="w-full h-full object-cover" />
+                              <img src={activeImageSrc} alt={item.name || 'Fragrance Decant'} className="w-full h-full object-cover" />
                             </div>
                             {gallery.length > 1 && (
                               <div className="flex gap-1 justify-center w-20 overflow-x-auto scrollbar-hide">
-                                {gallery.slice(0, 4).map((gImg, gIdx) => (
-                                  <button
-                                    key={gIdx}
-                                    onClick={() => setGalleryIndexMap(prev => ({ ...prev, [itemKey]: gIdx }))}
-                                    className={`w-4 h-4 rounded-md border overflow-hidden flex-shrink-0 transition-all cursor-pointer ${
-                                      activeImgIdx === gIdx ? 'border-[#8B672F] scale-110' : 'border-neutral-200 opacity-60 hover:opacity-100'
-                                    }`}
-                                  >
-                                    <img src={gImg || '/images/perfume_placeholder.jpeg'} className="w-full h-full object-cover" alt="mini-thumb" />
-                                  </button>
-                                ))}
+                                {gallery.slice(0, 4).map((gImg, gIdx) => {
+                                  const rawThumb = gImg || item.image;
+                                  const thumbUrl = typeof rawThumb === 'string' ? rawThumb : (rawThumb?.imageUrl || rawThumb?.url || '');
+                                  const thumbSrc = sanitizeImageUrl(thumbUrl);
+                                  return (
+                                    <button
+                                      key={gIdx}
+                                      onClick={() => setGalleryIndexMap(prev => ({ ...prev, [itemKey]: gIdx }))}
+                                      className={`w-4 h-4 rounded-md border overflow-hidden flex-shrink-0 transition-all cursor-pointer ${
+                                        activeImgIdx === gIdx ? 'border-[#8B672F] scale-110' : 'border-neutral-200 opacity-60 hover:opacity-100'
+                                      }`}
+                                    >
+                                      <img src={thumbSrc} className="w-full h-full object-cover" alt="mini-thumb" />
+                                    </button>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
@@ -974,7 +1036,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                            {/* Product Details */}
                            <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
                              <div className="space-y-1 w-full text-center md:text-left">
-                               <span className="text-[0.58rem] font-bold text-black/40 uppercase tracking-widest block block">
+                                <span className="text-[0.58rem] font-bold text-black/40 uppercase tracking-widest block">
                                  {item.brand ? item.brand.toUpperCase() : 'DECANTS'}
                                </span>
                                <h3 className="font-heading text-lg font-normal text-[#1C1B18] text-center md:text-left">

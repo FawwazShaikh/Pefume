@@ -786,7 +786,10 @@ app.post('/api/orders', requireAuth, async (req, res) => {
       });
       
       console.log(`Order placed successfully with Razorpay: ${updatedOrder.id}`);
-      return res.status(201).json(formatOrder(updatedOrder));
+      return res.status(201).json({
+        ...formatOrder(updatedOrder),
+        razorpayKeyId: process.env.RAZORPAY_KEY_ID ? process.env.RAZORPAY_KEY_ID.replace(/^["']|["']$/g, '').trim() : undefined
+      });
     } else {
       console.log(`Order placed successfully: ${order.id}`);
       return res.status(201).json(formatOrder(order));
