@@ -131,6 +131,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   const searchContainerRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const touchStartRef = useRef(0);
+  const scrollPositionRef = useRef(0);
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
   // Handle keyboard navigation and trap focus inside mobile menu drawer
@@ -219,52 +220,47 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   }, [isSearchOpen]);
 
   useEffect(() => {
-    const preventDefault = (e) => {
-      if (mobileMenuRef.current && mobileMenuRef.current.contains(e.target)) {
-        const el = mobileMenuRef.current;
-        const top = el.scrollTop;
-        const totalScroll = el.scrollHeight;
-        const currentScroll = top + el.offsetHeight;
-        const clientY = e.touches[0].clientY;
-
-        if (top === 0 && clientY > touchStartRef.current) {
-          e.preventDefault();
-        } else if (currentScroll >= totalScroll && clientY < touchStartRef.current) {
-          e.preventDefault();
-        }
-        return;
-      }
-      e.preventDefault();
-    };
-
-    const handleTouchStart = (e) => {
-      touchStartRef.current = e.touches[0].clientY;
-    };
-
     if (isSearchOpen || isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
-      document.documentElement.style.overflow = 'hidden';
-      document.documentElement.style.touchAction = 'none';
+      if (document.body.style.position !== 'fixed') {
+        scrollPositionRef.current = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollPositionRef.current}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        document.body.style.touchAction = 'none';
 
-      if (isMobileMenuOpen) {
-        document.addEventListener('touchstart', handleTouchStart, { passive: true });
-        document.addEventListener('touchmove', preventDefault, { passive: false });
+        document.documentElement.style.overflow = 'hidden';
+        document.documentElement.style.touchAction = 'none';
       }
     } else {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-      document.documentElement.style.overflow = '';
-      document.documentElement.style.touchAction = '';
+      if (document.body.style.position === 'fixed') {
+        const savedScroll = scrollPositionRef.current;
+
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+
+        document.documentElement.style.overflow = '';
+        document.documentElement.style.touchAction = '';
+
+        window.scrollTo(0, savedScroll);
+        scrollPositionRef.current = 0;
+      }
     }
 
     return () => {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-      document.documentElement.style.overflow = '';
-      document.documentElement.style.touchAction = '';
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', preventDefault);
+      // Cleanup on unmount if left open
+      if (document.body.style.position === 'fixed') {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+        document.documentElement.style.overflow = '';
+        document.documentElement.style.touchAction = '';
+      }
     };
   }, [isSearchOpen, isMobileMenuOpen]);
 
