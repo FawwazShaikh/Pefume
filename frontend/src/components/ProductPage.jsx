@@ -62,11 +62,14 @@ export default function ProductPage({ product: initialProduct, products = [], on
     const hash = window.location.hash.replace('#', '');
     if (hash.startsWith('product-')) {
       const slug = hash.replace('product-', '');
+      console.log(`[SEO DIAGNOSTICS] fetchProductDetails for slug: ${slug}, API_BASE_URL: ${API_BASE_URL}`);
       setLoading(true);
       try {
         const res = await fetch(`${API_BASE_URL}/api/products/${slug}`);
+        console.log(`[SEO DIAGNOSTICS] fetchProductDetails Response status: ${res.status}`);
         if (res.ok) {
           const dbProduct = await res.json();
+          console.log(`[SEO DIAGNOSTICS] fetchProductDetails Response JSON:`, dbProduct);
 
           // Normalize images: the single-product API returns ProductImage objects
           // [{id, productId, imageUrl, altText, position}], but the list API returns
@@ -133,10 +136,13 @@ export default function ProductPage({ product: initialProduct, products = [], on
               })) : []
             };
           }
+          console.log(`[SEO DIAGNOSTICS] fetchProductDetails Merged product:`, merged);
           setProduct(merged);
+        } else {
+          console.error(`[SEO DIAGNOSTICS] fetchProductDetails non-ok response: ${res.status}`);
         }
       } catch (err) {
-        console.error('Failed to fetch product details:', err);
+        console.error('[SEO DIAGNOSTICS] fetchProductDetails caught exception:', err);
       } finally {
         setLoading(false);
       }
