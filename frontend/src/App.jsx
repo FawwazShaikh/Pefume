@@ -77,12 +77,9 @@ function App() {
   useEffect(() => {
     async function loadProducts() {
       try {
-        console.log(`[SEO DIAGNOSTICS] loadProducts API_BASE_URL: ${API_BASE_URL}`);
         const res = await fetch(`${API_BASE_URL}/api/products`);
-        console.log(`[SEO DIAGNOSTICS] loadProducts Response status: ${res.status}`);
         if (res.ok) {
           const dbProducts = await res.json();
-          console.log(`[SEO DIAGNOSTICS] loadProducts Response JSON:`, dbProducts);
           // Merge with static data for details not present in the DB schema (e.g. pyramid, characteristics, notes)
           const merged = dbProducts.map(dbProd => {
             const staticProd = collectionsData.find(sp => sp.slug === dbProd.slug || sp.id === dbProd.id);
@@ -125,14 +122,15 @@ function App() {
             });
           }
 
-          console.log(`[SEO DIAGNOSTICS] loadProducts merged count: ${merged.length}`);
           setProducts(merged);
         } else {
-          console.error(`[SEO DIAGNOSTICS] loadProducts Non-200 status: ${res.status}`);
           setProducts([]);
+          if (import.meta.env.DEV) {
+            console.error('[CRITICAL DEVELOPMENT ERROR] Product catalog fetch returned non-200 response.');
+          }
         }
       } catch (err) {
-        console.error('[SEO DIAGNOSTICS] loadProducts caught exception:', err);
+        console.error('Failed to load dynamic product catalog:', err);
         setProducts([]);
       } finally {
         setLoadingProducts(false);
