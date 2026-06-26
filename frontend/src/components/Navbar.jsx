@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { SignedIn, SignedOut, SignInButton, SignOutButton } from '@clerk/clerk-react';
+import { SignedIn, SignedOut, SignInButton, SignOutButton, useAuth } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CartStore } from '../utils/store.js';
 import { clearCart } from '../utils/cartHelper.js';
-import { sanitizeImageUrl } from '../utils/config.js';
+import { sanitizeImageUrl, API_BASE_URL } from '../utils/config.js';
 import './Navbar.css';
 
 const ShoppingBagIcon = ({ className }) => (
@@ -71,6 +71,32 @@ const shopDescriptions = {
 };
 
 export default function Navbar({ onNavigate, activePage, onSelectCategory, activeCategory, products = [] }) {
+  const { isSignedIn, getToken } = useAuth();
+  const [dbUser, setDbUser] = useState(null);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!isSignedIn) {
+        setDbUser(null);
+        return;
+      }
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const res = await fetch(`${API_BASE_URL}/api/user/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const profileData = await res.json();
+          setDbUser(profileData);
+        }
+      } catch (err) {
+        console.error('Navbar failed to fetch user profile:', err);
+      }
+    }
+    fetchProfile();
+  }, [isSignedIn, getToken]);
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,6 +130,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   const searchInputRef = useRef(null);
   const searchContainerRef = useRef(null);
   const mobileMenuRef = useRef(null);
+  const touchStartRef = useRef(0);
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
   // Handle keyboard navigation and trap focus inside mobile menu drawer
@@ -192,13 +219,52 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   }, [isSearchOpen]);
 
   useEffect(() => {
+    const preventDefault = (e) => {
+      if (mobileMenuRef.current && mobileMenuRef.current.contains(e.target)) {
+        const el = mobileMenuRef.current;
+        const top = el.scrollTop;
+        const totalScroll = el.scrollHeight;
+        const currentScroll = top + el.offsetHeight;
+        const clientY = e.touches[0].clientY;
+
+        if (top === 0 && clientY > touchStartRef.current) {
+          e.preventDefault();
+        } else if (currentScroll >= totalScroll && clientY < touchStartRef.current) {
+          e.preventDefault();
+        }
+        return;
+      }
+      e.preventDefault();
+    };
+
+    const handleTouchStart = (e) => {
+      touchStartRef.current = e.touches[0].clientY;
+    };
+
     if (isSearchOpen || isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      document.documentElement.style.overflow = 'hidden';
+      document.documentElement.style.touchAction = 'none';
+
+      if (isMobileMenuOpen) {
+        document.addEventListener('touchstart', handleTouchStart, { passive: true });
+        document.addEventListener('touchmove', preventDefault, { passive: false });
+      }
     } else {
       document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.touchAction = '';
     }
+
     return () => {
       document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.touchAction = '';
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', preventDefault);
     };
   }, [isSearchOpen, isMobileMenuOpen]);
 
@@ -342,10 +408,13 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   }, [focusedCollectionIndex, isCollectionsHovered]);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 30);
+    const handleScroll = () => {
+      if (isMobileMenuOpen) return;
+      setIsScrolled(window.scrollY > 30);
+    };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isMobileMenuOpen]);
 
   useEffect(() => {
     const unsubscribe = CartStore.subscribe(cart => {
@@ -451,7 +520,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
   }, [hoveredCollectionIndex]);
 
   return (
-    <header className={`navbar-wrapper ${activePage === 'home' ? 'on-home' : ''} ${isScrolled ? 'scrolled' : ''} ${isSearchOpen ? 'search-active' : ''}`}>
+    <header className={`navbar-wrapper ${activePage === 'home' ? 'on-home' : ''} ${(isScrolled || isMobileMenuOpen) ? 'scrolled' : ''} ${isSearchOpen ? 'search-active' : ''}`}>
       <nav className="navbar" role="navigation" aria-label="Main navigation">
         <div className="nav-container">
 
@@ -736,6 +805,9 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             <li><a href="#profile?tab=orders" onClick={(e) => handleLinkClick(e, 'profile')}>My Orders</a></li>
             <li><a href="#profile?tab=addresses" onClick={(e) => handleLinkClick(e, 'profile')}>Manage Addresses</a></li>
             <li><a href="#profile?tab=security" onClick={(e) => handleLinkClick(e, 'profile')}>Account Security</a></li>
+            {dbUser?.role === 'ADMIN' && (
+              <li><a href="#admin" onClick={(e) => handleLinkClick(e, 'admin')} style={{ color: '#2563eb', fontWeight: 'bold' }}>Admin Console</a></li>
+            )}
             <li>
               <SignOutButton redirectUrl="/">
                 <a href="#" onClick={() => { CartStore.setAuthenticated(false); clearCart(); setIsMobileMenuOpen(false); }}>Log Out</a>
