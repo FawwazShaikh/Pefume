@@ -29,16 +29,19 @@ const clerkClient = createClerkClient({
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS for localhost development, FRONTEND_URL, and dynamic Vercel previews/production
+// Enable CORS for localhost development, FRONTEND_URL, custom production domains, and dynamic Vercel previews/production
 const allowedOrigins = [
   'http://localhost:5173', 
   'http://127.0.0.1:5173',
   'http://localhost:5174',
-  'http://127.0.0.1:5174'
+  'http://127.0.0.1:5174',
+  'https://decantatelier.in',
+  'https://www.decantatelier.in'
 ];
 
 if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(process.env.FRONTEND_URL.trim());
+  const origins = process.env.FRONTEND_URL.split(',').map(url => url.trim());
+  allowedOrigins.push(...origins);
 }
 
 app.use(cors({
