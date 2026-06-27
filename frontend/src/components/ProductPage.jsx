@@ -118,9 +118,9 @@ export default function ProductPage({ product: initialProduct, products = [], on
                 ? dbProduct.variants.map(v => ({
                   size: v.size,
                   price: parseFloat(v.price),
-                  label: v.size.includes('2ml') ? 'Perfect for testing' :
-                    v.size.includes('5ml') ? 'Travel friendly' :
-                      v.size.includes('10ml') ? 'Best value' : 'Collector size',
+                  label: v.size.includes('5ml') ? 'Travel friendly' :
+                    v.size.includes('10ml') ? 'Best value' :
+                      v.size.includes('20ml') ? 'Premium decant' : 'Collector size',
                   stock: v.stock,
                   sku: v.sku,
                   variantId: v.id
@@ -150,9 +150,9 @@ export default function ProductPage({ product: initialProduct, products = [], on
               sizes: dbProduct.variants ? dbProduct.variants.map(v => ({
                 size: v.size,
                 price: parseFloat(v.price),
-                label: v.size.includes('2ml') ? 'Perfect for testing' :
-                  v.size.includes('5ml') ? 'Travel friendly' :
-                    v.size.includes('10ml') ? 'Best value' : 'Collector size',
+                label: v.size.includes('5ml') ? 'Travel friendly' :
+                  v.size.includes('10ml') ? 'Best value' :
+                    v.size.includes('20ml') ? 'Premium decant' : 'Collector size',
                 stock: v.stock,
                 sku: v.sku,
                 variantId: v.id
@@ -453,13 +453,10 @@ export default function ProductPage({ product: initialProduct, products = [], on
   const competitorPriceForSize = useMemo(() => {
     if (!product || !selectedOption) return 0;
     // Extract size number
-    const sizeMl = parseInt(selectedOption.size) || 2;
-    if (product.id === 'baccarat-rouge-540' && sizeMl === 2) {
-      return 1750;
-    }
+    const sizeMl = parseInt(selectedOption.size) || 5;
     const baseCompetitor = product.competitorPrice || Math.round(product.price * 1.18);
     // Scale competitor price based on ml (traditional decants charge more per ml for smaller sizes)
-    const ratio = sizeMl / 2;
+    const ratio = sizeMl / 5;
     // Apply a sliding scale for larger sizes
     const scaleFactor = ratio > 1 ? Math.pow(ratio, 0.9) : ratio;
     return Math.round((baseCompetitor * scaleFactor) / 10) * 10;
@@ -869,7 +866,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                 <>
                   {/* Skeleton shimmer while loading */}
                   {isImageLoading && (
-                    <div className="pdp-img-skeleton" aria-hidden="true" />
+                    <div className="pdp-img-skeleton" style={{ position: 'absolute', inset: 0, zIndex: 5 }} aria-hidden="true" />
                   )}
 
                   {/* Main Product Image */}
@@ -887,7 +884,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.30, ease: [0.25, 0.1, 0.25, 1] }}
                       className="pdp-main-image"
-                      style={{ zIndex: isImageLoading ? 0 : 10 }}
+                      style={{ zIndex: 10 }}
                       onClick={() => setIsLightboxOpen(true)}
                       onError={() => setImageErrors(prev => ({ ...prev, [activeImageIndex]: true }))}
                       onLoad={(e) => {

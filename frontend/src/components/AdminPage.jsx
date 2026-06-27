@@ -102,9 +102,10 @@ export default function AdminPage() {
     categoryId: '',
     images: [{ imageUrl: '', altText: '', position: 0 }],
     variants: [
-      { size: '2ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
       { size: '5ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
-      { size: '10ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true }
+      { size: '10ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+      { size: '20ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+      { size: '30ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true }
     ]
   });
 
@@ -401,9 +402,10 @@ export default function AdminPage() {
       variants: prod.variants && prod.variants.length > 0 
         ? prod.variants.map(v => ({ size: v.size, price: v.price.toString(), stock: v.stock.toString(), sku: `${v.sku}-COPY`, lowStockThreshold: v.lowStockThreshold || 5, isActive: true })) 
         : [
-            { size: '2ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
             { size: '5ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
-            { size: '10ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true }
+            { size: '10ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+            { size: '20ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+            { size: '30ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true }
           ]
     });
     setErrorMsg('');
@@ -575,9 +577,10 @@ export default function AdminPage() {
       variants: prod.variants && prod.variants.length > 0 
         ? prod.variants.map(v => ({ size: v.size, price: v.price.toString(), stock: v.stock.toString(), sku: v.sku || '', lowStockThreshold: v.lowStockThreshold || 5, isActive: v.isActive })) 
         : [
-            { size: '2ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
             { size: '5ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
-            { size: '10ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true }
+            { size: '10ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+            { size: '20ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+            { size: '30ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true }
           ]
     });
     setErrorMsg('');
@@ -596,9 +599,10 @@ export default function AdminPage() {
       categoryId: '',
       images: [{ imageUrl: '', altText: '', position: 0 }],
       variants: [
-        { size: '2ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
         { size: '5ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
-        { size: '10ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true }
+        { size: '10ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+        { size: '20ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+        { size: '30ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true }
       ]
     });
     setErrorMsg('');
@@ -2069,6 +2073,7 @@ export default function AdminPage() {
                 <option value="CONFIRMED">Confirmed</option>
                 <option value="PROCESSING">Processing</option>
                 <option value="SHIPPED">Shipped</option>
+                <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
                 <option value="DELIVERED">Delivered</option>
                 <option value="CANCELLED">Cancelled</option>
               </select>
@@ -2819,39 +2824,124 @@ export default function AdminPage() {
 
             <div>
               <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', textTransform: 'uppercase', color: '#4b5563' }}>Fulfillment Timeline Control</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <label className="admin-label" style={{ margin: 0 }}>Fulfillment pipeline status</label>
-                  <select 
-                    className="admin-select"
-                    value={selectedOrder.status}
-                    onChange={(e) => handleUpdateOrderStatus(selectedOrder.id, e.target.value)}
-                    style={{ padding: '0.25rem 1.5rem 0.25rem 0.5rem', fontSize: '0.75rem', width: 'auto', display: 'inline-block' }}
-                  >
-                    <option value="PENDING">PENDING</option>
-                    <option value="CONFIRMED">CONFIRMED</option>
-                    <option value="PROCESSING">PROCESSING</option>
-                    <option value="SHIPPED">SHIPPED</option>
-                    <option value="DELIVERED">DELIVERED</option>
-                    <option value="CANCELLED">CANCELLED</option>
-                  </select>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', backgroundColor: '#f9fafb', padding: '1rem', borderRadius: '8px', border: '1px solid var(--admin-border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#4b5563' }}>Fulfillment Pipeline Status:</span>
+                  <span className={`admin-badge ${selectedOrder.status.toLowerCase()}`}>
+                    {selectedOrder.status === 'PENDING' ? 'Placed' : selectedOrder.status}
+                  </span>
                 </div>
 
-                <ul className="admin-timeline">
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                  {selectedOrder.status !== 'DELIVERED' && selectedOrder.status !== 'CANCELLED' && (
+                    <>
+                      {selectedOrder.status === 'PENDING' && (
+                        <button
+                          onClick={() => handleUpdateOrderStatus(selectedOrder.id, 'CONFIRMED')}
+                          className="admin-btn"
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', backgroundColor: '#10b981', borderColor: '#10b981' }}
+                        >
+                          Confirm Order
+                        </button>
+                      )}
+                      {selectedOrder.status === 'CONFIRMED' && (
+                        <button
+                          onClick={() => handleUpdateOrderStatus(selectedOrder.id, 'PROCESSING')}
+                          className="admin-btn"
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', backgroundColor: '#3b82f6', borderColor: '#3b82f6' }}
+                        >
+                          Start Processing
+                        </button>
+                      )}
+                      {selectedOrder.status === 'PROCESSING' && (
+                        <button
+                          onClick={() => handleUpdateOrderStatus(selectedOrder.id, 'SHIPPED')}
+                          className="admin-btn"
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', backgroundColor: '#8b5cf6', borderColor: '#8b5cf6' }}
+                        >
+                          Ship Order
+                        </button>
+                      )}
+                      {selectedOrder.status === 'SHIPPED' && (
+                        <button
+                          onClick={() => handleUpdateOrderStatus(selectedOrder.id, 'OUT_FOR_DELIVERY')}
+                          className="admin-btn"
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', backgroundColor: '#f59e0b', borderColor: '#f59e0b' }}
+                        >
+                          Out for Delivery
+                        </button>
+                      )}
+                      {selectedOrder.status === 'OUT_FOR_DELIVERY' && (
+                        <button
+                          onClick={() => handleUpdateOrderStatus(selectedOrder.id, 'DELIVERED')}
+                          className="admin-btn"
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', backgroundColor: '#10b981', borderColor: '#10b981' }}
+                        >
+                          Mark Delivered
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to cancel this order?')) {
+                            handleUpdateOrderStatus(selectedOrder.id, 'CANCELLED');
+                          }
+                        }}
+                        className="admin-btn-danger"
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}
+                      >
+                        Cancel Order
+                      </button>
+                    </>
+                  )}
+                  {selectedOrder.status === 'DELIVERED' && (
+                    <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 'bold' }}>✓ Order Completed & Delivered</span>
+                  )}
+                  {selectedOrder.status === 'CANCELLED' && (
+                    <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>✗ Order Cancelled</span>
+                  )}
+                </div>
+
+                <ul className="admin-timeline" style={{ marginTop: '0.5rem' }}>
                   <li className="admin-timeline-item">
                     <span className="admin-timeline-dot active" />
-                    <div className="admin-timeline-title">Order Created</div>
+                    <div className="admin-timeline-title">Placed</div>
                     <div className="admin-timeline-date">{new Date(selectedOrder.createdAt).toLocaleString('en-IN')}</div>
                   </li>
                   <li className="admin-timeline-item">
-                    <span className={`admin-timeline-dot ${selectedOrder.status !== 'PENDING' ? 'active' : ''}`} />
-                    <div className="admin-timeline-title">Fulfillment Started</div>
-                    <div className="admin-timeline-date">{selectedOrder.status !== 'PENDING' ? 'Confirmed & Processed' : 'Awaiting confirmation'}</div>
+                    <span className={`admin-timeline-dot ${['CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(selectedOrder.status) ? 'active' : ''}`} />
+                    <div className="admin-timeline-title">Confirmed</div>
+                    <div className="admin-timeline-date">
+                      {['CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(selectedOrder.status) ? 'Order Confirmed' : 'Awaiting confirmation'}
+                    </div>
+                  </li>
+                  <li className="admin-timeline-item">
+                    <span className={`admin-timeline-dot ${['PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(selectedOrder.status) ? 'active' : ''}`} />
+                    <div className="admin-timeline-title">Processing</div>
+                    <div className="admin-timeline-date">
+                      {['PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(selectedOrder.status) ? 'In Processing' : 'Pending processing'}
+                    </div>
+                  </li>
+                  <li className="admin-timeline-item">
+                    <span className={`admin-timeline-dot ${['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(selectedOrder.status) ? 'active' : ''}`} />
+                    <div className="admin-timeline-title">Shipped</div>
+                    <div className="admin-timeline-date">
+                      {['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(selectedOrder.status) ? 'In Transit' : 'Pending shipment'}
+                    </div>
+                  </li>
+                  <li className="admin-timeline-item">
+                    <span className={`admin-timeline-dot ${['OUT_FOR_DELIVERY', 'DELIVERED'].includes(selectedOrder.status) ? 'active' : ''}`} />
+                    <div className="admin-timeline-title">Out for Delivery</div>
+                    <div className="admin-timeline-date">
+                      {['OUT_FOR_DELIVERY', 'DELIVERED'].includes(selectedOrder.status) ? 'With Courier Partner' : 'Pending dispatch'}
+                    </div>
                   </li>
                   <li className="admin-timeline-item">
                     <span className={`admin-timeline-dot ${selectedOrder.status === 'DELIVERED' ? 'active' : ''}`} />
-                    <div className="admin-timeline-title">Delivery Complete</div>
-                    <div className="admin-timeline-date">{selectedOrder.status === 'DELIVERED' ? 'Delivered successfully' : 'Pending final drop-off'}</div>
+                    <div className="admin-timeline-title">Delivered</div>
+                    <div className="admin-timeline-date">
+                      {selectedOrder.status === 'DELIVERED' ? 'Delivered successfully' : 'Pending final drop-off'}
+                    </div>
                   </li>
                 </ul>
               </div>

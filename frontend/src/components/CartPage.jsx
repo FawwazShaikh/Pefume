@@ -95,7 +95,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
   const [storeSettings, setStoreSettings] = useState(null);
 
   const FREE_SHIPPING_THRESHOLD = storeSettings ? parseFloat(storeSettings.freeShippingThreshold) : 1999;
-  const SHIPPING_CHARGES = storeSettings ? parseFloat(storeSettings.shippingCharges) : 100;
+  const SHIPPING_CHARGES = storeSettings ? parseFloat(storeSettings.shippingCharges) : 199;
 
   // Sync cart items on load and list for updates via CartStore subscription
   useEffect(() => {
@@ -299,9 +299,11 @@ export default function CartPage({ onBackToShop, products = [] }) {
 
   const shipping = useMemo(() => {
     if (subtotal === 0) return 0;
-    if (deliveryMethod === 'EXPRESS') return 150;
+    if (deliveryMethod === 'EXPRESS') return 399;
+    if (deliveryMethod === 'OWNER') return 5000;
+    // STANDARD: standard charge is 199 by default, free above threshold
     const threshold = storeSettings ? parseFloat(storeSettings.freeShippingThreshold) : 1999;
-    const charge = storeSettings ? parseFloat(storeSettings.shippingCharges) : 100;
+    const charge = storeSettings ? parseFloat(storeSettings.shippingCharges) : 199;
     return subtotal >= threshold ? 0 : charge;
   }, [subtotal, deliveryMethod, storeSettings]);
 
@@ -528,6 +530,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
           addressId: selectedAddressId,
           items,
           paymentMethod,
+          shippingMethod: deliveryMethod,
           // Append bottle selections to order notes so admin can see packaging preferences
           notes: [
             notes,
@@ -1387,11 +1390,11 @@ export default function CartPage({ onBackToShop, products = [] }) {
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-xs font-bold">Standard Atelier Delivery</span>
                           <span className="text-xs font-bold text-[#8B672F]">
-                            {subtotal >= FREE_SHIPPING_THRESHOLD ? 'FREE' : `₹${SHIPPING_CHARGES}`}
+                            {subtotal >= FREE_SHIPPING_THRESHOLD ? 'FREE' : `₹${storeSettings ? parseFloat(storeSettings.shippingCharges) : 199}`}
                           </span>
                         </div>
                         <p className="text-[0.68rem] text-black/60 leading-relaxed font-body">
-                          Complimentary for orders over ₹{FREE_SHIPPING_THRESHOLD}. Arrives in 3-5 business days.
+                          Complimentary for orders over ₹{FREE_SHIPPING_THRESHOLD}. Arrives in 9 business days.
                         </p>
                       </div>
 
@@ -1401,10 +1404,23 @@ export default function CartPage({ onBackToShop, products = [] }) {
                       >
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-xs font-bold">Express Direct Air courier</span>
-                          <span className="text-xs font-bold text-[#8B672F]">₹150</span>
+                          <span className="text-xs font-bold text-[#8B672F]">₹399</span>
                         </div>
                         <p className="text-[0.68rem] text-black/60 leading-relaxed font-body">
-                          Guaranteed priority shipment. Arrives in 1-2 business days.
+                          Guaranteed priority shipment. Arrives in 3 business days.
+                        </p>
+                      </div>
+
+                      <div 
+                        onClick={() => setDeliveryMethod('OWNER')}
+                        className={`delivery-option-box ${deliveryMethod === 'OWNER' ? 'active' : ''}`}
+                      >
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs font-bold">Owner Delivery</span>
+                          <span className="text-xs font-bold text-[#8B672F]">₹5,000</span>
+                        </div>
+                        <p className="text-[0.68rem] text-black/60 leading-relaxed font-body">
+                          Hand-delivered by the store owner.
                         </p>
                       </div>
                     </div>

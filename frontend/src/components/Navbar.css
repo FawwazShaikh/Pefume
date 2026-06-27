@@ -853,6 +853,7 @@ body.marquee-hidden .main-content-padding {
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   height: 2.5rem;
@@ -942,6 +943,7 @@ body.marquee-hidden .main-content-padding {
   .search-card-name {
     height: auto;
     -webkit-line-clamp: 1;
+    line-clamp: 1;
   }
 }
 

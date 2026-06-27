@@ -298,6 +298,14 @@ app.use('/api/cart', async (req, res, next) => {
 
 // Helper: Get or create DB User from Clerk Auth ID (robust fallback if webhook is pending)
 async function getOrCreateDbUser(clerkId) {
+  // Query DB first to avoid expensive and slow external Clerk API calls
+  const existingUser = await prisma.user.findUnique({
+    where: { clerkId }
+  });
+  if (existingUser) {
+    return existingUser;
+  }
+  
   const clerkProfile = await fetchClerkProfile(clerkId);
   return syncDbUserFromClerkProfile(clerkId, clerkProfile);
 }
@@ -634,13 +642,50 @@ app.get('/api/orders', requireAuth, async (req, res) => {
 
 // Reusable Razorpay instance is imported from ./lib/razorpay.js
 
+// Helper: generate a branded customer-facing order reference DA26-XXXXXX
+function generateOrderReference() {
+  const year = new Date().getFullYear().toString().slice(-2); // "26"
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I confusion
+  let suffix = '';
+  for (let i = 0; i < 6; i++) {
+    suffix += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return `DA${year}-${suffix}`;
+}
+
+// Helper: compute shippingFee server-side from shippingMethod — never trust the client
+function computeShippingFee(shippingMethod, subtotal, threshold, standardCharge) {
+  switch (shippingMethod) {
+    case 'EXPRESS': return 399;
+    case 'OWNER':   return 5000;
+    case 'STANDARD':
+    default:
+      return subtotal >= threshold ? 0 : 199;
+  }
+}
+
+// Helper: compute estimated delivery date from shippingMethod
+function computeEstimatedDelivery(shippingMethod) {
+  const now = new Date();
+  switch (shippingMethod) {
+    case 'EXPRESS': { const d = new Date(now); d.setDate(d.getDate() + 3); return d; }
+    case 'OWNER':   return null; // Manual
+    case 'STANDARD':
+    default:        { const d = new Date(now); d.setDate(d.getDate() + 9); return d; }
+  }
+}
+
 // POST place order
 app.post('/api/orders', requireAuth, async (req, res) => {
-  const { addressId, items, paymentMethod, notes } = req.body;
+  const { addressId, items, paymentMethod, notes, shippingMethod: rawShippingMethod } = req.body;
 
   if (!addressId || !items || !Array.isArray(items) || items.length === 0 || !paymentMethod) {
     return res.status(400).json({ error: 'Missing required order details' });
   }
+
+  // Validate and normalise shippingMethod — default to STANDARD if not provided or invalid
+  const VALID_SHIPPING_METHODS = ['STANDARD', 'EXPRESS', 'OWNER'];
+  const shippingMethod = VALID_SHIPPING_METHODS.includes(rawShippingMethod) ? rawShippingMethod : 'STANDARD';
 
   try {
     const dbUser = await getOrCreateDbUser(req.auth.userId);
@@ -653,7 +698,7 @@ app.post('/api/orders', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Shipping address not found' });
     }
 
-    // Calculate subtotal and total
+    // Calculate subtotal — prices validated against DB in the transaction below
     let subtotal = 0;
     for (const item of items) {
       const price = parseFloat(item.price);
@@ -661,15 +706,25 @@ app.post('/api/orders', requireAuth, async (req, res) => {
       subtotal += price * qty;
     }
 
-    // Fetch store settings from DB
+    // Fetch store settings from DB (used for free-shipping threshold)
     const storeSettings = await prisma.storeSetting.findUnique({
       where: { id: 'default' }
     });
     const threshold = storeSettings ? parseFloat(storeSettings.freeShippingThreshold) : 1999;
-    const charge = storeSettings ? parseFloat(storeSettings.shippingCharges) : 100;
+    const standardCharge = storeSettings ? parseFloat(storeSettings.shippingCharges) : 199;
 
-    const shippingFee = subtotal >= threshold ? 0 : charge;
+    // Compute shipping server-side — NEVER trust client-sent fee
+    const shippingFee = computeShippingFee(shippingMethod, subtotal, threshold, standardCharge);
+    const estimatedDelivery = computeEstimatedDelivery(shippingMethod);
     const total = subtotal + shippingFee;
+
+    // Generate unique order reference (retry up to 3 times on collision)
+    let orderReference = generateOrderReference();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const existing = await prisma.order.findUnique({ where: { orderReference } });
+      if (!existing) break;
+      orderReference = generateOrderReference();
+    }
 
     // Place order in transaction
     const order = await prisma.$transaction(async (tx) => {
@@ -701,11 +756,14 @@ app.post('/api/orders', requireAuth, async (req, res) => {
       // 2. Create the order
       const newOrder = await tx.order.create({
         data: {
+          orderReference,
           userId: dbUser.id,
           addressId: addressId,
           subtotal,
           shippingFee,
           total,
+          shippingMethod,
+          estimatedDelivery,
           paymentMethod,
           status: 'PENDING',
           notes,
@@ -870,6 +928,46 @@ app.post('/api/orders', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Failed to place order:', err);
     return res.status(500).json({ error: err.message || 'Failed to place order' });
+  }
+});
+
+// ============================================================
+// PUBLIC ORDER TRACKING (no auth, no PII)
+// ============================================================
+
+// GET /api/orders/track/:reference — customer-facing status lookup
+// Returns only safe status data. Never exposes address, phone, email, or payment details.
+app.get('/api/orders/track/:reference', async (req, res) => {
+  const { reference } = req.params;
+  if (!reference || !reference.startsWith('DA')) {
+    return res.status(400).json({ error: 'Invalid order reference format' });
+  }
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { orderReference: reference },
+      select: {
+        orderReference: true,
+        status: true,
+        shippingMethod: true,
+        estimatedDelivery: true,
+        createdAt: true,
+        updatedAt: true,
+        // Only expose item count + product names — no prices, addresses, or user data
+        orderItems: {
+          select: { productName: true, size: true, quantity: true }
+        }
+      }
+    });
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found. Please check your reference number.' });
+    }
+
+    return res.status(200).json(order);
+  } catch (err) {
+    logApiError('/api/orders/track/:reference', 'GET', req, err);
+    return res.status(500).json({ error: 'Failed to fetch order status' });
   }
 });
 
@@ -1381,9 +1479,9 @@ app.get('/api/products', async (req, res) => {
         sizes: p.variants.map(v => ({
           size: v.size,
           price: parseFloat(v.price),
-          label: v.size.includes('2ml') ? 'Perfect for testing' : 
-                 v.size.includes('5ml') ? 'Travel friendly' : 
-                 v.size.includes('10ml') ? 'Best value' : 'Collector size',
+          label: v.size.includes('5ml') ? 'Travel friendly' : 
+                 v.size.includes('10ml') ? 'Best value' : 
+                 v.size.includes('20ml') ? 'Premium decant' : 'Collector size',
           stock: v.stock,
           sku: v.sku,
           variantId: v.id
@@ -1872,7 +1970,7 @@ app.patch('/api/admin/orders/:id', requireAuth, requireAdmin, async (req, res) =
   const { id } = req.params;
   const { status } = req.body;
 
-  const validStatuses = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+  const validStatuses = ['PENDING', 'CONFIRMED', 'PROCESSING', 'OUT_FOR_DELIVERY', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
   if (!status || !validStatuses.includes(status)) {
     return res.status(400).json({ error: 'Invalid or missing order status' });
   }

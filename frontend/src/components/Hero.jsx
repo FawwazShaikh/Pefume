@@ -47,7 +47,7 @@ export default function Hero() {
               </div>
               <div className="trust-divider" />
               <div className="trust-item">
-                <span className="trust-value">5 / 8 / 10 ml</span>
+                <span className="trust-value">5 / 10 / 20 / 30 ml</span>
                 <span className="trust-label">Trial Sizes</span>
               </div>
               <div className="trust-divider" />

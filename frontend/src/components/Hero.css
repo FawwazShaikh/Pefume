@@ -48,7 +48,6 @@
   height: 100%;
   object-fit: cover;
   object-position: center 20%;
-  vertical-align: middle;
   transform: translateZ(0);
   backface-visibility: hidden;
   will-change: transform;

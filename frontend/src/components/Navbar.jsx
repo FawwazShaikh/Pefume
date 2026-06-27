@@ -927,7 +927,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
                     <div style={{ marginBottom: '1.75rem' }}>
                       <span className="search-panel-section-title">Popular Searches</span>
                       <div className="search-pills-list">
-                        {['Baccarat Rouge 540', 'Hawas', 'Khamrah', 'Bleu de Chanel', '9PM'].map(term => (
+                        {['Le Male Elixir', 'Hawas', 'Khamrah', 'Bleu de Chanel', '9PM'].map(term => (
                           <button
                             key={term}
                             className="search-pill-item"
