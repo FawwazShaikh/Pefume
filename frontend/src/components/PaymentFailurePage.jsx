@@ -124,19 +124,19 @@ export default function PaymentFailurePage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={() => { window.location.hash = 'cart'; }}
-            className="flex-1 py-4 bg-[#1C1B18] text-[#FEFCF9] text-[0.65rem] font-bold tracking-widest uppercase hover:bg-[#B08A50] transition-all duration-300 cursor-pointer shadow-sm"
+            className="flex-1 btn-lux-primary"
           >
             Retry Secure Payment
           </button>
           <button
             onClick={() => { window.location.hash = 'cart'; }}
-            className="flex-1 py-4 border border-black/12 text-[#1C1B18] text-[0.65rem] font-bold tracking-widest uppercase hover:bg-black/5 hover:border-black/30 transition-all duration-300 cursor-pointer bg-[#FEFCF9]"
+            className="flex-1 btn-lux-secondary"
           >
             Return to Bag
           </button>
           <button
             onClick={() => { window.location.hash = 'shop'; }}
-            className="flex-1 py-4 border border-black/12 text-black/60 text-[0.65rem] font-bold tracking-widest uppercase hover:text-black hover:border-black/30 transition-all duration-300 cursor-pointer bg-transparent"
+            className="flex-1 btn-lux-secondary"
           >
             Back to Shop
           </button>

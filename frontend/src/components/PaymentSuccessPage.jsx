@@ -198,13 +198,13 @@ export default function PaymentSuccessPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={() => { window.location.hash = 'profile'; }}
-            className="flex-1 py-4 bg-[#1C1B18] text-[#FEFCF9] text-[0.65rem] font-bold tracking-widest uppercase hover:bg-[#B08A50] transition-all duration-300 cursor-pointer"
+            className="flex-1 btn-lux-primary"
           >
             View Orders
           </button>
           <button
             onClick={() => { window.location.hash = 'shop'; }}
-            className="flex-1 py-4 border border-black/12 text-black/60 text-[0.65rem] font-bold tracking-widest uppercase hover:text-black hover:border-black/30 transition-all duration-300 cursor-pointer"
+            className="flex-1 btn-lux-secondary"
           >
             Continue Shopping
           </button>
