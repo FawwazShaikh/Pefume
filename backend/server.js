@@ -19,10 +19,16 @@ console.log('RAZORPAY_KEY_SECRET length:', process.env.RAZORPAY_KEY_SECRET?.leng
 console.log('RAZORPAY_KEY_ID JSON:', JSON.stringify(process.env.RAZORPAY_KEY_ID));
 console.log('====================================');
 
+const cleanEnvVar = (val) => {
+  if (!val) return '';
+  return val.replace(/^["']|["']$/g, '').trim();
+};
+
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
+  key_id: cleanEnvVar(process.env.RAZORPAY_KEY_ID),
+  key_secret: cleanEnvVar(process.env.RAZORPAY_KEY_SECRET),
 });
+
 
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY,
@@ -120,8 +126,8 @@ app.get('/api/debug/razorpay', async (req, res) => {
 
   try {
     const rzp = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
+      key_id: cleanEnvVar(process.env.RAZORPAY_KEY_ID),
+      key_secret: cleanEnvVar(process.env.RAZORPAY_KEY_SECRET),
     });
 
     const rzpOrder = await rzp.orders.create({
@@ -865,20 +871,53 @@ app.post('/api/orders', requireAuth, async (req, res) => {
     });
 
     if (paymentMethod === 'RAZORPAY') {
+      const amountPaise = Math.round(total * 100);
+      if (amountPaise < 100) {
+        // Roll back database changes for invalid amount
+        await prisma.$transaction(async (tx) => {
+          await tx.order.update({
+            where: { id: order.id },
+            data: { status: 'CANCELLED' }
+          });
+          await tx.payment.update({
+            where: { orderId: order.id },
+            data: { status: 'FAILED' }
+          });
+          
+          for (const item of order.orderItems) {
+            const variant = await tx.productVariant.findUnique({
+              where: { id: item.variantId }
+            });
+            if (variant) {
+              await restoreToBottle(
+                tx,
+                variant.productId,
+                variant.volumeML,
+                item.quantity,
+                order.id
+              );
+            }
+          }
+        }, {
+          timeout: 15000
+        });
+        return res.status(400).json({ error: 'Failed to create payment gateway order: Minimum amount is 100 paise (₹1).' });
+      }
+
       let rzpOrder = null;
       try {
-        console.log('====== RAZORPAY ORDERS API CALL ======');
+        console.log('====== Razorpay Orders API Call ======');
         console.log('Client Config:');
         console.log('  Key ID:', razorpay.key_id);
         console.log('  Secret Length:', razorpay.key_secret?.length);
         console.log('Request Payload:');
-        console.log('  amount:', Math.round(total * 100));
+        console.log('  amount:', amountPaise);
         console.log('  currency:', 'INR');
         console.log('  receipt:', `rcpt_${order.id.slice(-10)}`);
         console.log('======================================');
 
         rzpOrder = await razorpay.orders.create({
-          amount: Math.round(total * 100),
+          amount: amountPaise,
           currency: 'INR',
           receipt: `rcpt_${order.id.slice(-10)}`
         });
@@ -926,7 +965,11 @@ app.post('/api/orders', requireAuth, async (req, res) => {
                          (rzpErr && rzpErr.error && rzpErr.error.description) || 
                          (rzpErr && rzpErr.message) || 
                          (typeof rzpErr === 'string' ? rzpErr : JSON.stringify(rzpErr));
-        return res.status(400).json({ error: 'Failed to create payment gateway order: ' + errorMsg });
+
+        const rzpStatusCode = rzpErr?.statusCode || rzpErr?.error?.statusCode;
+        const responseStatusCode = rzpStatusCode === 401 ? 401 : 500;
+        
+        return res.status(responseStatusCode).json({ error: 'Failed to create payment gateway order: ' + errorMsg });
       }
 
       // If we generated a Razorpay order ID, update the order in the database
