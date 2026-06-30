@@ -3,6 +3,8 @@
   color: var(--color-lux-text, #1C1B18);
   border-top: 1px solid var(--color-lux-border, rgba(0, 0, 0, 0.08));
   width: 100%;
+  content-visibility: auto;
+  contain-intrinsic-size: 300px;
 }
 
 /* Main 4-column grid */

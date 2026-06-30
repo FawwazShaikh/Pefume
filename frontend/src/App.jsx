@@ -12,17 +12,17 @@ import CartPage from './components/CartPage';
 import CategoriesPage from './components/CategoriesPage';
 import DailyOfferPopup from './components/DailyOfferPopup';
 import { collectionsData } from './components/SignatureCollection/CollectionData';
-
 const PoliciesPage = lazy(() => import('./components/Policies'));
 const ProfilePage = lazy(() => import('./components/ProfilePage'));
 const AdminPage = lazy(() => import('./components/AdminPage'));
 const GiftingPage = lazy(() => import('./components/GiftingPage'));
-import PaymentSuccessPage from './components/PaymentSuccessPage';
-import PaymentFailurePage from './components/PaymentFailurePage';
+const PaymentSuccessPage = lazy(() => import('./components/PaymentSuccessPage'));
+const PaymentFailurePage = lazy(() => import('./components/PaymentFailurePage'));
 import MiniBag from './components/MiniBag';
 import { API_BASE_URL } from './utils/config.js';
 import { clearCart } from './utils/cartHelper.js';
 import { CartStore } from './utils/store.js';
+import LazyRender from './components/LazyRender';
 import SEO from './components/SEO';
 
 
@@ -208,12 +208,18 @@ function App() {
       {activePage === 'home' && (
         <>
           <Hero />
-          <Gifting
-            onSelectCategory={setActiveCategory}
-            onNavigate={setActivePage}
-          />
-          <Pricing />
-          <Authenticity />
+          <LazyRender placeholderHeight="400px">
+            <Gifting
+              onSelectCategory={setActiveCategory}
+              onNavigate={setActivePage}
+            />
+          </LazyRender>
+          <LazyRender placeholderHeight="300px">
+            <Pricing />
+          </LazyRender>
+          <LazyRender placeholderHeight="400px">
+            <Authenticity />
+          </LazyRender>
         </>
       )}
 
