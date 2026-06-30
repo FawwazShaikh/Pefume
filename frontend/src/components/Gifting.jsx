@@ -17,56 +17,48 @@ export default function Gifting({ onSelectCategory, onNavigate }) {
         {/* Gift Grid */}
         <div className="gift-grid">
           {/* Card: Him */}
-          <div className="gift-card gift-him">
+          <div 
+            className="gift-card gift-him cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onSelectCategory) onSelectCategory('him');
+              if (onNavigate) onNavigate('shop');
+              window.location.hash = 'shop?category=him';
+              setTimeout(() => {
+                const element = document.getElementById('collection');
+                if (element) element.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+            }}
+          >
             <div className="gift-card-bg">
               <img src="/him_perfume.png" alt="Shop For Him" className="gift-card-img" />
             </div>
             <div className="gift-card-overlay"></div>
             <div className="gift-card-content">
               <h3 className="gift-card-title">Shop For Him</h3>
-              <a 
-                href="#shop?category=him" 
-                className="gift-explore-btn"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (onSelectCategory) onSelectCategory('him');
-                  if (onNavigate) onNavigate('shop');
-                  window.location.hash = 'shop?category=him';
-                  setTimeout(() => {
-                    const element = document.getElementById('collection');
-                    if (element) element.scrollIntoView({ behavior: 'smooth' });
-                  }, 100);
-                }}
-              >
-                EXPLORE &nbsp;→
-              </a>
             </div>
           </div>
 
           {/* Card: Her */}
-          <div className="gift-card gift-her">
+          <div 
+            className="gift-card gift-her cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onSelectCategory) onSelectCategory('her');
+              if (onNavigate) onNavigate('shop');
+              window.location.hash = 'shop?category=her';
+              setTimeout(() => {
+                const element = document.getElementById('collection');
+                if (element) element.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+            }}
+          >
             <div className="gift-card-bg">
               <img src="/her_perfume.png" alt="Shop For Her" className="gift-card-img" />
             </div>
             <div className="gift-card-overlay"></div>
             <div className="gift-card-content">
               <h3 className="gift-card-title">Shop For Her</h3>
-              <a 
-                href="#shop?category=her" 
-                className="gift-explore-btn"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (onSelectCategory) onSelectCategory('her');
-                  if (onNavigate) onNavigate('shop');
-                  window.location.hash = 'shop?category=her';
-                  setTimeout(() => {
-                    const element = document.getElementById('collection');
-                    if (element) element.scrollIntoView({ behavior: 'smooth' });
-                  }, 100);
-                }}
-              >
-                EXPLORE &nbsp;→
-              </a>
             </div>
           </div>
         </div>

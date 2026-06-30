@@ -425,6 +425,8 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
     setIsMobileMenuOpen(false);
     setIsSearchOpen(false);
     const policies = ['authenticity', 'about', 'shipping', 'returns', 'terms', 'privacy', 'reviews'];
+    const basePage = hash.split('?')[0];
+
     if (hash === 'cart') {
       window.location.hash = 'cart';
       if (onNavigate) onNavigate('cart');
@@ -437,22 +439,24 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
     } else if (hash === 'gifting') {
       window.location.hash = 'gifting';
       if (onNavigate) onNavigate('gifting');
-    } else if (policies.includes(hash)) {
+    } else if (policies.includes(basePage)) {
       window.location.hash = hash;
       if (onNavigate) onNavigate('policies');
       setTimeout(() => {
-        const el = document.getElementById(hash);
+        const el = document.getElementById(basePage);
         if (el) el.scrollIntoView({ behavior: 'smooth' });
         else window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 100);
     } else {
       window.location.hash = hash;
       if (onNavigate) {
-        if (hash === 'collection' || hash === 'shop') onNavigate('shop');
+        if (basePage === 'collection' || basePage === 'shop') onNavigate('shop');
+        else if (basePage === 'profile') onNavigate('profile');
+        else if (basePage === 'admin') onNavigate('admin');
         else onNavigate('home');
       }
       setTimeout(() => {
-        const el = document.getElementById(hash);
+        const el = document.getElementById(basePage);
         if (el) el.scrollIntoView({ behavior: 'smooth' });
         else if (hash === '') window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 100);
@@ -693,7 +697,6 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
 
           {/* Center: Brand Logo */}
           <div className="logo-container" onClick={(e) => handleLinkClick(e, '')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* <img src="/decantatelierlogo.png" alt="" className="nav-logo-img" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} /> */}
             <span className="brand-name">DECANT ATELIER</span>
           </div>
 
@@ -742,7 +745,6 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
       >
         <div className="mobile-menu-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img src="/decantatelierlogo.png" alt="Decant Atelier Logo" className="nav-logo-img" style={{ height: '24px', width: 'auto', objectFit: 'contain' }} />
             <span className="brand-name" style={{ fontSize: '15px' }}>DECANT ATELIER</span>
           </div>
           <button className="mobile-close" onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu">
@@ -801,10 +803,10 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
           <SignedIn>
             <div className="mobile-drawer-divider" />
             <span className="mobile-drawer-section-title">My Account</span>
-            <li><a href="#profile?tab=profile" onClick={(e) => handleLinkClick(e, 'profile')}>Profile Details</a></li>
-            <li><a href="#profile?tab=orders" onClick={(e) => handleLinkClick(e, 'profile')}>My Orders</a></li>
-            <li><a href="#profile?tab=addresses" onClick={(e) => handleLinkClick(e, 'profile')}>Manage Addresses</a></li>
-            <li><a href="#profile?tab=security" onClick={(e) => handleLinkClick(e, 'profile')}>Account Security</a></li>
+            <li><a href="#profile?tab=profile" onClick={(e) => handleLinkClick(e, 'profile?tab=profile')}>Profile Details</a></li>
+            <li><a href="#profile?tab=orders" onClick={(e) => handleLinkClick(e, 'profile?tab=orders')}>My Orders</a></li>
+            <li><a href="#profile?tab=addresses" onClick={(e) => handleLinkClick(e, 'profile?tab=addresses')}>Manage Addresses</a></li>
+            <li><a href="#profile?tab=security" onClick={(e) => handleLinkClick(e, 'profile?tab=security')}>Account Security</a></li>
             {dbUser?.role === 'ADMIN' && (
               <li><a href="#admin" onClick={(e) => handleLinkClick(e, 'admin')} style={{ color: '#2563eb', fontWeight: 'bold' }}>Admin Console</a></li>
             )}

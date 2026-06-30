@@ -164,6 +164,17 @@ body.marquee-hidden .main-content-padding {
   max-width: 380px;
 }
 
+.nav-logo-img {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.logo-container:hover .nav-logo-img {
+  transform: scale(1.05);
+}
+
 .brand-name {
   font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
   font-size: clamp(1.1rem, 1.6vw, 1.55rem);
@@ -178,6 +189,12 @@ body.marquee-hidden .main-content-padding {
 .logo-container:hover .brand-name {
   color: #B89563;
   letter-spacing: 0.32em;
+}
+
+@media (max-width: 768px) {
+  .nav-logo-img {
+    height: 36px;
+  }
 }
 
 /* ─── Right icons ─── */
