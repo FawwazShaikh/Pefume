@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../utils/config.js';
 
 /**
  * Helper to dynamically create/update meta tags in document head.
@@ -63,7 +64,24 @@ const CATEGORY_TITLES = {
   luxury: 'Luxury Collection'
 };
 
-export default function SEO({ activePage, activeCategory, selectedProduct }) {
+export default function SEO({ activePage, activeCategory, selectedProduct, products = [] }) {
+  const [dbCategories, setDbCategories] = useState([]);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/categories`);
+        if (res.ok) {
+          const data = await res.json();
+          setDbCategories(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories in SEO:', err);
+      }
+    }
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     let title = 'Decant Atelier | Luxury Perfume Decants in India';
     let description = 'Buy authentic luxury perfume decants in India. Explore Dior, Chanel, Tom Ford, Maison Francis Kurkdjian, Creed and more.';
@@ -77,6 +95,7 @@ export default function SEO({ activePage, activeCategory, selectedProduct }) {
     let localBusinessSchema = null;
     let productSchema = null;
     let breadcrumbSchema = null;
+    let collectionSchema = null;
 
     // Organization details
     const organizationData = {
@@ -155,6 +174,86 @@ export default function SEO({ activePage, activeCategory, selectedProduct }) {
         description = 'Browse our full catalogue of authentic designer and niche perfume decants. Hand-poured in sterile conditions with fast delivery across India.';
         canonical = 'https://decantatelier.in/#shop';
       }
+
+      // Dynamic CollectionPage & ItemList JSON-LD Generation
+      let filteredProducts = products && products.length > 0 ? [...products] : [];
+      if (catKey !== 'all') {
+        const primaryCategories = ['decants', 'full-bottles', 'fullbottles', 'sets'];
+        if (primaryCategories.includes(catKey)) {
+          const targetSlug = catKey === 'fullbottles' ? 'full-bottles' : catKey;
+          const matchedCat = dbCategories.find(c => c.slug === targetSlug);
+          if (matchedCat) {
+            filteredProducts = filteredProducts.filter(item => item.categoryId === matchedCat.id || item.category === matchedCat.slug);
+          } else {
+            filteredProducts = filteredProducts.filter(item => item.category === catKey || (catKey === 'full-bottles' && (item.category === 'fullbottles' || item.category === 'full-bottles')));
+          }
+        } else {
+          let tagToSearch = catKey;
+          if (catKey === 'for-him' || catKey === 'him') tagToSearch = 'him';
+          else if (catKey === 'for-her' || catKey === 'her') tagToSearch = 'her';
+          else if (catKey === 'newarrivals' || catKey === 'new-arrivals') tagToSearch = 'new-arrival';
+          else if (catKey === 'bestsellers' || catKey === 'best-sellers') tagToSearch = 'featured';
+
+          filteredProducts = filteredProducts.filter(item => {
+            if (item.tags && item.tags.includes(tagToSearch)) return true;
+            if (tagToSearch === 'new-arrival' && item.featured) return true;
+            if (tagToSearch === 'featured' && item.featured) return true;
+            return false;
+          });
+        }
+      }
+
+      filteredProducts.sort((a, b) => {
+        const aFeat = a.tags && a.tags.includes('featured') ? 1 : 0;
+        const bFeat = b.tags && b.tags.includes('featured') ? 1 : 0;
+        return bFeat - aFeat;
+      });
+
+      const collectionUrl = catKey === 'all' 
+        ? 'https://decantatelier.in/#shop' 
+        : `https://decantatelier.in/#shop?category=${catKey}`;
+
+      const itemListElement = filteredProducts.map((prod, idx) => {
+        const defaultVariant = prod.sizes && prod.sizes.length > 0 ? prod.sizes[0] : null;
+        const price = defaultVariant ? defaultVariant.price : (prod.price || 0);
+        const isOutOfStock = defaultVariant ? defaultVariant.stock === 0 : (prod.tags && prod.tags.includes('out-of-stock'));
+        const prodSlug = prod.slug || prod.id;
+        const prodUrl = `https://decantatelier.in/#product/${prodSlug}`;
+        
+        return {
+          '@type': 'ListItem',
+          'position': idx + 1,
+          'url': prodUrl,
+          'name': prod.name,
+          'image': prod.image ? (prod.image.startsWith('http') ? prod.image : `https://decantatelier.in${prod.image}`) : 'https://decantatelier.in/decantatelierlogo.png',
+          'offers': {
+            '@type': 'Offer',
+            'price': price,
+            'priceCurrency': 'INR',
+            'availability': isOutOfStock ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+            'url': prodUrl
+          }
+        };
+      });
+
+      const catTitle = CATEGORY_TITLES[catKey] || catKey.charAt(0).toUpperCase() + catKey.slice(1);
+
+      collectionSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        '@id': `${collectionUrl}#collectionpage`,
+        'name': catKey === 'all' ? 'Shop Luxury Perfume Decants | Decant Atelier' : `${catTitle} Collection | Decant Atelier`,
+        'description': catKey === 'all' 
+          ? 'Browse our full catalogue of authentic designer and niche perfume decants.'
+          : `Explore our premium ${catTitle} collection at Decant Atelier. Genuine hand-poured decants and luxury fragrance options in India.`,
+        'url': collectionUrl,
+        'mainEntity': {
+          '@type': 'ItemList',
+          'name': catKey === 'all' ? 'Decant Atelier Product Catalog' : `${catTitle} Fragrances`,
+          'numberOfItems': filteredProducts.length,
+          'itemListElement': itemListElement
+        }
+      };
 
     } else if (activePage === 'product' && selectedProduct) {
       title = `${selectedProduct.name} | Decant Atelier`;
@@ -337,8 +436,9 @@ export default function SEO({ activePage, activeCategory, selectedProduct }) {
     updateJsonLd('seo-localbusiness-jsonld', localBusinessSchema);
     updateJsonLd('seo-product-jsonld', productSchema);
     updateJsonLd('seo-breadcrumb-jsonld', breadcrumbSchema);
+    updateJsonLd('seo-collection-jsonld', collectionSchema);
 
-  }, [activePage, activeCategory, selectedProduct]);
+  }, [activePage, activeCategory, selectedProduct, products, dbCategories]);
 
   return null;
 }

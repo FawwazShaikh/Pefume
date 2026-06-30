@@ -188,7 +188,7 @@ function App() {
 
   return (
     <div className="flex flex-col gap-0 min-h-screen">
-      <SEO activePage={activePage} activeCategory={activeCategory} selectedProduct={selectedProduct} />
+      <SEO activePage={activePage} activeCategory={activeCategory} selectedProduct={selectedProduct} products={products} />
       {activePage !== 'admin' && activePage !== 'cart' && activePage !== 'profile' && <DailyOfferPopup />}
 
       {/* Mini Bag — Global slide-out drawer, mounted at root so it overlays any page */}
