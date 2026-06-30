@@ -302,11 +302,34 @@ export default function SEO({ activePage, activeCategory, selectedProduct }) {
     document.title = title;
     updateMetaTag('description', description);
     updateCanonicalLink(canonical);
+    
+    // Open Graph
     updateMetaTag('og:title', title);
     updateMetaTag('og:description', description);
     updateMetaTag('og:image', ogImage);
+    updateMetaTag('og:image:secure_url', ogImage);
+    updateMetaTag('og:image:type', 'image/png');
     updateMetaTag('og:url', canonical);
     updateMetaTag('og:type', ogType);
+
+    if (activePage === 'product' && selectedProduct) {
+      updateMetaTag('og:image:width', '600');
+      updateMetaTag('og:image:height', '600');
+      updateMetaTag('og:image:alt', `${selectedProduct.name} - Decant Atelier`);
+    } else {
+      updateMetaTag('og:image:width', '1200');
+      updateMetaTag('og:image:height', '630');
+      updateMetaTag('og:image:alt', 'Decant Atelier - Luxury Perfume Decants');
+    }
+
+    // Twitter Card
+    updateMetaTag('twitter:card', 'summary_large_image');
+    updateMetaTag('twitter:image', ogImage);
+    updateMetaTag('twitter:title', title);
+    updateMetaTag('twitter:description', activePage === 'home' || activePage === 'shop'
+      ? 'Buy authentic luxury perfume decants from premium designer and Middle Eastern brands.'
+      : description
+    );
 
     // Apply JSON-LD structured schemas
     updateJsonLd('seo-website-jsonld', websiteSchema);
