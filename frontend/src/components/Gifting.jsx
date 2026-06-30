@@ -27,7 +27,7 @@ export default function Gifting({ onSelectCategory, onNavigate }) {
             }}
           >
             <div className="gift-card-bg">
-              <img src="/him_perfume.webp" alt="Shop For Him" className="gift-card-img" loading="lazy" />
+              <img src="/decant_images/hero_1.png" alt="Shop For Him" className="gift-card-img" loading="lazy" />
             </div>
             <div className="gift-card-overlay"></div>
             <div className="gift-card-content">
@@ -44,7 +44,7 @@ export default function Gifting({ onSelectCategory, onNavigate }) {
             }}
           >
             <div className="gift-card-bg">
-              <img src="/her_perfume.webp" alt="Shop For Her" className="gift-card-img" loading="lazy" />
+              <img src="/decant_images/hero_2.png" alt="Shop For Her" className="gift-card-img" loading="lazy" />
             </div>
             <div className="gift-card-overlay"></div>
             <div className="gift-card-content">

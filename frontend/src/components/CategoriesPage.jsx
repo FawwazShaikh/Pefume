@@ -11,7 +11,7 @@ const categoriesData = [
     id: 'winter',
     title: 'Winter Perfumes',
     desc: 'Explore warm, spicy, vanilla, and woody fragrances that perform exceptionally well in colder weather. Find th...',
-    image: 'https://images.unsplash.com/photo-1482862549707-f63cb32c5fd9?auto=format&fit=crop&w=600&q=80'
+    image:'/decant_images/wintercc.png'
   },
   // {
   //   id: 'office',
@@ -41,13 +41,13 @@ const categoriesData = [
     id: 'her',
     title: 'For Her',
     desc: "Whether she's into soft florals, sweet notes, or bold statement scents, this is where you find a gift that fee...",
-    image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=600&q=80'
+    image:'/decant_images/for_her.png'
   },
   {
     id: 'him',
     title: 'For Him',
     desc: 'From fresh everyday scents to bold, attention-grabbing fragrances, find something that actually...',
-    image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80'
+    image:'/decant_images/for_him.png'
   },
   {
     id: 'bestsellers',

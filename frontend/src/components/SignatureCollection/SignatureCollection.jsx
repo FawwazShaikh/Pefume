@@ -17,7 +17,7 @@ const categoryBanners = {
   winter: {
     title: 'Winter Perfumes',
     desc: 'Explore warm, spicy, vanilla, and woody fragrances that perform exceptionally well in colder weather. Find the best winter perfume decants for lasting impressions.',
-    image: 'https://images.unsplash.com/photo-1482862549707-f63cb32c5fd9?auto=format&fit=crop&w=1200&q=80'
+    image:'/decant_images/wintercc.png'
   },
   office: {
     title: 'Office Perfumes',
@@ -42,12 +42,12 @@ const categoryBanners = {
   her: {
     title: 'For Her',
     desc: 'Explore our collection of elegant, feminine scents. From soft, romantic florals and sweet gourmands to bold, sophisticated statement fragrances.',
-    image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1200&q=80'
+    image:'/decant_images/for_her.png'
   },
   him: {
     title: 'For Him',
     desc: 'Discover bold, charismatic, and refined masculine scents. From fresh, energetic everyday profiles to rich, magnetic evening colognes.',
-    image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1200&q=80'
+    image:'/decant_images/for_him.png'
   },
   newarrivals: {
     title: 'New Arrivals',
