@@ -119,6 +119,11 @@ export default function Footer({ onNavigate }) {
                 Privacy Policy
               </a>
             </li>
+            <li>
+              <a href="#terms" onClick={(e) => handlePolicyClick(e, 'terms')}>
+                Terms &amp; Conditions
+              </a>
+            </li>
           </ul>
         </div>
 
