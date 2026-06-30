@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -6,16 +6,17 @@ import SignatureCollection from './components/SignatureCollection';
 import Gifting from './components/Gifting';
 import Pricing from './components/Pricing';
 import Authenticity from './components/Authenticity';
-import PoliciesPage from './components/Policies';
 import Footer from './components/Footer';
 import ProductPage from './components/ProductPage';
 import CartPage from './components/CartPage';
 import CategoriesPage from './components/CategoriesPage';
-import ProfilePage from './components/ProfilePage';
 import DailyOfferPopup from './components/DailyOfferPopup';
-import AdminPage from './components/AdminPage';
-import GiftingPage from './components/GiftingPage';
 import { collectionsData } from './components/SignatureCollection/CollectionData';
+
+const PoliciesPage = lazy(() => import('./components/Policies'));
+const ProfilePage = lazy(() => import('./components/ProfilePage'));
+const AdminPage = lazy(() => import('./components/AdminPage'));
+const GiftingPage = lazy(() => import('./components/GiftingPage'));
 import PaymentSuccessPage from './components/PaymentSuccessPage';
 import PaymentFailurePage from './components/PaymentFailurePage';
 import MiniBag from './components/MiniBag';
@@ -218,65 +219,74 @@ function App() {
 
       {activePage !== 'home' && (
         <div className={(activePage === 'admin' || activePage === 'cart' || activePage === 'profile' || activePage === 'gifting' || activePage === 'policies') ? '' : 'main-content-padding'} style={(activePage !== 'admin' && activePage !== 'cart' && activePage !== 'profile' && activePage !== 'gifting' && activePage !== 'policies') ? { backgroundColor: '#F7F3ED' } : {}}>
-          {(activePage === 'shop' || activePage === 'wishlist') && (
-            <SignatureCollection
-              activeCategory={activeCategory}
-              onSelectCategory={setActiveCategory}
-              products={products}
-            />
-          )}
+          <Suspense fallback={
+            <div className="py-20 text-center font-body text-[#1C1B18]/50 bg-[#F7F3ED] min-h-[400px] flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <i className="fas fa-circle-notch fa-spin text-lg" style={{ color: '#8B672F' }} />
+                <span className="text-xs uppercase tracking-widest">Loading details...</span>
+              </div>
+            </div>
+          }>
+            {(activePage === 'shop' || activePage === 'wishlist') && (
+              <SignatureCollection
+                activeCategory={activeCategory}
+                onSelectCategory={setActiveCategory}
+                products={products}
+              />
+            )}
 
-          {activePage === 'product' && (
-            <ProductPage
-              product={selectedProduct}
-              products={products}
-              onBackToShop={() => {
-                window.location.hash = 'shop';
-              }}
-            />
-          )}
+            {activePage === 'product' && (
+              <ProductPage
+                product={selectedProduct}
+                products={products}
+                onBackToShop={() => {
+                  window.location.hash = 'shop';
+                }}
+              />
+            )}
 
-          {activePage === 'cart' && (
-            <CartPage
-              products={products}
-              onBackToShop={() => {
-                window.location.hash = 'shop';
-              }}
-            />
-          )}
+            {activePage === 'cart' && (
+              <CartPage
+                products={products}
+                onBackToShop={() => {
+                  window.location.hash = 'shop';
+                }}
+              />
+            )}
 
-          {activePage === 'profile' && (
-            <ProfilePage />
-          )}
+            {activePage === 'profile' && (
+              <ProfilePage />
+            )}
 
-          {activePage === 'payment-success' && (
-            <PaymentSuccessPage />
-          )}
+            {activePage === 'payment-success' && (
+              <PaymentSuccessPage />
+            )}
 
-          {activePage === 'payment-failure' && (
-            <PaymentFailurePage />
-          )}
+            {activePage === 'payment-failure' && (
+              <PaymentFailurePage />
+            )}
 
-          {activePage === 'admin' && (
-            <AdminPage />
-          )}
+            {activePage === 'admin' && (
+              <AdminPage />
+            )}
 
-          {activePage === 'policies' && <PoliciesPage />}
+            {activePage === 'policies' && <PoliciesPage />}
 
-          {activePage === 'categories' && (
-            <CategoriesPage
-              onSelectCategory={(categoryKey) => {
-                const normalized = (categoryKey || '').toLowerCase().trim();
-                setActiveCategory(normalized);
-                setActivePage('shop');
-                window.location.hash = `shop?category=${normalized}`;
-              }}
-            />
-          )}
+            {activePage === 'categories' && (
+              <CategoriesPage
+                onSelectCategory={(categoryKey) => {
+                  const normalized = (categoryKey || '').toLowerCase().trim();
+                  setActiveCategory(normalized);
+                  setActivePage('shop');
+                  window.location.hash = `shop?category=${normalized}`;
+                }}
+              />
+            )}
 
-          {activePage === 'gifting' && (
-            <GiftingPage />
-          )}
+            {activePage === 'gifting' && (
+              <GiftingPage />
+            )}
+          </Suspense>
         </div>
       )}
 

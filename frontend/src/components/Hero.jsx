@@ -10,10 +10,11 @@ export default function Hero() {
       {/* Full-bleed product image (background layer) */}
       <div className="hero-image-layer">
         <img
-          src="/valentino_uomo_intense.png"
+          src="/valentino_uomo_intense.webp"
           alt="Valentino Born In Roma Uomo Intense — luxury fragrance campaign"
           className="hero-product-img"
           loading="eager"
+          fetchPriority="high"
         />
         <div className="hero-image-vignette" />
       </div>

@@ -12,14 +12,14 @@ import { API_BASE_URL, sanitizeImageUrl } from '../utils/config.js';
 // Supported formats: .webp (preferred), .png, .jpg
 const BOTTLE_OPTIONS = {
   '5ml': [
-    { id: 'classic-mini-black', name: 'Classic Mini Spray (Black)', additionalPrice: 0, image: '/decant_images/bottle_5ml_black.png' },
-    { id: 'classic-mini-gold', name: 'Classic Mini Spray (Gold)', additionalPrice: 0, image: '/decant_images/bottle_5ml_gold.png' },
+    { id: 'classic-mini-black', name: 'Classic Mini Spray (Black)', additionalPrice: 0, image: '/decant_images/bottle_5ml_black.webp' },
+    { id: 'classic-mini-gold', name: 'Classic Mini Spray (Gold)', additionalPrice: 0, image: '/decant_images/bottle_5ml_gold.webp' },
   ],
   '10ml': [
-    { id: 'metal-atomizer-black', name: 'Classic Metal Atomizer (Black)', additionalPrice: 0, image: '/decant_images/bottle_10ml_black.png' },
-    { id: 'metal-atomizer-gold', name: 'Classic Metal Atomizer (Gold)', additionalPrice: 0, image: '/decant_images/bottle_10ml_gold.png' },
-    { id: 'premium-metal-atomizer', name: 'Premium Classic Metal Atomizer', additionalPrice: 55, image: '/decant_images/bottle_10ml_premium.png' },
-    { id: 'travel-safe', name: 'Travel-Safe', additionalPrice: 199, image: '/decant_images/bottle_10ml_travel.png' },
+    { id: 'metal-atomizer-black', name: 'Classic Metal Atomizer (Black)', additionalPrice: 0, image: '/decant_images/bottle_10ml_black.webp' },
+    { id: 'metal-atomizer-gold', name: 'Classic Metal Atomizer (Gold)', additionalPrice: 0, image: '/decant_images/bottle_10ml_gold.webp' },
+    { id: 'premium-metal-atomizer', name: 'Premium Classic Metal Atomizer', additionalPrice: 55, image: '/decant_images/bottle_10ml_premium.webp' },
+    { id: 'travel-safe', name: 'Travel-Safe', additionalPrice: 199, image: '/decant_images/bottle_10ml_travel.webp' },
   ],
 };
 

@@ -157,9 +157,10 @@ export default function GiftingPage() {
               variants={itemVariants}
             >
               <img 
-                src="/decant_images/luxury_gifting_hero.png" 
+                src="/decant_images/luxury_gifting_hero.webp" 
                 alt="Luxury fragrance discovery set campaign" 
                 className="w-full h-full object-cover object-center scale-100 hover:scale-[1.02] transition-transform duration-[1200ms] ease-out select-none"
+                loading="lazy"
               />
             </motion.div>
 
