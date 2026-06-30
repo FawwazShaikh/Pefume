@@ -42,7 +42,7 @@ export default function Authenticity() {
               </div>
             </div>
             
-            <h4 className="cert-title">Original Source Guarantee</h4>
+            <h3 className="cert-title">Original Source Guarantee</h3>
             <p className="cert-desc">
               Each decant is sourced from verified retail stock and checked before dispatch.
             </p>

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { API_BASE_URL, sanitizeImageUrl } from '../utils/config.js';
 
 const CTA_DESTINATIONS = {
@@ -86,86 +85,90 @@ export default function DailyOfferPopup() {
   if (!show || !campaign) return null;
 
   return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          key="campaign-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          style={styles.overlay}
-          className="campaign-popup-overlay"
+    show && (
+      <div
+        style={styles.overlay}
+        className="campaign-popup-overlay"
+      >
+        <div
+          style={styles.card}
+          className="campaign-popup-card"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            style={styles.card}
-          >
-            {/* Close */}
-            <button onClick={handleClose} style={styles.closeBtn} aria-label="Close popup">×</button>
+          {/* Close */}
+          <button onClick={handleClose} style={styles.closeBtn} aria-label="Close popup">×</button>
 
-            {/* Accent bar */}
-            <div style={styles.accentBar}>
-              {campaign.badge || 'TODAY\'S SPECIAL OFFER'}
-            </div>
+          {/* Accent bar */}
+          <div style={styles.accentBar}>
+            {campaign.badge || 'TODAY\'S SPECIAL OFFER'}
+          </div>
 
-            {/* Content */}
-            <div style={styles.content} className="campaign-popup-content">
-              {/* Image */}
-              {campaign.imageUrl && (
-                <div style={styles.imageCol} className="campaign-popup-img-col">
-                  <img
-                    src={sanitizeImageUrl(campaign.imageUrl)}
-                    alt={campaign.title}
-                    style={styles.productImg}
-                    onError={e => { e.target.style.display = 'none'; }}
-                  />
-                </div>
+          {/* Content */}
+          <div style={styles.content} className="campaign-popup-content">
+            {/* Image */}
+            {campaign.imageUrl && (
+              <div style={styles.imageCol} className="campaign-popup-img-col">
+                <img
+                  src={sanitizeImageUrl(campaign.imageUrl)}
+                  alt={campaign.title}
+                  style={styles.productImg}
+                  onError={e => { e.target.style.display = 'none'; }}
+                />
+              </div>
+            )}
+
+            {/* Info */}
+            <div style={styles.infoCol} className="campaign-popup-info-col">
+              <h2 style={styles.title}>{campaign.title}</h2>
+              {campaign.subheading && (
+                <p style={styles.tagline}>{campaign.subheading}</p>
+              )}
+              {campaign.badge && (
+                <div style={styles.discount}>{campaign.badge}</div>
+              )}
+              {campaign.displayPrice && (
+                <p style={styles.price}>{campaign.displayPrice}</p>
               )}
 
-              {/* Info */}
-              <div style={styles.infoCol} className="campaign-popup-info-col">
-                <h2 style={styles.title}>{campaign.title}</h2>
-                {campaign.subheading && (
-                  <p style={styles.tagline}>{campaign.subheading}</p>
-                )}
-                {campaign.badge && (
-                  <div style={styles.discount}>{campaign.badge}</div>
-                )}
-                {campaign.displayPrice && (
-                  <p style={styles.price}>{campaign.displayPrice}</p>
-                )}
+              {/* Countdown */}
+              <div style={styles.timerContainer}>
+                <span style={styles.timerLabel}>Offer ends in:</span>
+                <span style={styles.timerValue}>{timeLeft}</span>
+              </div>
 
-                {/* Countdown */}
-                <div style={styles.timerContainer}>
-                  <span style={styles.timerLabel}>Offer ends in:</span>
-                  <span style={styles.timerValue}>{timeLeft}</span>
-                </div>
-
-                {/* CTAs */}
-                <div style={styles.btnRow} className="campaign-popup-btn-row">
-                  <button onClick={handleClaim} style={styles.claimBtn}>
-                    {campaign.ctaText || 'Shop Now'}
-                  </button>
-                  <button onClick={handleClose} style={styles.notNowBtn}>Not Now</button>
-                </div>
+              {/* CTAs */}
+              <div style={styles.btnRow} className="campaign-popup-btn-row">
+                <button onClick={handleClaim} style={styles.claimBtn}>
+                  {campaign.ctaText || 'Shop Now'}
+                </button>
+                <button onClick={handleClose} style={styles.notNowBtn}>Not Now</button>
               </div>
             </div>
-          </motion.div>
-          <style>{`
-            @media (max-width: 640px) {
-              .campaign-popup-content { flex-direction: column !important; padding: 1.5rem !important; gap: 1.25rem !important; }
-              .campaign-popup-img-col { flex: 0 0 auto !important; }
-              .campaign-popup-info-col { width: 100% !important; align-items: center !important; text-align: center !important; }
-              .campaign-popup-btn-row { flex-direction: column !important; width: 100% !important; }
-            }
-          `}</style>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </div>
+        </div>
+        <style>{`
+          @keyframes popupFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          @keyframes popupScaleIn {
+            from { opacity: 0; transform: scale(0.92) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+          }
+          .campaign-popup-overlay {
+            animation: popupFadeIn 0.3s forwards ease-out;
+          }
+          .campaign-popup-card {
+            animation: popupScaleIn 0.35s forwards cubic-bezier(0.16, 1, 0.3, 1);
+          }
+          @media (max-width: 640px) {
+            .campaign-popup-content { flex-direction: column !important; padding: 1.5rem !important; gap: 1.25rem !important; }
+            .campaign-popup-img-col { flex: 0 0 auto !important; }
+            .campaign-popup-info-col { width: 100% !important; align-items: center !important; text-align: center !important; }
+            .campaign-popup-btn-row { flex-direction: column !important; width: 100% !important; }
+          }
+        `}</style>
+      </div>
+    )
   );
 }
 

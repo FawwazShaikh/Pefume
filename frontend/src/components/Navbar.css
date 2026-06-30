@@ -1691,3 +1691,48 @@ input:focus-visible {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 }
+
+/* CSS Animations for Dropdowns and Search Overlay */
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lux-dropdown {
+  animation: dropdownFadeIn 0.2s forwards cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes searchOverlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.search-overlay {
+  animation: searchOverlayFadeIn 0.25s forwards ease-out;
+}
+
+@keyframes searchContainerSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.search-container {
+  animation: searchContainerSlideDown 0.3s forwards cubic-bezier(0.16, 1, 0.3, 1);
+}
+

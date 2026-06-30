@@ -1,8 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { useAuth } from '@clerk/clerk-react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import SignatureCollection from './components/SignatureCollection';
+const SignatureCollection = lazy(() => import('./components/SignatureCollection'));
 import Gifting from './components/Gifting';
 import Pricing from './components/Pricing';
 import Authenticity from './components/Authenticity';
@@ -22,7 +21,6 @@ import MiniBag from './components/MiniBag';
 import { API_BASE_URL } from './utils/config.js';
 import { clearCart } from './utils/cartHelper.js';
 import { CartStore } from './utils/store.js';
-import LazyRender from './components/LazyRender';
 import SEO from './components/SEO';
 
 
@@ -34,8 +32,7 @@ function App() {
   // 4. Generate OG preview images automatically using dynamic HTML-to-image canvas.
   // 5. Implement Google Merchant Center catalog feed integration.
   // 6. Implement FAQ Schema.
-  // 7. Implement Review Schema.
-  const { isLoaded: authLoaded, isSignedIn } = useAuth();
+
 
   const getPageFromHash = () => {
     const fullHash = window.location.hash.replace('#', '');
@@ -178,17 +175,12 @@ function App() {
     window.scrollTo(0, 0);
   }, [activePage]);
 
-  useEffect(() => {
-    if (!authLoaded) return;
-    CartStore.setAuthenticated(isSignedIn);
-    if (authLoaded && !isSignedIn) {
-      clearCart();
-    }
-  }, [authLoaded, isSignedIn]);
+
 
 
   return (
     <div className="flex flex-col gap-0 min-h-screen">
+      <a href="#main" className="skip-link">Skip to content</a>
       <SEO activePage={activePage} activeCategory={activeCategory} selectedProduct={selectedProduct} products={products} />
       {activePage !== 'admin' && activePage !== 'cart' && activePage !== 'profile' && <DailyOfferPopup />}
 
@@ -205,23 +197,18 @@ function App() {
         />
       )}
 
-      {activePage === 'home' && (
-        <>
-          <Hero />
-          <LazyRender placeholderHeight="400px">
+      <main id="main" className="flex-1">
+        {activePage === 'home' && (
+          <>
+            <Hero />
             <Gifting
               onSelectCategory={setActiveCategory}
               onNavigate={setActivePage}
             />
-          </LazyRender>
-          <LazyRender placeholderHeight="300px">
             <Pricing />
-          </LazyRender>
-          <LazyRender placeholderHeight="400px">
             <Authenticity />
-          </LazyRender>
-        </>
-      )}
+          </>
+        )}
 
       {activePage !== 'home' && (
         <div className={(activePage === 'admin' || activePage === 'cart' || activePage === 'profile' || activePage === 'gifting' || activePage === 'policies') ? '' : 'main-content-padding'} style={(activePage !== 'admin' && activePage !== 'cart' && activePage !== 'profile' && activePage !== 'gifting' && activePage !== 'policies') ? { backgroundColor: '#F7F3ED' } : {}}>
@@ -295,6 +282,7 @@ function App() {
           </Suspense>
         </div>
       )}
+      </main>
 
       {activePage !== 'admin' && <Footer onNavigate={setActivePage} />}
     </div>

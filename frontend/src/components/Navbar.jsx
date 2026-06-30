@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { SignedIn, SignedOut, SignInButton, SignOutButton, useAuth } from '@clerk/clerk-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
+const NavbarUserMenu = lazy(() => import('./NavbarUserMenu'));
 import { CartStore } from '../utils/store.js';
 import { clearCart } from '../utils/cartHelper.js';
 import { sanitizeImageUrl, API_BASE_URL } from '../utils/config.js';
@@ -71,31 +70,7 @@ const shopDescriptions = {
 };
 
 export default function Navbar({ onNavigate, activePage, onSelectCategory, activeCategory, products = [] }) {
-  const { isSignedIn, getToken } = useAuth();
-  const [dbUser, setDbUser] = useState(null);
 
-  useEffect(() => {
-    async function fetchProfile() {
-      if (!isSignedIn) {
-        setDbUser(null);
-        return;
-      }
-      try {
-        const token = await getToken();
-        if (!token) return;
-        const res = await fetch(`${API_BASE_URL}/api/user/profile`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const profileData = await res.json();
-          setDbUser(profileData);
-        }
-      } catch (err) {
-        console.error('Navbar failed to fetch user profile:', err);
-      }
-    }
-    fetchProfile();
-  }, [isSignedIn, getToken]);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -553,14 +528,9 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
                   Shop <i className="fas fa-chevron-down nav-chevron" />
                 </a>
                 
-                <AnimatePresence>
                   {isShopHovered && (
-                    <motion.div
+                    <div
                       className="lux-dropdown"
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                       onPointerMove={handlePointerMove}
                       role="menu"
                       aria-label="Shop Submenu"
@@ -605,9 +575,8 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
                           <p className="preview-text">{activeShopInfo.text}</p>
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
               </li>
 
               <li 
@@ -627,14 +596,9 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
                   Collections <i className="fas fa-chevron-down nav-chevron" />
                 </a>
                 
-                <AnimatePresence>
                   {isCollectionsHovered && (
-                    <motion.div
+                    <div
                       className="lux-dropdown"
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                       onPointerMove={handlePointerMove}
                       role="menu"
                       aria-label="Collections Submenu"
@@ -683,9 +647,8 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
                           <p className="preview-text">{activeCollectionInfo.text}</p>
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
               </li>
 
               <li className="nav-item">
@@ -703,18 +666,12 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
           {/* Right: Action icons */}
           <div className="nav-right">
             <div className="nav-icons">
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <button className="nav-icon-btn nav-profile-btn" title="Login" aria-label="Login">
-                    <UserIcon className="nav-profile-svg" />
-                  </button>
-                </SignInButton>
-              </SignedOut>
-              <SignedIn>
-                <a href="#profile" onClick={(e) => handleLinkClick(e, 'profile')} className="nav-icon-btn nav-profile-btn" title="My Profile" aria-label="My Profile" style={{ display: 'flex', alignItems: 'center' }}>
-                  <UserIcon className="nav-profile-svg" />
-                </a>
-              </SignedIn>
+              <Suspense fallback={<div className="w-8 h-8 rounded-full bg-black/5" />}>
+                <NavbarUserMenu
+                  mode="desktop"
+                  handleLinkClick={handleLinkClick}
+                />
+              </Suspense>
 
               <button className="nav-icon-btn" onClick={() => setIsSearchOpen(true)} title="Search" aria-label="Search">
                 <SearchIcon className="nav-search-svg" />
@@ -792,51 +749,22 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
           <li><a href="#gifting" onClick={(e) => handleLinkClick(e, 'gifting')}>Gifting</a></li>
           <li><a href="#collection" onClick={(e) => handleCategoryClick(e, 'bestsellers')}>Best Sellers</a></li>
           <li><a href="#about" onClick={(e) => handleLinkClick(e, 'about')}>About</a></li>
-          {/* <li><a href="#wishlist" onClick={(e) => handleLinkClick(e, 'wishlist')}>My Wishlist</a></li>
-          <li>
-            <a href="#cart" onClick={(e) => handleLinkClick(e, 'cart')} className="mobile-cart-link" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>Shopping Bag</span>
-              {cartCount > 0 && <span className="mobile-drawer-cart-count">{cartCount}</span>}
-            </a>
-          </li> */}
           
-          <SignedIn>
-            <div className="mobile-drawer-divider" />
-            <span className="mobile-drawer-section-title">My Account</span>
-            <li><a href="#profile?tab=profile" onClick={(e) => handleLinkClick(e, 'profile?tab=profile')}>Profile Details</a></li>
-            <li><a href="#profile?tab=orders" onClick={(e) => handleLinkClick(e, 'profile?tab=orders')}>My Orders</a></li>
-            <li><a href="#profile?tab=addresses" onClick={(e) => handleLinkClick(e, 'profile?tab=addresses')}>Manage Addresses</a></li>
-            <li><a href="#profile?tab=security" onClick={(e) => handleLinkClick(e, 'profile?tab=security')}>Account Security</a></li>
-            {dbUser?.role === 'ADMIN' && (
-              <li><a href="#admin" onClick={(e) => handleLinkClick(e, 'admin')} style={{ color: '#2563eb', fontWeight: 'bold' }}>Admin Console</a></li>
-            )}
-            <li>
-              <SignOutButton redirectUrl="/">
-                <a href="#" onClick={() => { CartStore.setAuthenticated(false); clearCart(); setIsMobileMenuOpen(false); }}>Log Out</a>
-              </SignOutButton>
-            </li>
-          </SignedIn>
-          <SignedOut>
-            <div className="mobile-drawer-divider" />
-            <li>
-              <SignInButton mode="modal">
-                <a href="#" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); }}>Log In</a>
-              </SignInButton>
-            </li>
-          </SignedOut>
+          <Suspense fallback={null}>
+            <NavbarUserMenu
+              mode="mobile"
+              handleLinkClick={handleLinkClick}
+              setIsMobileMenuOpen={setIsMobileMenuOpen}
+            />
+          </Suspense>
         </ul>
       </div>
 
 
       {/* ─── Search Overlay — Spotlight / Raycast Style ─── */}
-      <AnimatePresence>
         {isSearchOpen && (
-          <motion.div
+          <div
             className="search-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
             role="dialog"
             aria-modal="true"
             aria-label="Search fragrances"
@@ -847,12 +775,8 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
               }
             }}
           >
-            <motion.div
+            <div
               className="search-container"
-              initial={{ opacity: 0, y: -16, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.97 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               ref={searchContainerRef}
               onKeyDown={handleSearchKeyDown}
             >
@@ -971,12 +895,9 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
                     {filteredProducts.length > 0 ? (
                       <div className="search-results-list">
                         {filteredProducts.slice(0, 6).map((product) => (
-                          <motion.div
+                          <div
                             key={product.id}
                             className="search-result-row"
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.2 }}
                             onClick={() => {
                               addRecentSearch(product.name);
                               handleSearchProductClick(product);
@@ -1002,7 +923,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
                             <span className="search-result-price">
                               ₹{parseFloat(product.price).toLocaleString('en-IN')}
                             </span>
-                          </motion.div>
+                          </div>
                         ))}
                       </div>
                     ) : (
@@ -1034,10 +955,9 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
                 </button>
               </div>
 
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
     </header>
   );
 }

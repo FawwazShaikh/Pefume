@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { collectionsData } from './CollectionData';
 import { addToCart, updateQuantity } from '../../utils/cartHelper';
 import { showToast } from '../../utils/toast.js';
@@ -634,7 +633,6 @@ export default function SignatureCollection({
                         alt={item.name}
                         loading="lazy"
                         decoding="async"
-                        fetchPriority="low"
                         className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-102"
                       />
                     ) : (
@@ -847,7 +845,7 @@ export default function SignatureCollection({
         ) : currentCategory === 'wishlist' ? (
           <div className="text-center py-24 bg-[#FEFCF9] border rounded-none p-10 shadow-sm max-w-xl mx-auto" style={{ borderColor: '#D8D1C7' }}>
             <i className="far fa-heart text-5xl mb-4 block" style={{ color: '#8B672F' }}></i>
-            <h4 className="font-heading text-xl font-light mb-2 uppercase tracking-wide" style={{ color: '#3A3632' }}>Your wishlist is empty.</h4>
+            <h3 className="font-heading text-xl font-light mb-2 uppercase tracking-wide" style={{ color: '#3A3632' }}>Your wishlist is empty.</h3>
             <p className="text-xs leading-relaxed mb-6 font-body" style={{ color: '#5A5550' }}>
               Explore our boutique decants and curate your personal fragrance wishlist.
             </p>
@@ -873,7 +871,7 @@ export default function SignatureCollection({
         ) : (
           <div className="text-center py-24 bg-white/40 border rounded-none p-10 shadow-sm" style={{ borderColor: '#D8D1C7' }}>
             <i className="fas fa-search text-5xl mb-4 block" style={{ color: '#5A5550' }}></i>
-            <h4 className="font-heading text-xl font-light mb-2" style={{ color: '#3A3632' }}>No Scents Found</h4>
+            <h3 className="font-heading text-xl font-light mb-2" style={{ color: '#3A3632' }}>No Scents Found</h3>
             <p className="text-xs font-body" style={{ color: '#5A5550' }}>
               Try adjusting your filters, search term, or sorting option.
             </p>
@@ -970,9 +968,9 @@ export default function SignatureCollection({
                       <span className="text-[0.62rem] font-bold tracking-widest uppercase px-3 py-1 rounded-none inline-block mb-4" style={{ color: '#8B672F', backgroundColor: 'rgba(139,103,47,0.08)' }}>
                         {selectedItem.category === 'decants' ? 'Decant Scent' : selectedItem.category === 'sets' ? 'Collection Set' : 'Retail Bottle'}
                       </span>
-                      <h3 className="font-heading text-3xl font-light mb-2 tracking-wide leading-tight" style={{ color: '#2C2926' }}>
+                      <h2 className="font-heading text-3xl font-light mb-2 tracking-wide leading-tight" style={{ color: '#2C2926' }}>
                         {selectedItem.name}
-                      </h3>
+                      </h2>
                       <p className="text-[0.78rem] italic tracking-wide mb-4" style={{ color: '#8B672F' }}>
                         {selectedItem.tagline}
                       </p>
@@ -982,9 +980,9 @@ export default function SignatureCollection({
 
                       {/* Olfactory Pyramid Accordion */}
                       <div className="mb-8 p-5 bg-[#FEFCF9] border" style={{ borderColor: '#D8D1C7' }}>
-                        <h4 className="text-[0.72rem] font-bold uppercase tracking-wider mb-4 pb-2 border-b" style={{ color: '#3A3632', borderBottomColor: '#D8D1C7' }}>
+                        <h3 className="text-[0.72rem] font-bold uppercase tracking-wider mb-4 pb-2 border-b" style={{ color: '#3A3632', borderBottomColor: '#D8D1C7' }}>
                           Olfactory Pyramid
-                        </h4>
+                        </h3>
                         <div className="space-y-3">
                           <div className="grid grid-cols-[85px_1fr] text-[0.72rem] leading-normal font-body">
                             <span className="font-bold uppercase tracking-wide" style={{ color: '#8B672F' }}>Top notes:</span>
@@ -1003,9 +1001,9 @@ export default function SignatureCollection({
 
                       {/* Size Selector */}
                       <div className="mb-6">
-                        <h4 className="text-[0.72rem] font-bold uppercase tracking-wider mb-3" style={{ color: '#3A3632' }}>
+                        <h3 className="text-[0.72rem] font-bold uppercase tracking-wider mb-3" style={{ color: '#3A3632' }}>
                           Select Product Option
-                        </h4>
+                        </h3>
                         <div className="grid grid-cols-2 gap-3">
                           {selectedItem.sizes.map((sz, idx) => (
                             <button

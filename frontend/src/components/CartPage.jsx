@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth, useUser, SignInButton } from '@clerk/clerk-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { getCart, updateQuantity, removeFromCart, clearCart, mergeCartToDb } from '../utils/cartHelper';
 import { showToast } from '../utils/toast';
 import './CartPage.css';
