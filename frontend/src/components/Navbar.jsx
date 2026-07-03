@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-const NavbarUserMenu = lazy(() => import('./NavbarUserMenu'));
+import NavbarUserMenu from './NavbarUserMenu';
 import { CartStore } from '../utils/store.js';
 import { clearCart } from '../utils/cartHelper.js';
 import { sanitizeImageUrl, API_BASE_URL } from '../utils/config.js';
@@ -651,12 +651,10 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
           {/* Right: Action icons */}
           <div className="nav-right">
             <div className="nav-icons">
-              <Suspense fallback={<div className="w-8 h-8 rounded-full bg-black/5" />}>
-                <NavbarUserMenu
-                  mode="desktop"
-                  handleLinkClick={handleLinkClick}
-                />
-              </Suspense>
+              <NavbarUserMenu
+                mode="desktop"
+                handleLinkClick={handleLinkClick}
+              />
 
               <button className="nav-icon-btn" onClick={() => setIsSearchOpen(true)} title="Search" aria-label="Search">
                 <SearchIcon className="nav-search-svg" />
@@ -735,13 +733,11 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
           <li><a href="/shop?category=bestsellers" onClick={(e) => handleCategoryClick(e, 'bestsellers')}>Best Sellers</a></li>
           <li><a href="/about" onClick={(e) => handleLinkClick(e, 'about')}>About</a></li>
           
-          <Suspense fallback={null}>
-            <NavbarUserMenu
-              mode="mobile"
-              handleLinkClick={handleLinkClick}
-              setIsMobileMenuOpen={setIsMobileMenuOpen}
-            />
-          </Suspense>
+          <NavbarUserMenu
+            mode="mobile"
+            handleLinkClick={handleLinkClick}
+            setIsMobileMenuOpen={setIsMobileMenuOpen}
+          />
         </ul>
       </div>
 

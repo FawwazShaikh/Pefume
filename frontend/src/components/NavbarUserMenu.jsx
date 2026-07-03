@@ -23,6 +23,24 @@ export default function NavbarUserMenu({ mode, handleLinkClick, setIsMobileMenuO
     }
   }, [authLoaded, isSignedIn]);
 
+  if (!authLoaded) {
+    if (mode === 'desktop') {
+      return (
+        <button className="nav-icon-btn nav-profile-btn" title="Login" aria-label="Login">
+          <UserIcon className="nav-profile-svg" />
+        </button>
+      );
+    }
+    return (
+      <>
+        <div className="mobile-drawer-divider" />
+        <li>
+          <a href="#" onClick={(e) => { e.preventDefault(); }}>Log In</a>
+        </li>
+      </>
+    );
+  }
+
   useEffect(() => {
     async function fetchProfile() {
       if (!isSignedIn) {

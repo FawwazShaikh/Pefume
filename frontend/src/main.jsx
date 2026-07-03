@@ -5,7 +5,12 @@ import { ClerkProvider } from '@clerk/clerk-react'
 import './index.css'
 import App from './App.jsx'
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const cleanEnvVar = (val) => {
+  if (!val) return '';
+  return val.replace(/^["']|["']$/g, '').trim();
+};
+
+const PUBLISHABLE_KEY = cleanEnvVar(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
 if (!PUBLISHABLE_KEY) {
   console.warn("VITE_CLERK_PUBLISHABLE_KEY environment variable is missing.");
