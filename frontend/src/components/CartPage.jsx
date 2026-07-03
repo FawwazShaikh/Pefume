@@ -1535,18 +1535,76 @@ export default function CartPage({ onBackToShop, products = [] }) {
                       <p className="text-xs text-black/45 font-body">Verify all delivery and ledger parameters before validating purchase.</p>
                     </div>
 
+                    {/* Review Info Card */}
+                    <div className="bg-[#FEFCF9] border border-black/5 p-6 space-y-6 text-left shadow-sm">
+                      <div className="space-y-4">
+                        {/* Shipping Destination */}
+                        <div>
+                          <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block mb-1.5">Shipping Destination</span>
+                          {selectedAddress ? (
+                            <div className="text-xs font-body text-black/80 leading-relaxed">
+                              <p className="font-semibold text-black">{selectedAddress.fullName}</p>
+                              <p>{selectedAddress.addressLine1}{selectedAddress.addressLine2 ? `, ${selectedAddress.addressLine2}` : ''}</p>
+                              <p>{selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postalCode}</p>
+                              <p className="text-[0.68rem] text-black/50 mt-1">📞 {selectedAddress.phone}</p>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-[#FF003C] font-bold">No address selected. Please go back and select one.</p>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-black/5">
+                          {/* Delivery Speed */}
+                          <div>
+                            <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block mb-1">Transit Method</span>
+                            <span className="text-xs font-semibold text-black">
+                              {deliveryMethod === 'STANDARD' && 'Standard Atelier Delivery'}
+                              {deliveryMethod === 'EXPRESS' && 'Express Direct Air Courier'}
+                              {deliveryMethod === 'OWNER' && 'Owner Hand-Delivery'}
+                            </span>
+                            <span className="text-[0.68rem] text-black/50 block mt-0.5">
+                              {deliveryMethod === 'STANDARD' && (subtotal >= FREE_SHIPPING_THRESHOLD ? 'Free Shipping (Arrives in 9 days)' : `₹${shipping.toLocaleString('en-IN')} (Arrives in 9 days)`)}
+                              {deliveryMethod === 'EXPRESS' && `₹399 (Arrives in 3 days)`}
+                              {deliveryMethod === 'OWNER' && `₹5,000 (Hand-delivered)`}
+                            </span>
+                          </div>
+
+                          {/* Payment Preference */}
+                          <div>
+                            <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block mb-1">Payment Preference</span>
+                            <span className="text-xs font-semibold text-[#8B672F] uppercase tracking-wider block">
+                              {paymentMethod === 'RAZORPAY' ? 'Secure Online Payment (UPI / Card)' : 'Cash on Delivery (COD)'}
+                            </span>
+                            <span className="text-[0.68rem] text-black/50 block mt-0.5">
+                              {paymentMethod === 'RAZORPAY' ? 'Processed via Razorpay gateway' : 'Pay at your doorstep'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Notes */}
+                        {notes && (
+                          <div className="pt-4 border-t border-black/5">
+                            <span className="text-[0.62rem] font-bold text-black/40 uppercase tracking-widest block mb-1">Special Instructions / Notes</span>
+                            <p className="text-xs font-body italic text-black/70 leading-relaxed bg-[#F7F3ED]/30 p-3 border border-black/5">
+                              {notes}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Mobile Summary Panel */}
                     <div className="checkout-mobile-summary-wrapper">
                       {renderOrderSummary(true)}
                     </div>
 
-                    {/* Step 3 Actions */}
+                    {/* Step Actions */}
                     <div className="checkout-step-actions">
                       <button
-                        onClick={() => setCheckoutStep(2)}
+                        onClick={() => setCheckoutStep(3)}
                         className="checkout-back-btn"
                       >
-                        Back to Delivery
+                        Back to Payment
                       </button>
                       <button
                         onClick={handlePlaceOrder}
