@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SignedIn, SignedOut, SignInButton, SignOutButton, useAuth } from '@clerk/clerk-react';
+import { SignedIn, SignedOut, useAuth, useClerk } from '@clerk/clerk-react';
 import { CartStore } from '../utils/store.js';
 import { clearCart } from '../utils/cartHelper.js';
 import { API_BASE_URL } from '../utils/config.js';
@@ -13,6 +13,7 @@ const UserIcon = ({ className }) => (
 
 export default function NavbarUserMenu({ mode, handleLinkClick, setIsMobileMenuOpen }) {
   const { isLoaded: authLoaded, isSignedIn, getToken } = useAuth();
+  const clerk = useClerk();
   const [dbUser, setDbUser] = useState(null);
 
   useEffect(() => {
@@ -23,10 +24,34 @@ export default function NavbarUserMenu({ mode, handleLinkClick, setIsMobileMenuO
     }
   }, [authLoaded, isSignedIn]);
 
+  const handleSignInClick = (e) => {
+    if (e) e.preventDefault();
+    if (clerk && typeof clerk.openSignIn === 'function') {
+      if (setIsMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+      }
+      clerk.openSignIn();
+    } else {
+      console.warn("Clerk is not fully initialized yet.");
+    }
+  };
+
+  const handleSignOutClick = (e) => {
+    if (e) e.preventDefault();
+    CartStore.setAuthenticated(false);
+    clearCart();
+    if (setIsMobileMenuOpen) {
+      setIsMobileMenuOpen(false);
+    }
+    if (clerk && typeof clerk.signOut === 'function') {
+      clerk.signOut({ redirectUrl: '/' });
+    }
+  };
+
   if (!authLoaded) {
     if (mode === 'desktop') {
       return (
-        <button className="nav-icon-btn nav-profile-btn" title="Login" aria-label="Login">
+        <button className="nav-icon-btn nav-profile-btn" onClick={handleSignInClick} title="Login" aria-label="Login">
           <UserIcon className="nav-profile-svg" />
         </button>
       );
@@ -35,7 +60,7 @@ export default function NavbarUserMenu({ mode, handleLinkClick, setIsMobileMenuO
       <>
         <div className="mobile-drawer-divider" />
         <li>
-          <a href="#" onClick={(e) => { e.preventDefault(); }}>Log In</a>
+          <a href="#" onClick={handleSignInClick}>Log In</a>
         </li>
       </>
     );
@@ -68,11 +93,9 @@ export default function NavbarUserMenu({ mode, handleLinkClick, setIsMobileMenuO
     return (
       <>
         <SignedOut>
-          <SignInButton mode="modal">
-            <button className="nav-icon-btn nav-profile-btn" title="Login" aria-label="Login">
-              <UserIcon className="nav-profile-svg" />
-            </button>
-          </SignInButton>
+          <button className="nav-icon-btn nav-profile-btn" onClick={handleSignInClick} title="Login" aria-label="Login">
+            <UserIcon className="nav-profile-svg" />
+          </button>
         </SignedOut>
         <SignedIn>
           <a href="#profile" onClick={(e) => handleLinkClick(e, 'profile')} className="nav-icon-btn nav-profile-btn" title="My Profile" aria-label="My Profile" style={{ display: 'flex', alignItems: 'center' }}>
@@ -97,17 +120,13 @@ export default function NavbarUserMenu({ mode, handleLinkClick, setIsMobileMenuO
           <li><a href="#admin" onClick={(e) => handleLinkClick(e, 'admin')} style={{ color: '#2563eb', fontWeight: 'bold' }}>Admin Console</a></li>
         )}
         <li>
-          <SignOutButton redirectUrl="/">
-            <a href="#" onClick={() => { CartStore.setAuthenticated(false); clearCart(); setIsMobileMenuOpen(false); }}>Log Out</a>
-          </SignOutButton>
+          <a href="#" onClick={handleSignOutClick}>Log Out</a>
         </li>
       </SignedIn>
       <SignedOut>
         <div className="mobile-drawer-divider" />
         <li>
-          <SignInButton mode="modal">
-            <a href="#" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); }}>Log In</a>
-          </SignInButton>
+          <a href="#" onClick={handleSignInClick}>Log In</a>
         </li>
       </SignedOut>
     </>
