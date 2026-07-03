@@ -265,12 +265,8 @@ export default function SignatureCollection({
 
   // Olfactory filtering & search & sorting logic
   const filteredAndSortedItems = useMemo(() => {
-    let items = products && products.length > 0 ? [...products] : collectionsData;
+    let items = products && products.length > 0 ? [...products] : [];
     const initialCount = items.length;
-
-    if (import.meta.env.DEV && (!products || products.length === 0)) {
-      console.warn('[DEVELOPMENT WARNING] SignatureCollection: No database products loaded. Using static collectionsData fallback.');
-    }
 
     if (activeCollection) {
       const assignedProducts = activeCollection.products || [];

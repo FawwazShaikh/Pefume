@@ -154,23 +154,11 @@ export default function ProductPage({ product: initialProduct, products = [], on
         }
         setProduct(merged);
       } else {
-        // Fallback to static collectionsData if not found in DB
-        const staticProd = collectionsData.find(sp => sp.id === productSlug);
-        if (staticProd) {
-          setProduct(staticProd);
-        } else {
-          setProduct(null);
-        }
+        setProduct(null);
       }
     } catch (err) {
       console.error('Failed to fetch product details:', err);
-      // Fallback to static collectionsData on error
-      const staticProd = collectionsData.find(sp => sp.id === productSlug);
-      if (staticProd) {
-        setProduct(staticProd);
-      } else {
-        setProduct(null);
-      }
+      setProduct(null);
     } finally {
       setLoading(false);
     }

@@ -148,7 +148,7 @@ function App() {
       }
     }
     loadProducts();
-  }, []);
+  }, [location.pathname]);
 
   // Resolve selected product from URL params when on a product page
   useEffect(() => {

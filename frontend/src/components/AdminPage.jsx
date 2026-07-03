@@ -422,9 +422,66 @@ export default function AdminPage() {
         const newCat = await res.json();
         setCategories([...categories, newCat]);
         setCategoryForm({ name: '', slug: '' });
+        showToast('Category created successfully.', 'success');
+        fetchCoreData();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'Failed to create category.', 'error');
       }
     } catch (err) {
       console.error('Failed to create category:', err);
+      showToast('Error creating category.', 'error');
+    }
+  };
+
+  // Update category configuration
+  const handleUpdateCategory = async (e) => {
+    e.preventDefault();
+    if (!editingCategory || !categoryForm.name || !categoryForm.slug) return;
+    try {
+      const headers = await getAdminHeaders();
+      const res = await fetch(`${API_BASE_URL}/api/categories/${editingCategory.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ name: categoryForm.name, slug: categoryForm.slug })
+      });
+      if (res.ok) {
+        const updatedCat = await res.json();
+        setCategories(categories.map(c => c.id === editingCategory.id ? updatedCat : c));
+        setCategoryForm({ name: '', slug: '' });
+        setEditingCategory(null);
+        showToast('Category updated successfully.', 'success');
+        fetchCoreData();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'Failed to update category.', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to update category:', err);
+      showToast('Error updating category.', 'error');
+    }
+  };
+
+  // Delete category configuration
+  const handleDeleteCategory = async (id) => {
+    if (!confirm('Are you sure you want to delete this category? This will fail if products are linked to it.')) return;
+    try {
+      const headers = await getAdminHeaders();
+      const res = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
+        method: 'DELETE',
+        headers
+      });
+      if (res.ok) {
+        setCategories(categories.filter(c => c.id !== id));
+        showToast('Category deleted successfully.', 'success');
+        fetchCoreData();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'Failed to delete category.', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to delete category:', err);
+      showToast('Error deleting category.', 'error');
     }
   };
 
@@ -2027,6 +2084,7 @@ export default function AdminPage() {
                         Products count {renderSortIndicator('productCount', categorySort)}
                       </th>
                       <th>Status</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2038,11 +2096,30 @@ export default function AdminPage() {
                         <td>
                           <span className="admin-badge success">Active</span>
                         </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <button
+                            onClick={() => {
+                              setEditingCategory(c);
+                              setCategoryForm({ name: c.name, slug: c.slug });
+                            }}
+                            className="admin-btn-secondary"
+                            style={{ padding: '0.2rem 0.4rem', fontSize: '0.65rem', marginRight: '0.25rem' }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCategory(c.id)}
+                            className="admin-btn-danger"
+                            style={{ padding: '0.2rem 0.4rem', fontSize: '0.65rem' }}
+                          >
+                            Delete
+                          </button>
+                        </td>
                       </tr>
                     ))}
                     {filteredCategoriesData.length === 0 && (
                       <tr>
-                        <td colSpan="4" style={{ color: '#9ca3af', textAlign: 'center', padding: '2rem' }}>No categories match search.</td>
+                        <td colSpan="5" style={{ color: '#9ca3af', textAlign: 'center', padding: '2rem' }}>No categories match search.</td>
                       </tr>
                     )}
                   </tbody>
@@ -2051,8 +2128,8 @@ export default function AdminPage() {
             </div>
 
             <div className="admin-card">
-              <h3 className="admin-card-title">Create New Category</h3>
-              <form onSubmit={handleCreateCategory} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <h3 className="admin-card-title">{editingCategory ? 'Edit Category' : 'Create New Category'}</h3>
+              <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <div className="admin-form-group">
                   <label className="admin-label">Category Name</label>
                   <input
@@ -2075,7 +2152,23 @@ export default function AdminPage() {
                     onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })}
                   />
                 </div>
-                <button type="submit" className="admin-btn">Add Category</button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="submit" className="admin-btn" style={{ flexGrow: 1 }}>
+                    {editingCategory ? 'Save Changes' : 'Add Category'}
+                  </button>
+                  {editingCategory && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingCategory(null);
+                        setCategoryForm({ name: '', slug: '' });
+                      }}
+                      className="admin-btn-secondary"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </form>
             </div>
           </div>
