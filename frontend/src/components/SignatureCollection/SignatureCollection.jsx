@@ -169,6 +169,7 @@ export default function SignatureCollection({
   const [selectedCardSizes, setSelectedCardSizes] = useState({});
   const [addingItemId, setAddingItemId] = useState(null);
   const [isWishlistCtaHovered, setIsWishlistCtaHovered] = useState(false);
+  const [isResetHovered, setIsResetHovered] = useState(false);
 
   const getCardSizeIndex = (itemId) => {
     return selectedCardSizes[itemId] !== undefined ? selectedCardSizes[itemId] : 0;
@@ -884,16 +885,22 @@ export default function SignatureCollection({
             </button>
           </div>
         ) : (
-          <div className="text-center py-24 bg-white/40 border rounded-none p-10 shadow-sm" style={{ borderColor: '#D8D1C7' }}>
-            <i className="fas fa-search text-5xl mb-4 block" style={{ color: '#5A5550' }}></i>
-            <h3 className="font-heading text-xl font-light mb-2" style={{ color: '#3A3632' }}>No Scents Found</h3>
-            <p className="text-xs font-body" style={{ color: '#5A5550' }}>
+          <div className="text-center py-10 px-8 bg-white/40 border rounded-none shadow-sm max-w-md mx-auto" style={{ borderColor: '#D8D1C7' }}>
+            <i className="fas fa-search text-3xl mb-3 block mx-auto" style={{ color: '#5A5550' }}></i>
+            <h3 className="font-heading text-lg font-light mb-1.5" style={{ color: '#3A3632' }}>No Scents Found</h3>
+            <p className="text-xs font-body mb-5" style={{ color: '#5A5550' }}>
               Try adjusting your filters, search term, or sorting option.
             </p>
             <button
               onClick={handleClearFilters}
-              className="mt-6 px-6 py-3 rounded-none text-white text-[0.7rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer shadow-sm"
-              style={{ backgroundColor: '#2C2926' }}
+              onMouseEnter={() => setIsResetHovered(true)}
+              onMouseLeave={() => setIsResetHovered(false)}
+              className="px-5 py-2.5 rounded-none text-[0.7rem] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer shadow-sm border inline-flex items-center justify-center min-h-[42px] min-w-[140px]"
+              style={{
+                backgroundColor: isResetHovered ? 'transparent' : '#2C2926',
+                color: isResetHovered ? '#2C2926' : '#FFFFFF',
+                borderColor: '#2C2926'
+              }}
             >
               Reset Filters
             </button>
