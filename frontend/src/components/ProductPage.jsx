@@ -7,6 +7,8 @@ import { showToast } from '../utils/toast';
 import { collectionsData } from './SignatureCollection/CollectionData';
 import { WishlistStore, CartStore } from '../utils/store.js';
 import { API_BASE_URL, sanitizeImageUrl } from '../utils/config.js';
+import { SALE_START_DATE, SALE_END_DATE, computeDisplayMrp, getCampaignPhase, CAMPAIGN_PHASE } from '../utils/launchPricing.js';
+import { useLaunchCountdown } from '../hooks/useLaunchCountdown.js';
 
 // ── Bottle Options (frontend-only, packaging choice) ────────────────────────
 // Drop image files into: frontend/public/bottles/
@@ -33,7 +35,128 @@ function getBottleKey(sizeStr) {
   return null;
 }
 
+// ── PriceBlock ───────────────────────────────────────────────────────────────
+// Defined at module level (outside ProductPage) so it is a stable reference
+// and never re-created on parent re-renders.
+//
+// Campaign window (both from env vars):
+//   Before SALE_START_DATE  → normal price only
+//   start ≤ now < SALE_END_DATE → Launch Collection Pricing + countdown
+//   After SALE_END_DATE     → normal price only (automatic, no redeploy)
+//
+// The fade-in animation fires once on mount (CSS animation-fill-mode: both).
+// Countdown digit updates do NOT replay the animation.
+function PriceBlock({ selectedSizePrice }) {
+  const { phase, remaining } = useLaunchCountdown(SALE_START_DATE, SALE_END_DATE);
+
+  const displayMrp = phase === CAMPAIGN_PHASE.LIVE_LAUNCH ? computeDisplayMrp(selectedSizePrice) : null;
+
+  // Format countdown: show days if > 0, otherwise show hh:mm:ss
+  const countdownString = (() => {
+    if (!remaining || remaining.expired) return '';
+    const { days, hours, minutes, seconds } = remaining;
+    const pad = (n) => String(n).padStart(2, '0');
+    if (days > 0) {
+      return `${days}d : ${pad(hours)}h : ${pad(minutes)}m`;
+    }
+    return `${pad(hours)}h : ${pad(minutes)}m : ${pad(seconds)}s`;
+  })();
+
+  if (phase === CAMPAIGN_PHASE.PRE_LAUNCH) {
+    return (
+      <div className="pdp-price-block">
+        {/* Pre-launch label */}
+        <span className="pdp-launch-label">Launch Collection</span>
+
+        {/* Selling price only */}
+        <div
+          className="pdp-launch-price-prelaunch"
+          aria-label={`Price: ${selectedSizePrice.toLocaleString('en-IN')} rupees`}
+        >
+          ₹{selectedSizePrice.toLocaleString('en-IN')}
+        </div>
+
+        {/* Short divider */}
+        <div className="pdp-launch-divider" aria-hidden="true" />
+
+        {/* Countdown to launch */}
+        <div
+          className="pdp-launch-countdown"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-label={`Launching in ${countdownString}`}
+        >
+          <span className="pdp-launch-countdown-label">Launching In</span>
+          <span className="pdp-launch-countdown-time">{countdownString}</span>
+        </div>
+
+        {/* Editorial message */}
+        <p className="pdp-launch-prelaunch-note">
+          Our launch collection becomes available on Sunday at 2:00 PM IST.
+        </p>
+
+        <span className="pdp-price-note">Tax included · Shipping calculated at checkout</span>
+      </div>
+    );
+  }
+
+  if (phase === CAMPAIGN_PHASE.LIVE_LAUNCH) {
+    return (
+      <div className="pdp-price-block">
+        {/* Campaign label */}
+        <span className="pdp-launch-label">Launch Collection Pricing</span>
+
+        {/* Struck-through MRP — tight to the label */}
+        <span
+          className="pdp-launch-mrp"
+          aria-label={`Market retail price ${displayMrp.toLocaleString('en-IN')} rupees`}
+        >
+          ₹{displayMrp.toLocaleString('en-IN')}
+        </span>
+
+        {/* Selling price — visual anchor */}
+        <div
+          className="pdp-launch-price"
+          aria-label={`Price: ${selectedSizePrice.toLocaleString('en-IN')} rupees`}
+        >
+          ₹{selectedSizePrice.toLocaleString('en-IN')}
+        </div>
+
+        {/* Short editorial divider */}
+        <div className="pdp-launch-divider" aria-hidden="true" />
+
+        {/* Countdown */}
+        <div
+          className="pdp-launch-countdown"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-label={`Launch pricing ends in ${countdownString}`}
+        >
+          <span className="pdp-launch-countdown-label">Launch Pricing Ends In</span>
+          <span className="pdp-launch-countdown-time">{countdownString}</span>
+        </div>
+
+        <span className="pdp-price-note">Tax included · Shipping calculated at checkout</span>
+      </div>
+    );
+  }
+
+  // POST_LAUNCH or fallback (no campaign)
+  return (
+    <div className="pdp-price-block">
+      <div
+        className="pdp-price-amount"
+        aria-label={`Price: ${selectedSizePrice.toLocaleString('en-IN')} rupees`}
+      >
+        ₹{selectedSizePrice.toLocaleString('en-IN')}
+      </div>
+      <span className="pdp-price-note">Tax included · Shipping calculated at checkout</span>
+    </div>
+  );
+}
+
 export default function ProductPage({ product: initialProduct, products = [], onBackToShop }) {
+
   const { isSignedIn, getToken } = useAuth();
   const navigate = useNavigate();
   const { slug } = useParams();
@@ -655,6 +778,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                   <SignInButton mode="modal">
                     <button
                       className="w-full py-2.5 bg-[#1C1B18] text-white text-[0.62rem] font-bold tracking-widest uppercase hover:bg-[#8B672F] transition-colors cursor-pointer"
+                      style={{ color: '#FEFCF9' }}
                     >
                       Authenticate Account
                     </button>
@@ -745,7 +869,9 @@ export default function ProductPage({ product: initialProduct, products = [], on
 
             {reviews.length === 0 ? (
               <div className="text-center py-10 bg-white/20 border border-[#1C1B18]/12">
-                <p className="text-xs text-[#1C1B18]/65 italic font-light">No feedback submitted for this item yet.</p>
+                <p className="text-xs text-[#1C1B18]/65 italic font-light">
+                  No reviews yet.<br />Be the first to share your experience.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1006,12 +1132,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
             </div>
 
             {/* ── Price Block ── */}
-            <div className="pdp-price-block">
-              <div className="pdp-price-amount" aria-label={`Price: ${selectedSizePrice.toLocaleString('en-IN')} rupees`}>
-                ₹{selectedSizePrice.toLocaleString('en-IN')}
-              </div>
-              <span className="pdp-price-note">Tax included · Shipping calculated at checkout</span>
-            </div>
+            <PriceBlock selectedSizePrice={selectedSizePrice} />
 
             {/* ── Configuration Card ── */}
             <div className="pdp-config-card">
@@ -1215,8 +1336,8 @@ export default function ProductPage({ product: initialProduct, products = [], on
         {/* Trust & Quality Pillars */}
         {renderTrustSection()}
 
-        {/* Reviews — commented out pending moderation system */}
-        {/* {renderReviewsSection()} */}
+        {/* Reviews */}
+        {renderReviewsSection()}
 
         {/* SECTION 7: Unified discovery recommendations */}
         {similarProducts.length > 0 && (

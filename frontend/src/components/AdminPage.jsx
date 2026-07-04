@@ -1343,7 +1343,10 @@ export default function AdminPage() {
             Administrative access is restricted to authorized coordinators. Please authenticate to continue.
           </p>
           <SignInButton mode="modal">
-            <button className="w-full py-3 bg-gray-900 text-white font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-gray-800 transition-all duration-200 cursor-pointer">
+            <button
+              className="w-full py-3 bg-gray-900 text-white font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-gray-800 transition-all duration-200 cursor-pointer"
+              style={{ color: '#FEFCF9' }}
+            >
               Admin Authenticate
             </button>
           </SignInButton>

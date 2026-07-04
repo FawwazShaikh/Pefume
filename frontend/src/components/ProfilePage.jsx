@@ -384,6 +384,7 @@ export default function ProfilePage() {
           <SignInButton mode="modal">
             <button 
               className="profile-btn-primary w-full py-3.5 text-[0.68rem]"
+              style={{ color: '#FEFCF9' }}
             >
               Authenticate Session
             </button>

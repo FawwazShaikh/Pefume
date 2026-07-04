@@ -11,6 +11,7 @@ import ProductPage from './components/ProductPage';
 import CartPage from './components/CartPage';
 import CategoriesPage from './components/CategoriesPage';
 import DailyOfferPopup from './components/DailyOfferPopup';
+import LaunchWelcomePopup from './components/LaunchWelcomePopup';
 import { collectionsData } from './components/SignatureCollection/CollectionData';
 const PoliciesPage = lazy(() => import('./components/Policies'));
 const ProfilePage = lazy(() => import('./components/ProfilePage'));
@@ -230,6 +231,7 @@ function App() {
       <a href="#main" className="skip-link">Skip to content</a>
       <SEO activePage={activePage} activeCategory={activeCategory} selectedProduct={selectedProduct} products={products} />
       {showDailyOffer && <DailyOfferPopup />}
+      {showDailyOffer && <LaunchWelcomePopup />}
 
       {/* Mini Bag — Global slide-out drawer, mounted at root so it overlays any page */}
       <MiniBag products={products} />

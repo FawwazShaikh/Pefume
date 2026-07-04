@@ -1346,6 +1346,377 @@ html {
   color: rgba(28, 27, 24, 0.55);
 }
 
+/* ── Launch Pricing Block ── */
+/*
+ * Fade-in animation — fires once on initial mount via animation-fill-mode: both.
+ * The countdown digits update via state; they do NOT replay this animation.
+ * Each child has a staggered animation-delay so the hierarchy reveals naturally.
+ */
+@keyframes pdpLaunchReveal {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pdp-launch-label {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.575rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(139, 103, 47, 0.75);
+  margin-bottom: 0.25rem;
+  /* Fade in first */
+  animation: pdpLaunchReveal 180ms ease-out both;
+  animation-delay: 0ms;
+}
+
+/* MRP sits tight under the label — small gap so both read as one pricing unit */
+.pdp-launch-mrp {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(28, 27, 24, 0.32);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  /* Tight spacing — feels attached to the label above */
+  margin-bottom: 0.1rem;
+  /* Tighten the gap between ₹ and the number in Inter */
+  font-feature-settings: 'tnum' 1;
+  animation: pdpLaunchReveal 180ms ease-out both;
+  animation-delay: 40ms;
+}
+
+/* The selling price is the visual anchor — largest element */
+.pdp-launch-price {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: #1C1B18;
+  /* Cormorant has generous spacing around the rupee glyph — tighten it */
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  /* Generous bottom gap so the countdown breathes below */
+  margin-bottom: 1.25rem;
+  animation: pdpLaunchReveal 180ms ease-out both;
+  animation-delay: 80ms;
+}
+
+/* Short editorial divider — ~35% width, left-aligned */
+.pdp-launch-divider {
+  width: 35%;
+  max-width: 80px;
+  height: 1px;
+  background: rgba(28, 27, 24, 0.10);
+  margin-bottom: 0.875rem;
+  animation: pdpLaunchReveal 180ms ease-out both;
+  animation-delay: 110ms;
+}
+
+/* Countdown wrapper */
+.pdp-launch-countdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  animation: pdpLaunchReveal 180ms ease-out both;
+  animation-delay: 140ms;
+}
+
+/* "Launch Pricing Ends In" eyebrow above the digits */
+.pdp-launch-countdown-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.525rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(28, 27, 24, 0.48);
+}
+
+/* The digit string — tabular, slightly larger than the label, smaller than the price */
+.pdp-launch-countdown-time {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: rgba(28, 27, 24, 0.65);
+  font-feature-settings: 'tnum' 1; /* tabular numbers so digits don't shift width */
+}
+
+/* Pre-launch styling */
+.pdp-launch-price-prelaunch {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: #1C1B18;
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  margin-bottom: 1.25rem;
+  animation: pdpLaunchReveal 180ms ease-out both;
+  animation-delay: 40ms;
+}
+
+.pdp-launch-prelaunch-note {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  color: rgba(28, 27, 24, 0.55);
+  margin-top: 0.875rem;
+  margin-bottom: 0.25rem;
+  animation: pdpLaunchReveal 180ms ease-out both;
+  animation-delay: 170ms;
+}
+
+/* ── Launch Welcome Popup ── */
+.launch-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(28, 27, 24, 0.35); /* Elegant light warm charcoal layer */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 1.5rem;
+  animation: launchPopupFadeIn 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.launch-popup-card {
+  background-color: #FEFCF9; /* Warm paper cream background */
+  border: 1px solid rgba(28, 27, 24, 0.08);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 520px;
+  position: relative;
+  padding: 3rem 2.5rem 2.75rem;
+  box-shadow: 
+    0 24px 60px rgba(28, 27, 24, 0.08),
+    0 4px 16px rgba(28, 27, 24, 0.02);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: launchPopupScaleIn 450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Close Icon Button */
+.launch-popup-close-btn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: transparent;
+  border: none;
+  color: rgba(28, 27, 24, 0.4);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+  outline: none;
+}
+
+.launch-popup-close-btn:hover {
+  color: #1C1B18;
+  transform: scale(1.05);
+}
+
+/* Brand Eyebrow */
+.launch-popup-eyebrow {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #8B672F; /* Accent Gold */
+  margin-bottom: 0.75rem;
+}
+
+/* Title */
+.launch-popup-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(1.5rem, 5vw, 1.95rem);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #1C1B18;
+  margin: 0 0 1rem;
+}
+
+/* Divider */
+.launch-popup-divider {
+  width: 45px;
+  height: 1px;
+  background-color: rgba(139, 103, 47, 0.25);
+  margin-bottom: 1.5rem;
+}
+
+/* Body Text */
+.launch-popup-body {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: rgba(28, 27, 24, 0.72);
+  margin: 0 0 2rem;
+  max-width: 420px;
+}
+
+.launch-popup-highlight {
+  color: #1C1B18;
+  font-weight: 600;
+}
+
+/* Timer Box */
+.launch-popup-timer-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: rgba(247, 243, 237, 0.45);
+  border: 1px solid rgba(28, 27, 24, 0.05);
+  border-radius: 8px;
+  padding: 0.875rem 2.5rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.launch-popup-timer-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.525rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(28, 27, 24, 0.48);
+}
+
+.launch-popup-timer-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: rgba(28, 27, 24, 0.75);
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Buttons Row */
+.launch-popup-btn-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.launch-popup-btn-primary {
+  background-color: #1C1B18;
+  color: #FEFCF9;
+  border: 1px solid #1C1B18;
+  border-radius: 4px;
+  padding: 0.875rem 1.5rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+  width: 100%;
+  outline: none;
+}
+
+.launch-popup-btn-primary:hover {
+  background-color: #8B672F;
+  border-color: #8B672F;
+}
+
+.launch-popup-btn-secondary {
+  background: transparent;
+  color: rgba(28, 27, 24, 0.6);
+  border: none;
+  padding: 0.5rem 1rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  width: 100%;
+  outline: none;
+}
+
+.launch-popup-btn-secondary:hover {
+  color: #1C1B18;
+}
+
+/* Animations */
+@keyframes launchPopupFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes launchPopupScaleIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .launch-popup-card {
+    padding: 2.5rem 1.5rem 2.25rem;
+  }
+  .launch-popup-body {
+    font-size: 0.74rem;
+    margin-bottom: 1.5rem;
+  }
+  .launch-popup-timer-box {
+    margin-bottom: 1.5rem;
+  }
+}
+
+.launch-popup-logo-container {
+  width: 68px;
+  height: 68px;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.launch-popup-logo-img {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.launch-popup-tagline {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.525rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(28, 27, 24, 0.38);
+  margin-top: 2rem;
+  text-align: center;
+}
+
 /* ── Configuration Card ── */
 .pdp-config-card {
   background-color: #FEFCF9;

@@ -388,6 +388,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
               <button
                 type="button"
                 className="luxury-summary-checkout-btn"
+                style={{ color: '#FEFCF9' }}
               >
                 <span>Sign In to Checkout</span>
               </button>
