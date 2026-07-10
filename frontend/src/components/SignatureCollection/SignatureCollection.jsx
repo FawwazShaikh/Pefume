@@ -318,13 +318,15 @@ export default function SignatureCollection({
             if (item.category === currentCategory) {
               return true;
             }
+            if (tagToSearch === 'featured') {
+              return !!item.featured;
+            }
             // Fallback tags matching
             if (item.tags && item.tags.includes(tagToSearch)) {
               return true;
             }
             // Fallback for custom metadata/featured flags
             if (tagToSearch === 'new-arrival' && item.featured) return true;
-            if (tagToSearch === 'featured' && item.featured) return true;
             return false;
           });
         }
@@ -351,10 +353,18 @@ export default function SignatureCollection({
     } else if (sortBy === 'price-high') {
       items.sort((a, b) => b.price - a.price);
     } else if (sortBy === 'recommended') {
-      // Prioritize items with 'featured' tag
+      // Sort primarily by featuredOrder (ascending, 1 is highest priority), then fallback to featured status
       items.sort((a, b) => {
-        const aFeat = a.tags && a.tags.includes('featured') ? 1 : 0;
-        const bFeat = b.tags && b.tags.includes('featured') ? 1 : 0;
+        const aOrder = a.featuredOrder || Number.MAX_SAFE_INTEGER;
+        const bOrder = b.featuredOrder || Number.MAX_SAFE_INTEGER;
+        
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+
+        // Fallback to original featured tag logic
+        const aFeat = (a.tags && a.tags.includes('featured')) || a.featured ? 1 : 0;
+        const bFeat = (b.tags && b.tags.includes('featured')) || b.featured ? 1 : 0;
         return bFeat - aFeat;
       });
     }
@@ -619,9 +629,21 @@ export default function SignatureCollection({
         </div>
 
         {/* Dynamic Products Grid */}
-        {collectionsLoading && currentCategory !== 'all' ? (
-          <div className="py-20 text-center text-black/50">Loading this collection...</div>
-        ) : collectionsError && currentCategory !== 'all' ? (
+        {collectionsLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-6 lg:gap-x-8 gap-y-8 md:gap-y-12 lg:gap-y-16">
+            {Array.from({ length: 8 }).map((_, idx) => (
+              <div key={idx} className="skeleton-card">
+                <div className="skeleton-card-image skeleton-shimmer" />
+                <div className="skeleton-card-body">
+                  <div className="skeleton-text-eyebrow skeleton-shimmer" />
+                  <div className="skeleton-text-title skeleton-shimmer" />
+                  <div className="skeleton-text-price skeleton-shimmer" />
+                  <div className="skeleton-button skeleton-shimmer" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : collectionsError ? (
           <div className="py-20 text-center text-red-700">{collectionsError}</div>
         ) : filteredAndSortedItems.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-6 lg:gap-x-8 gap-y-8 md:gap-y-12 lg:gap-y-16">
@@ -674,7 +696,7 @@ export default function SignatureCollection({
 
                     {/* Overlays Badges */}
                     <div className="absolute top-3 left-3 z-10 flex flex-col gap-1 pointer-events-none items-start">
-                      {item.tags && item.tags.includes('featured') && (
+                      {item.featured && (
                         <span className="text-[0.55rem] font-bold tracking-[0.15em] uppercase bg-[#FEFCF9]/90 backdrop-blur-[2px] px-2 py-0.5" style={{ color: '#8B672F' }}>
                           BESTSELLER
                         </span>

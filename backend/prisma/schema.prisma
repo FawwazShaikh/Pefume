@@ -1,7 +1,3 @@
-// ============================================================
-// Prisma Schema — Perfume E-Commerce
-// ============================================================
-
 generator client {
   provider   = "prisma-client-js"
   engineType = "library"
@@ -11,9 +7,305 @@ datasource db {
   provider = "postgresql"
 }
 
-// ============================================================
-// ENUMS
-// ============================================================
+model User {
+  id        String     @id @default(cuid())
+  clerkId   String     @unique
+  email     String     @unique
+  name      String?
+  phone     String?
+  role      Role       @default(USER)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  addresses Address[]
+  cartItems CartItem[]
+  orders    Order[]
+  reviews   Review[]
+
+  @@index([clerkId])
+  @@index([email])
+  @@map("users")
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  userId       String
+  fullName     String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  country      String   @default("India")
+  postalCode   String
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders       Order[]
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String            @id @default(cuid())
+  name        String
+  slug        String            @unique
+  description String?
+  brand       String?
+  featured    Boolean           @default(false)
+  featuredOrder Int             @default(0)
+  isActive    Boolean           @default(true)
+  categoryId  String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  bottles     BottleInventory[]
+  orderItems  OrderItem[]
+  images      ProductImage[]
+  variants    ProductVariant[]
+  category    Category?         @relation(fields: [categoryId], references: [id])
+  reviews     Review[]
+
+  @@index([slug])
+  @@index([name])
+  @@index([categoryId])
+  @@index([featured])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  imageUrl  String
+  altText   String?
+  position  Int     @default(0)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id                String         @id @default(cuid())
+  productId         String
+  size              String
+  price             Decimal        @db.Decimal(10, 2)
+  stock             Int            @default(0)
+  lowStockThreshold Int            @default(5)
+  sku               String         @unique
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  volumeML          Int            @default(5)
+  cartItems         CartItem[]
+  inventoryLogs     InventoryLog[]
+  orderItems        OrderItem[]
+  product           Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, size])
+  @@index([productId])
+  @@index([sku])
+  @@map("product_variants")
+}
+
+model BottleInventory {
+  id                  String              @id @default(cuid())
+  productId           String
+  bottleLabel         String
+  bottleSizeML        Int
+  remainingML         Int
+  lowStockThresholdML Int                 @default(20)
+  status              BottleStatus        @default(OPEN)
+  purchaseDate        DateTime?
+  supplier            String?
+  batchNumber         String?
+  costPrice           Decimal?            @db.Decimal(10, 2)
+  notes               String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  product             Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  movements           InventoryMovement[]
+
+  @@index([productId])
+  @@index([status])
+  @@map("bottle_inventory")
+}
+
+model InventoryMovement {
+  id         String          @id @default(cuid())
+  bottleId   String
+  type       MovementType
+  quantityML Int
+  orderId    String?
+  adminId    String?
+  note       String?
+  createdAt  DateTime        @default(now())
+  bottle     BottleInventory @relation(fields: [bottleId], references: [id], onDelete: Cascade)
+
+  @@index([bottleId])
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("inventory_movements")
+}
+
+model CartItem {
+  id        String         @id @default(cuid())
+  userId    String
+  variantId String
+  quantity  Int            @default(1)
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, variantId])
+  @@index([userId])
+  @@map("cart_items")
+}
+
+model Order {
+  id                String        @id @default(cuid())
+  userId            String
+  addressId         String
+  subtotal          Decimal       @db.Decimal(10, 2)
+  shippingFee       Decimal       @default(0) @db.Decimal(10, 2)
+  total             Decimal       @db.Decimal(10, 2)
+  paymentMethod     PaymentMethod
+  status            OrderStatus   @default(PENDING)
+  razorpayOrderId   String?
+  notes             String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  estimatedDelivery DateTime?
+  orderReference    String?       @unique
+  shippingMethod    String?
+  trackingId        String?
+  orderItems        OrderItem[]
+  address           Address       @relation(fields: [addressId], references: [id])
+  user              User          @relation(fields: [userId], references: [id])
+  payment           Payment?
+  reviews           Review[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([orderReference])
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String         @id @default(cuid())
+  orderId         String
+  productId       String
+  variantId       String
+  productName     String
+  size            String
+  priceAtPurchase Decimal        @db.Decimal(10, 2)
+  quantity        Int
+  createdAt       DateTime       @default(now())
+  order           Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product        @relation(fields: [productId], references: [id])
+  variant         ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  orderId       String        @unique
+  provider      PaymentMethod
+  transactionId String?
+  amount        Decimal       @db.Decimal(10, 2)
+  status        PaymentStatus @default(PENDING)
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([transactionId])
+  @@map("payments")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  orderId   String?
+  rating    Int
+  title     String?
+  comment   String?
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order?   @relation(fields: [orderId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([approved])
+  @@map("reviews")
+}
+
+model InventoryLog {
+  id         String              @id @default(cuid())
+  variantId  String
+  oldStock   Int
+  newStock   Int
+  changeType InventoryChangeType
+  note       String?
+  createdAt  DateTime            @default(now())
+  variant    ProductVariant      @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([variantId])
+  @@index([createdAt])
+  @@map("inventory_logs")
+}
+
+model StoreSetting {
+  id                    String   @id @default("default")
+  storeName             String   @default("Decant Atelier")
+  supportEmail          String   @default("concierge@decantatelier.com")
+  supportPhone          String   @default("+91 97681 88453")
+  codEnabled            Boolean  @default(true)
+  shippingCharges       Decimal  @default(100.00) @db.Decimal(10, 2)
+  freeShippingThreshold Decimal  @default(1999.00) @db.Decimal(10, 2)
+  razorpayKey           String   @default("rzp_test_AtelierKey2026")
+  razorpaySecret        String   @default("")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("store_settings")
+}
+
+model Campaign {
+  id             String    @id @default(cuid())
+  isActive       Boolean   @default(false)
+  title          String    @default("Special Offer")
+  subheading     String?
+  imageUrl       String?
+  badge          String?
+  displayPrice   String?
+  ctaText        String    @default("Shop Now")
+  ctaDestination String    @default("shop")
+  displayMode    String    @default("once_per_day")
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("campaigns")
+}
 
 enum Role {
   USER
@@ -24,10 +316,10 @@ enum OrderStatus {
   PENDING
   CONFIRMED
   PROCESSING
-  OUT_FOR_DELIVERY
   SHIPPED
   DELIVERED
   CANCELLED
+  OUT_FOR_DELIVERY
 }
 
 enum PaymentMethod {
@@ -59,355 +351,4 @@ enum MovementType {
   RESTOCK
   ADJUSTMENT
   CANCELLATION
-}
-
-// ============================================================
-// USER & ADDRESS
-// ============================================================
-
-model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  email     String   @unique
-  name      String?
-  phone     String?
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  addresses Address[]
-  cartItems CartItem[]
-  orders    Order[]
-  reviews   Review[]
-
-  @@index([clerkId])
-  @@index([email])
-  @@map("users")
-}
-
-model Address {
-  id           String   @id @default(cuid())
-  userId       String
-  fullName     String
-  phone        String
-  addressLine1 String
-  addressLine2 String?
-  city         String
-  state        String
-  country      String   @default("India")
-  postalCode   String
-  isDefault    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders Order[]
-
-  @@index([userId])
-  @@map("addresses")
-}
-
-// ============================================================
-// CATEGORY
-// ============================================================
-
-model Category {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  slug     String    @unique
-  products Product[]
-
-  @@map("categories")
-}
-
-// ============================================================
-// PRODUCT, IMAGES, VARIANTS, BOTTLES
-// ============================================================
-
-model Product {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?
-  brand       String?
-  featured    Boolean  @default(false)
-  isActive    Boolean  @default(true)
-  categoryId  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  category   Category?        @relation(fields: [categoryId], references: [id])
-  images     ProductImage[]
-  variants   ProductVariant[]
-  reviews    Review[]
-  orderItems OrderItem[]
-  bottles    BottleInventory[]
-
-  @@index([slug])
-  @@index([name])
-  @@index([categoryId])
-  @@index([featured])
-  @@map("products")
-}
-
-model ProductImage {
-  id        String  @id @default(cuid())
-  productId String
-  imageUrl  String
-  altText   String?
-  position  Int     @default(0)
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@index([productId])
-  @@map("product_images")
-}
-
-model ProductVariant {
-  id                String   @id @default(cuid())
-  productId         String
-  size              String
-  price             Decimal  @db.Decimal(10, 2)
-  stock             Int      @default(0)
-  lowStockThreshold Int      @default(5)
-  volumeML          Int      @default(5)
-  sku               String   @unique
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
-  inventoryLogs InventoryLog[]
-
-  @@unique([productId, size])
-  @@index([productId])
-  @@index([sku])
-  @@map("product_variants")
-}
-
-model BottleInventory {
-  id                  String             @id @default(cuid())
-  productId           String
-  bottleLabel         String                                // e.g. "Bottle #001"
-  bottleSizeML        Int                                   // e.g. 100, 50, 75, 200
-  remainingML         Int                                   // current liquid level
-  lowStockThresholdML Int                @default(20)       // threshold config per bottle
-  status              BottleStatus       @default(OPEN)     // OPEN, EMPTY, RETIRED
-  
-  // Provenance / Identity fields
-  purchaseDate        DateTime?
-  supplier            String?
-  batchNumber         String?
-  costPrice           Decimal?           @db.Decimal(10, 2)
-  notes               String?
-  
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-
-  product             Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
-  movements           InventoryMovement[]
-
-  @@index([productId])
-  @@index([status])
-  @@map("bottle_inventory")
-}
-
-model InventoryMovement {
-  id         String       @id @default(cuid())
-  bottleId   String
-  type       MovementType
-  quantityML Int          // negative for deduction, positive for addition
-  orderId    String?
-  adminId    String?
-  note       String?
-  createdAt  DateTime     @default(now())
-
-  bottle BottleInventory @relation(fields: [bottleId], references: [id], onDelete: Cascade)
-
-  @@index([bottleId])
-  @@index([orderId])
-  @@index([createdAt])
-  @@map("inventory_movements")
-}
-
-// ============================================================
-// CART
-// ============================================================
-
-model CartItem {
-  id        String   @id @default(cuid())
-  userId    String
-  variantId String
-  quantity  Int      @default(1)
-  createdAt DateTime @default(now())
-
-  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, variantId])
-  @@index([userId])
-  @@map("cart_items")
-}
-
-// ============================================================
-// ORDERS, ORDER ITEMS, PAYMENT
-// ============================================================
-
-model Order {
-  id                String        @id @default(cuid())
-  orderReference    String?       @unique
-  userId            String
-  addressId         String
-  subtotal          Decimal       @db.Decimal(10, 2)
-  shippingFee       Decimal       @db.Decimal(10, 2) @default(0)
-  total             Decimal       @db.Decimal(10, 2)
-  shippingMethod    String?
-  estimatedDelivery DateTime?
-  trackingId        String?
-  paymentMethod     PaymentMethod
-  status            OrderStatus   @default(PENDING)
-  razorpayOrderId   String?
-  notes             String?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-
-  user       User        @relation(fields: [userId], references: [id])
-  address    Address     @relation(fields: [addressId], references: [id], onDelete: Restrict)
-  orderItems OrderItem[]
-  payment    Payment?
-  reviews    Review[]
-
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
-  @@index([orderReference])
-  @@map("orders")
-}
-
-model OrderItem {
-  id              String   @id @default(cuid())
-  orderId         String
-  productId       String
-  variantId       String
-  productName     String
-  size            String
-  priceAtPurchase Decimal  @db.Decimal(10, 2)
-  quantity        Int
-  createdAt       DateTime @default(now())
-
-  order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product        @relation(fields: [productId], references: [id])
-  variant ProductVariant @relation(fields: [variantId], references: [id])
-
-  @@index([orderId])
-  @@index([productId])
-  @@map("order_items")
-}
-
-model Payment {
-  id            String        @id @default(cuid())
-  orderId       String        @unique
-  provider      PaymentMethod
-  transactionId String?
-  amount        Decimal       @db.Decimal(10, 2)
-  status        PaymentStatus @default(PENDING)
-  paidAt        DateTime?
-  createdAt     DateTime      @default(now())
-
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  @@index([orderId])
-  @@index([transactionId])
-  @@map("payments")
-}
-
-// ============================================================
-// REVIEWS
-// ============================================================
-
-model Review {
-  id        String   @id @default(cuid())
-  userId    String
-  productId String
-  orderId   String?
-  rating    Int
-  title     String?
-  comment   String?
-  approved  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
-
-  @@unique([userId, productId])
-  @@index([productId])
-  @@index([approved])
-  @@map("reviews")
-}
-
-// ============================================================
-// INVENTORY LOG
-// ============================================================
-
-model InventoryLog {
-  id         String              @id @default(cuid())
-  variantId  String
-  oldStock   Int
-  newStock   Int
-  changeType InventoryChangeType
-  note       String?
-  createdAt  DateTime            @default(now())
-
-  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-
-  @@index([variantId])
-  @@index([createdAt])
-  @@map("inventory_logs")
-}
-
-// ============================================================
-// STORE SETTINGS
-// ============================================================
-
-model StoreSetting {
-  id                    String   @id @default("default")
-  storeName             String   @default("Decant Atelier")
-  supportEmail          String   @default("concierge@decantatelier.com")
-  supportPhone          String   @default("+91 97681 88453")
-  codEnabled            Boolean  @default(true)
-  shippingCharges       Decimal  @db.Decimal(10, 2) @default(100.00)
-  freeShippingThreshold Decimal  @db.Decimal(10, 2) @default(1999.00)
-  razorpayKey           String   @default("rzp_test_AtelierKey2026")
-  razorpaySecret        String   @default("")
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  @@map("store_settings")
-}
-
-// ============================================================
-// CAMPAIGN MANAGER
-// ============================================================
-
-model Campaign {
-  id             String    @id @default(cuid())
-  isActive       Boolean   @default(false)
-  title          String    @default("Special Offer")
-  subheading     String?
-  imageUrl       String?
-  badge          String?
-  displayPrice   String?
-  ctaText        String    @default("Shop Now")
-  ctaDestination String    @default("shop")
-  displayMode    String    @default("once_per_day")
-  startDate      DateTime?
-  endDate        DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  @@map("campaigns")
 }

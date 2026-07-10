@@ -1497,6 +1497,7 @@ app.get('/api/products', async (req, res) => {
         slug: p.slug,
         brand: p.brand,
         featured: p.featured,
+        featuredOrder: p.featuredOrder,
         description: p.description,
         category: p.category ? p.category.slug : null,
         image,

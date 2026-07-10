@@ -269,6 +269,7 @@ function App() {
                   activeCategory={activeCategory}
                   onSelectCategory={setActiveCategory}
                   products={products}
+                  collectionsLoading={loadingProducts}
                 />
               </div>
             } />
@@ -280,6 +281,7 @@ function App() {
                   activeCategory="wishlist"
                   onSelectCategory={setActiveCategory}
                   products={products}
+                  collectionsLoading={loadingProducts}
                 />
               </div>
             } />

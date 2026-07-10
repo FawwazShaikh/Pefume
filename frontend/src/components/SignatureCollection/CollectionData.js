@@ -746,5 +746,68 @@ export const collectionsData = [
     ],
     retailPrice: 5000,
     competitorPrice: 699
+  },
+  {
+    "id": "valentino-born-in-roma-intense",
+    "name": "Born In Roma Uomo Eau De Parfum Intense",
+    "brand": "Valentino",
+    "tagline": "Intense, Magnetic & Rebellious",
+    "family": "Amber Fougere",
+    "description": "Valentino Born In Roma Uomo Eau De Parfum Intense is an outstanding tribute to Rome and its sunsets. It amplifies the original's addictive nature, introducing a powerful infusion of vanilla sourced from Madagascar. The heart reveals a luminous lavandin, delivering a vibrant freshness. The base is an earthy, smoky vetiver that brings a captivating masculinity and intensity. Perfect for confident individuals who want a long-lasting, magnetic signature scent.",
+    "price": 549,
+    "category": "decants",
+    "image": "/decant_images/valentino_roma_intense_1.png",
+    "images": [
+      "/decant_images/valentino_roma_intense_1.png",
+      "/decant_images/valentino_roma_intense_2.png",
+      "/decant_images/valentino_roma_intense_3.jpg",
+      "/decant_images/valentino_roma_intense_4.jpg"
+    ],
+    "notes": [
+      "Vanilla",
+      "Lavender",
+      "Vetiver"
+    ],
+    "tags": [
+      "winter",
+      "datenight",
+      "him",
+      "newlaunch"
+    ],
+    "pyramid": {
+      "top": "Vanilla Infusion",
+      "heart": "Lavandin",
+      "base": "Smoked Vetiver"
+    },
+    "characteristics": {
+      "longevity": "8-12 Hours",
+      "sillage": "Strong",
+      "gender": "Masculine"
+    },
+    "sizes": [
+      {
+        "size": "5ml Decant",
+        "price": 549,
+        "label": "Perfect for testing"
+      },
+      {
+        "size": "10ml Decant",
+        "price": 999,
+        "label": "Most popular"
+      },
+      {
+        "size": "20ml Decant",
+        "price": 1899,
+        "label": "Best value"
+      },
+      {
+        "size": "30ml Decant",
+        "price": 2799,
+        "label": "Collector size"
+      }
+    ],
+    "retailPrice": 11000,
+    "competitorPrice": 699,
+    "featured": false
   }
 ];

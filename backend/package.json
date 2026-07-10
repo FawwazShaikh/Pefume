@@ -16,10 +16,8 @@
     "express": "^4.19.2",
     "nodemailer": "^9.0.1",
     "pg": "^8.22.0",
+    "prisma": "^7.8.0",
     "razorpay": "^2.9.6",
     "svix": "^1.24.0"
-  },
-  "devDependencies": {
-    "prisma": "^7.8.0"
   }
 }
