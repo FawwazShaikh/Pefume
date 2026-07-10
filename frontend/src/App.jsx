@@ -84,70 +84,76 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [collectionsError, setCollectionsError] = useState(false);
 
   // Fetch active products from backend database catalog
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/products`);
-        if (res.ok) {
-          const dbProducts = await res.json();
-          // Merge with static data for details not present in the DB schema (e.g. pyramid, characteristics, notes)
-          const merged = dbProducts.map(dbProd => {
-            const staticProd = collectionsData.find(sp => sp.id === dbProd.slug || sp.id === dbProd.id);
-            if (staticProd) {
-              return {
-                ...staticProd,
-                ...dbProd,
-                sizes: dbProd.sizes && dbProd.sizes.length > 0 ? dbProd.sizes : staticProd.sizes
-              };
-            }
-            // Sensible fallbacks for newly added admin panel products
+  const loadProducts = async () => {
+    setLoadingProducts(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/products`);
+      if (res.ok) {
+        const dbProducts = await res.json();
+        // Merge with static data for details not present in the DB schema (e.g. pyramid, characteristics, notes)
+        const merged = dbProducts.map(dbProd => {
+          const staticProd = collectionsData.find(sp => sp.id === dbProd.slug || sp.id === dbProd.id);
+          if (staticProd) {
             return {
-              tagline: dbProd.brand || 'Premium Fragrance',
-              family: 'Woody / Amber',
-              notes: [],
-              tags: dbProd.featured ? ['featured'] : [],
-              pyramid: {
-                top: 'Fresh top notes',
-                heart: 'Aromatic heart notes',
-                base: 'Long-lasting base notes'
-              },
-              characteristics: {
-                longevity: '8+ Hours',
-                sillage: 'Moderate',
-                gender: 'Unisex'
-              },
-              retailPrice: dbProd.price * 1.5,
-              competitorPrice: dbProd.price * 1.25,
-              ...dbProd
+              ...staticProd,
+              ...dbProd,
+              sizes: dbProd.sizes && dbProd.sizes.length > 0 ? dbProd.sizes : staticProd.sizes
             };
+          }
+          // Sensible fallbacks for newly added admin panel products
+          return {
+            tagline: dbProd.brand || 'Premium Fragrance',
+            family: 'Woody / Amber',
+            notes: [],
+            tags: dbProd.featured ? ['featured'] : [],
+            pyramid: {
+              top: 'Fresh top notes',
+              heart: 'Aromatic heart notes',
+              base: 'Long-lasting base notes'
+            },
+            characteristics: {
+              longevity: '8+ Hours',
+              sillage: 'Moderate',
+              gender: 'Unisex'
+            },
+            retailPrice: dbProd.price * 1.5,
+            competitorPrice: dbProd.price * 1.25,
+            ...dbProd
+          };
+        });
+
+        // Verify that all CollectionData products exist in the database
+        if (import.meta.env.DEV) {
+          collectionsData.forEach(sp => {
+            const found = dbProducts.find(dp => dp.slug === sp.id || dp.id === sp.id);
+            if (!found) {
+              console.error(`[CRITICAL DEVELOPMENT ERROR] Product "${sp.name}" with slug/id "${sp.slug || sp.id}" is defined in CollectionData.js but is MISSING from the Neon Database!`);
+            }
           });
-
-          // Verify that all CollectionData products exist in the database
-          if (import.meta.env.DEV) {
-            collectionsData.forEach(sp => {
-              const found = dbProducts.find(dp => dp.slug === sp.id || dp.id === sp.id);
-              if (!found) {
-                console.error(`[CRITICAL DEVELOPMENT ERROR] Product "${sp.name}" with slug/id "${sp.slug || sp.id}" is defined in CollectionData.js but is MISSING from the Neon Database!`);
-              }
-            });
-          }
-
-          setProducts(merged);
-        } else {
-          setProducts([]);
-          if (import.meta.env.DEV) {
-            console.error('[CRITICAL DEVELOPMENT ERROR] Product catalog fetch returned non-200 response.');
-          }
         }
-      } catch (err) {
-        console.error('Failed to load dynamic product catalog:', err);
+
+        setProducts(merged);
+        setCollectionsError(false);
+      } else {
         setProducts([]);
-      } finally {
-        setLoadingProducts(false);
+        setCollectionsError(true);
+        if (import.meta.env.DEV) {
+          console.error('[CRITICAL DEVELOPMENT ERROR] Product catalog fetch returned non-200 response.');
+        }
       }
+    } catch (err) {
+      console.error('Failed to load dynamic product catalog:', err);
+      setProducts([]);
+      setCollectionsError(true);
+    } finally {
+      setLoadingProducts(false);
     }
+  };
+
+  useEffect(() => {
     loadProducts();
   }, [location.pathname]);
 
@@ -270,6 +276,8 @@ function App() {
                   onSelectCategory={setActiveCategory}
                   products={products}
                   collectionsLoading={loadingProducts}
+                  collectionsError={collectionsError}
+                  onRetry={loadProducts}
                 />
               </div>
             } />
@@ -282,6 +290,8 @@ function App() {
                   onSelectCategory={setActiveCategory}
                   products={products}
                   collectionsLoading={loadingProducts}
+                  collectionsError={collectionsError}
+                  onRetry={loadProducts}
                 />
               </div>
             } />

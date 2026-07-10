@@ -47,7 +47,7 @@ const collectionsMenuItems = [
 const shopMenuItems = [
   { id: 'all', label: 'Shop All', filter: 'all' },
   { id: 'decants', label: 'Decants', filter: 'decants' },
-  { id: 'fullbottles', label: 'Full Bottles', filter: 'fullbottles' },
+  // { id: 'fullbottles', label: 'Full Bottles', filter: 'fullbottles' },
   { id: 'newarrivals', label: 'New Arrivals', filter: 'newarrivals' },
   { id: 'bestsellers', label: 'Best Sellers', filter: 'bestsellers' }
 ];
@@ -705,7 +705,7 @@ export default function Navbar({ onNavigate, activePage, onSelectCategory, activ
             <ul id="mobile-shop-submenu" className={`mobile-sub ${isMobileShopOpen ? 'open' : ''}`}>
               <li><a href="/shop" onClick={(e) => handleCategoryClick(e, 'all')}>Shop All</a></li>
               <li><a href="/shop?category=decants" onClick={(e) => handleCategoryClick(e, 'decants')}>Decants</a></li>
-              <li><a href="/shop?category=fullbottles" onClick={(e) => handleCategoryClick(e, 'fullbottles')}>Full Bottles</a></li>
+              {/* <li><a href="/shop?category=fullbottles" onClick={(e) => handleCategoryClick(e, 'fullbottles')}>Full Bottles</a></li> */}
               <li><a href="/shop?category=newarrivals" onClick={(e) => handleCategoryClick(e, 'newarrivals')}>New Arrivals</a></li>
               <li><a href="/shop?category=bestsellers" onClick={(e) => handleCategoryClick(e, 'bestsellers')}>Best Sellers</a></li>
             </ul>

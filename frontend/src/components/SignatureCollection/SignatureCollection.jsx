@@ -88,7 +88,8 @@ export default function SignatureCollection({
   products = [],
   collections = [],
   collectionsLoading = false,
-  collectionsError = ''
+  collectionsError = false,
+  onRetry
 }) {
   const { isSignedIn, getToken } = useAuth();
   const navigate = useNavigate();
@@ -644,7 +645,20 @@ export default function SignatureCollection({
             ))}
           </div>
         ) : collectionsError ? (
-          <div className="py-20 text-center text-red-700">{collectionsError}</div>
+          <div className="text-center py-16 px-8 bg-white/40 border rounded-none shadow-sm max-w-md mx-auto" style={{ borderColor: '#D8D1C7' }}>
+            <i className="fas fa-exclamation-triangle text-3xl mb-4 block mx-auto text-[#8B672F]"></i>
+            <h3 className="font-heading text-lg font-light mb-2" style={{ color: '#3A3632' }}>Unable to Load Fragrances</h3>
+            <p className="text-xs font-light mb-6 leading-relaxed" style={{ color: '#5A5550' }}>
+              Please refresh the page or try again shortly.
+            </p>
+            <button
+              onClick={onRetry}
+              className="px-6 py-2.5 bg-[#1C1B18] text-white text-[11px] font-bold tracking-widest uppercase hover:bg-[#8B672F] transition-colors"
+              style={{ minHeight: '40px' }}
+            >
+              Retry
+            </button>
+          </div>
         ) : filteredAndSortedItems.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-6 lg:gap-x-8 gap-y-8 md:gap-y-12 lg:gap-y-16">
             {filteredAndSortedItems.map((item) => {

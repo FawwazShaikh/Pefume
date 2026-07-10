@@ -90,9 +90,9 @@ export default function Footer({ onNavigate }) {
             <li>
               <a href="/shop?category=newarrivals" onClick={(e) => handleDiscoverClick(e, 'newarrivals')}>New Arrivals</a>
             </li>
-            <li>
+            {/* <li>
               <a href="/shop?category=sets" onClick={(e) => handleDiscoverClick(e, 'sets')}>Gift Sets</a>
-            </li>
+            </li> */}
           </ul>
         </div>
 
