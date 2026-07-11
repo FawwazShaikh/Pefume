@@ -32,6 +32,8 @@ const loadRazorpayScript = () => {
 
 import { CartStore, WishlistStore } from '../utils/store.js';
 
+const COD_ENABLED = false;
+
 export default function CartPage({ onBackToShop, products = [] }) {
   const navigate = useNavigate();
   const { isSignedIn, getToken } = useAuth();
@@ -81,7 +83,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
   const [deliveryMethod, setDeliveryMethod] = useState('STANDARD'); // STANDARD, EXPRESS
   
   // Payment methods
-  const [paymentMethod, setPaymentMethod] = useState('COD'); // COD, RAZORPAY
+  const [paymentMethod, setPaymentMethod] = useState('RAZORPAY'); // COD, RAZORPAY
   
   // Order notes & placement states
   const [notes, setNotes] = useState('');
@@ -496,6 +498,10 @@ export default function CartPage({ onBackToShop, products = [] }) {
 
   // Place final order
   const handlePlaceOrder = async () => {
+    if (!COD_ENABLED && paymentMethod === 'COD') {
+      showToast('Cash on Delivery is currently unavailable. Please select online payment.', 'error');
+      return;
+    }
     if (!selectedAddressId) {
       showToast('Please select a shipping destination.', 'warning');
       return;
@@ -1482,27 +1488,29 @@ export default function CartPage({ onBackToShop, products = [] }) {
                         </p>
                       </div>
 
-                      <div 
-                        onClick={() => {
-                          setPaymentMethod('COD');
-                          window.dispatchEvent(new CustomEvent('payment_method_selected', { detail: { method: 'COD' } }));
-                        }}
-                        className={`payment-option-box ${paymentMethod === 'COD' ? 'active' : ''}`}
-                        role="radio"
-                        aria-checked={paymentMethod === 'COD'}
-                        tabIndex={0}
-                        onKeyDown={(e) => e.key === 'Enter' && setPaymentMethod('COD')}
-                      >
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${paymentMethod === 'COD' ? 'border-[#1C1B18]' : 'border-black/20'}`}>
-                            {paymentMethod === 'COD' && <div className="w-2 h-2 rounded-full bg-[#1C1B18]" />}
+                      {COD_ENABLED && (
+                        <div 
+                          onClick={() => {
+                            setPaymentMethod('COD');
+                            window.dispatchEvent(new CustomEvent('payment_method_selected', { detail: { method: 'COD' } }));
+                          }}
+                          className={`payment-option-box ${paymentMethod === 'COD' ? 'active' : ''}`}
+                          role="radio"
+                          aria-checked={paymentMethod === 'COD'}
+                          tabIndex={0}
+                          onKeyDown={(e) => e.key === 'Enter' && setPaymentMethod('COD')}
+                        >
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${paymentMethod === 'COD' ? 'border-[#1C1B18]' : 'border-black/20'}`}>
+                              {paymentMethod === 'COD' && <div className="w-2 h-2 rounded-full bg-[#1C1B18]" />}
+                            </div>
+                            <span className="text-xs font-bold">Cash on Delivery (COD)</span>
                           </div>
-                          <span className="text-xs font-bold">Cash on Delivery (COD)</span>
+                          <p className="text-[0.68rem] text-black/60 leading-relaxed font-body pl-7">
+                            Pay with cash upon delivery. No card details required.
+                          </p>
                         </div>
-                        <p className="text-[0.68rem] text-black/60 leading-relaxed font-body pl-7">
-                          Pay with cash upon delivery. No card details required.
-                        </p>
-                      </div>
+                      )}
                     </div>
 
                     {/* Mobile Summary Panel */}
