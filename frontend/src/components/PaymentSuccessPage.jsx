@@ -105,7 +105,7 @@ export default function PaymentSuccessPage() {
           <div className="px-8 py-6 border-b border-black/5 flex justify-between items-center">
             <div>
               <span className="text-[0.58rem] font-bold tracking-[0.16em] text-black/35 uppercase block mb-1">Order Reference</span>
-              <span className="text-sm font-bold text-[#1C1B18]">#{(orderId || '').slice(-8).toUpperCase() || 'N/A'}</span>
+              <span className="text-sm font-bold text-[#1C1B18]">{order?.orderReference ? `#${order.orderReference}` : `#${(orderId || '').slice(-8).toUpperCase()}`}</span>
             </div>
             <div className="text-right">
               <span className="text-[0.58rem] font-bold tracking-[0.16em] text-black/35 uppercase block mb-1">

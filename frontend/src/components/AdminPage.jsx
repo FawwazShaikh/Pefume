@@ -2505,7 +2505,7 @@ export default function AdminPage() {
                     return (
                       <tr key={o.id}>
                         <td>
-                          <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>#{o.id.slice(-8).toUpperCase()}</div>
+                          <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{o.orderReference ? `#${o.orderReference}` : `#${o.id.slice(-8).toUpperCase()}`}</div>
                         </td>
                         <td>{orderDate}</td>
                         <td>
@@ -2599,7 +2599,7 @@ export default function AdminPage() {
                   {paymentsData.map(p => (
                     <tr key={p.id}>
                       <td style={{ fontFamily: 'monospace' }}>{p.id}</td>
-                      <td style={{ fontFamily: 'monospace' }}>#{p.orderId.slice(-8).toUpperCase()}</td>
+                      <td style={{ fontFamily: 'monospace' }}>{p.orderReference ? `#${p.orderReference}` : `#${p.orderId.slice(-8).toUpperCase()}`}</td>
                       <td>
                         <div style={{ fontWeight: 'bold' }}>{p.customerName}</div>
                         <div style={{ fontSize: '0.7rem', color: '#9ca3af' }}>{p.customerEmail || 'N/A'}</div>
@@ -3188,7 +3188,7 @@ export default function AdminPage() {
         <div className="admin-drawer-overlay" onClick={() => setSelectedOrder(null)}>
           <div className="admin-drawer-container" onClick={(e) => e.stopPropagation()}>
             <div className="admin-drawer-header">
-              <h3 className="admin-drawer-title">Order Fulfillments #{selectedOrder.id.slice(-8).toUpperCase()}</h3>
+              <h3 className="admin-drawer-title">Order Fulfillments {selectedOrder.orderReference ? `#${selectedOrder.orderReference}` : `#${selectedOrder.id.slice(-8).toUpperCase()}`}</h3>
               <button onClick={() => setSelectedOrder(null)} className="admin-drawer-close">&times;</button>
             </div>
 
@@ -3371,7 +3371,7 @@ export default function AdminPage() {
               <button onClick={() => { window.print(); }} className="admin-btn" style={{ flexGrow: 1 }}>
                 Print Invoice
               </button>
-              <a href={`mailto:${selectedOrder.user?.email || ''}?subject=Decant Atelier Order #${selectedOrder.id.slice(-8).toUpperCase()}`} className="admin-btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexGrow: 1 }}>
+              <a href={`mailto:${selectedOrder.user?.email || ''}?subject=Decant Atelier Order ${selectedOrder.orderReference ? `#${selectedOrder.orderReference}` : `#${selectedOrder.id.slice(-8).toUpperCase()}`}`} className="admin-btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexGrow: 1 }}>
                 Contact Customer
               </a>
             </div>

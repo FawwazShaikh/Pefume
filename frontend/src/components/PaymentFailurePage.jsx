@@ -1,9 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
+import { API_BASE_URL } from '../utils/config.js';
 
 export default function PaymentFailurePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isSignedIn, getToken } = useAuth();
+  const [order, setOrder] = useState(null);
+
   const orderId = searchParams.get('orderId');
   const orderRef = searchParams.get('orderRef') || searchParams.get('orderReference');
   const reason = searchParams.get('reason') || 'failed'; // failed, cancelled, verification_failed
@@ -14,6 +19,32 @@ export default function PaymentFailurePage() {
       detail: { orderId, reason }
     }));
   }, [orderId, reason]);
+
+  useEffect(() => {
+    async function checkOrderStatus() {
+      if (!orderId || !isSignedIn) return;
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setOrder(data);
+          const activeStatuses = ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+          if (activeStatuses.includes(data.status)) {
+            // Already paid, redirect to success
+            navigate(`/payment/success?orderId=${orderId}&paymentId=${data.payment?.transactionId || ''}`);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to verify order status in failure page:', err);
+      }
+    }
+    checkOrderStatus();
+  }, [orderId, isSignedIn, getToken, navigate]);
 
   const getContent = () => {
     switch (reason) {
@@ -100,7 +131,7 @@ export default function PaymentFailurePage() {
             <div className="px-8 py-4 border-b border-black/5 flex justify-between items-center text-[0.62rem] font-bold tracking-wider text-black/40 uppercase">
               <span>Reference Order</span>
               <span className="font-mono text-xs text-[#1C1B18] font-bold">
-                {orderRef ? `#${orderRef.toUpperCase()}` : `#${orderId.slice(-8).toUpperCase()}`}
+                {order?.orderReference ? `#${order.orderReference}` : (orderRef ? `#${orderRef.toUpperCase()}` : `#${orderId.slice(-8).toUpperCase()}`)}
               </span>
             </div>
           )}

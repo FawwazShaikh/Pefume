@@ -653,12 +653,12 @@ app.get('/api/orders', requireAuth, async (req, res) => {
 
 // Reusable Razorpay instance is imported from ./lib/razorpay.js
 
-// Helper: generate a branded customer-facing order reference DA26-XXXXXX
+// Helper: generate a branded customer-facing order reference DA26-XXXXXXXX
 function generateOrderReference() {
   const year = new Date().getFullYear().toString().slice(-2); // "26"
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I confusion
   let suffix = '';
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 8; i++) {
     suffix += chars[Math.floor(Math.random() * chars.length)];
   }
   return `DA${year}-${suffix}`;
@@ -2114,6 +2114,7 @@ app.get('/api/admin/payments', requireAuth, requireAdmin, async (req, res) => {
     const response = payments.map(p => ({
       id: p.id,
       orderId: p.orderId,
+      orderReference: p.order?.orderReference || null,
       customerName: p.order?.user?.name || 'Collector',
       customerEmail: p.order?.user?.email || 'N/A',
       customerPhone: p.order?.user?.phone || 'N/A',

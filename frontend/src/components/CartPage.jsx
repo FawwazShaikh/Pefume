@@ -479,6 +479,58 @@ export default function CartPage({ onBackToShop, products = [] }) {
     }
   };
 
+  // Resiliently poll order status after a verify failure before redirecting to Failure Page
+  const pollOrderStatus = async (orderId, paymentId, orderRef) => {
+    setCheckoutState('VERIFYING_PAYMENT');
+    let attempts = 0;
+    const maxAttempts = 5;
+    const pollInterval = 2000; // 2 seconds
+
+    const runPoll = async () => {
+      attempts++;
+      try {
+        const freshToken = await getToken();
+        const res = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
+          headers: { Authorization: `Bearer ${freshToken}` }
+        });
+        if (res.ok) {
+          const order = await res.json();
+          const activeStatuses = ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+          if (activeStatuses.includes(order.status)) {
+            setCheckoutState('SUCCESS');
+            navigate(`/payment/success?orderId=${orderId}&paymentId=${paymentId || order.payment?.transactionId || ''}`);
+            return true;
+          } else if (order.status === 'CANCELLED' || order.payment?.status === 'FAILED') {
+            setCheckoutState('FAILURE');
+            navigate(`/payment/failure?orderId=${orderId}&orderRef=${orderRef || order.orderReference || ''}&reason=failed`);
+            return true;
+          }
+        }
+      } catch (err) {
+        console.error('Polling order status error:', err);
+      }
+      return false;
+    };
+
+    const intervalId = setInterval(async () => {
+      const done = await runPoll();
+      if (done || attempts >= maxAttempts) {
+        clearInterval(intervalId);
+        if (!done) {
+          // If we run out of attempts and order status is still pending/other, show failure
+          setCheckoutState('FAILURE');
+          navigate(`/payment/failure?orderId=${orderId}&orderRef=${orderRef || ''}&reason=failed`);
+        }
+      }
+    }, pollInterval);
+
+    // Run first check immediately
+    const immediateDone = await runPoll();
+    if (immediateDone) {
+      clearInterval(intervalId);
+    }
+  };
+
   // Place final order
   const handlePlaceOrder = async () => {
     if (!COD_ENABLED && paymentMethod === 'COD') {
@@ -578,11 +630,12 @@ export default function CartPage({ onBackToShop, products = [] }) {
             handler: async function (response) {
               setCheckoutState('VERIFYING_PAYMENT');
               try {
+                const freshToken = await getToken();
                 const verifyRes = await fetch(`${API_BASE_URL}/api/payments/verify`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${freshToken}`
                   },
                   body: JSON.stringify({
                     razorpayOrderId: response.razorpay_order_id,
@@ -595,16 +648,13 @@ export default function CartPage({ onBackToShop, products = [] }) {
                   setCheckoutState('SUCCESS');
                   navigate(`/payment/success?orderId=${orderData.id}&paymentId=${response.razorpay_payment_id}`);
                 } else {
-                  const errData = await verifyRes.json();
-                  showToast(errData.error || 'Payment verification failed.', 'error');
-                  setCheckoutState('FAILURE');
-                  navigate(`/payment/failure?orderId=${orderData.id}&orderRef=${orderData.orderReference || ''}&reason=failed`);
+                  // Fallback: poll order status instead of redirecting immediately to failure page
+                  await pollOrderStatus(orderData.id, response.razorpay_payment_id, orderData.orderReference);
                 }
               } catch (verifyErr) {
                 console.error('Error verifying payment:', verifyErr);
-                showToast('Verification error. Please contact support with Order ID: ' + orderData.id, 'error');
-                setCheckoutState('FAILURE');
-                navigate(`/payment/failure?orderId=${orderData.id}&orderRef=${orderData.orderReference || ''}&reason=failed`);
+                // Fallback: poll order status in case of network timeout
+                await pollOrderStatus(orderData.id, null, orderData.orderReference);
               }
             },
             prefill: {
@@ -621,11 +671,12 @@ export default function CartPage({ onBackToShop, products = [] }) {
                 setCheckoutState('READY');
                 setPlacingOrder(false);
                 try {
+                  const freshToken = await getToken();
                   await fetch(`${API_BASE_URL}/api/payments/fail`, {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${token}`
+                      'Authorization': `Bearer ${freshToken}`
                     },
                     body: JSON.stringify({ orderId: orderData.id })
                   });
