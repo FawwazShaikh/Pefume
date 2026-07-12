@@ -784,7 +784,7 @@ app.post('/api/orders', requireAuth, async (req, res) => {
         where: { code: normalizedCode }
       });
 
-      if (!coupon || !coupon.isActive) {
+      if (!coupon || !coupon.isActive || coupon.isArchived) {
         return res.status(400).json({ error: 'Invitation not recognised.' });
       }
 
@@ -796,6 +796,18 @@ app.post('/api/orders', requireAuth, async (req, res) => {
         return res.status(400).json({ error: 'This launch invitation has expired.' });
       }
       if (coupon.usedCount >= coupon.usageLimit) {
+        return res.status(400).json({ error: 'This invitation has already reached its usage limit.' });
+      }
+
+      // Check user-specific limit
+      const userUsedCount = await prisma.order.count({
+        where: {
+          userId: dbUser.id,
+          couponCode: coupon.code,
+          status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'] }
+        }
+      });
+      if (userUsedCount >= coupon.perUserLimit) {
         return res.status(400).json({ error: 'This invitation has already reached its usage limit.' });
       }
 
@@ -2045,7 +2057,7 @@ app.post('/api/coupons/validate', requireAuth, async (req, res) => {
       where: { code: normalizedCode }
     });
 
-    if (!coupon || !coupon.isActive) {
+    if (!coupon || !coupon.isActive || coupon.isArchived) {
       return res.status(400).json({ valid: false, error: 'Invitation not recognised.' });
     }
 
@@ -2063,6 +2075,19 @@ app.post('/api/coupons/validate', requireAuth, async (req, res) => {
 
     // Check usage limits
     if (coupon.usedCount >= coupon.usageLimit) {
+      return res.status(400).json({ valid: false, error: 'This invitation has already reached its usage limit.' });
+    }
+
+    // Check user-specific limit
+    const dbUser = await getOrCreateDbUser(req.auth.userId);
+    const userUsedCount = await prisma.order.count({
+      where: {
+        userId: dbUser.id,
+        couponCode: coupon.code,
+        status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'] }
+      }
+    });
+    if (userUsedCount >= coupon.perUserLimit) {
       return res.status(400).json({ valid: false, error: 'This invitation has already reached its usage limit.' });
     }
 
@@ -2153,10 +2178,12 @@ app.get('/api/admin/coupons', requireAuth, requireAdmin, async (req, res) => {
         minimumOrderValue: parseFloat(c.minimumOrderValue),
         maximumDiscount: c.maximumDiscount ? parseFloat(c.maximumDiscount) : null,
         isActive: c.isActive,
+        isArchived: c.isArchived,
         launchOnly: c.launchOnly,
         startsAt: c.startsAt,
         expiresAt: c.expiresAt,
         usageLimit: c.usageLimit,
+        perUserLimit: c.perUserLimit,
         usedCount: c.usedCount,
         createdAt: c.createdAt,
         updatedAt: c.updatedAt,
@@ -2173,6 +2200,225 @@ app.get('/api/admin/coupons', requireAuth, requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Failed to fetch coupons:', err);
     return res.status(500).json({ error: 'Failed to fetch coupons' });
+  }
+});
+
+// GET single coupon for admin
+app.get('/api/admin/coupons/:id', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const coupon = await prisma.coupon.findUnique({
+      where: { id }
+    });
+    if (!coupon) {
+      return res.status(404).json({ error: 'Coupon not found' });
+    }
+
+    const activeOrders = await prisma.order.findMany({
+      where: {
+        couponCode: coupon.code,
+        status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'] }
+      }
+    });
+
+    const totalUses = activeOrders.length;
+    const totalDiscountGiven = activeOrders.reduce((sum, o) => sum + (parseFloat(o.discountAmount) || 0), 0);
+    const revenueGenerated = activeOrders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+    const averageOrder = totalUses > 0 ? (revenueGenerated / totalUses) : 0;
+
+    return res.status(200).json({
+      ...coupon,
+      value: parseFloat(coupon.value),
+      minimumOrderValue: parseFloat(coupon.minimumOrderValue),
+      maximumDiscount: coupon.maximumDiscount ? parseFloat(coupon.maximumDiscount) : null,
+      metrics: {
+        totalUses,
+        totalDiscountGiven,
+        revenueGenerated,
+        averageOrder
+      }
+    });
+  } catch (err) {
+    console.error('Failed to fetch coupon:', err);
+    return res.status(500).json({ error: 'Failed to fetch coupon' });
+  }
+});
+
+// POST create coupon (admin only)
+app.post('/api/admin/coupons', requireAuth, requireAdmin, async (req, res) => {
+  const {
+    code,
+    type,
+    value,
+    minimumOrderValue,
+    maximumDiscount,
+    usageLimit,
+    perUserLimit,
+    startsAt,
+    expiresAt,
+    launchOnly,
+    isActive
+  } = req.body;
+
+  if (!code || !type || value === undefined) {
+    return res.status(400).json({ error: 'Missing required coupon fields' });
+  }
+
+  try {
+    const normalizedCode = code.trim().toUpperCase();
+
+    // Check uniqueness
+    const existing = await prisma.coupon.findUnique({
+      where: { code: normalizedCode }
+    });
+    if (existing) {
+      return res.status(400).json({ error: 'Coupon code already exists.' });
+    }
+
+    const val = parseFloat(value);
+    const minOrderVal = minimumOrderValue ? parseFloat(minimumOrderValue) : 0;
+
+    // Reject if value > minimumOrderValue for FIXED type
+    if (type === 'FIXED' && val > minOrderVal) {
+      return res.status(400).json({ error: 'Discount value cannot be greater than the minimum order value.' });
+    }
+
+    // Reject if PERCENT type is > 100
+    if (type === 'PERCENT' && val > 100) {
+      return res.status(400).json({ error: 'Percentage discount cannot exceed 100%.' });
+    }
+
+    // Reject if ends date is before starts date
+    if (startsAt && expiresAt && new Date(expiresAt) < new Date(startsAt)) {
+      return res.status(400).json({ error: 'End date cannot be before the start date.' });
+    }
+
+    const newCoupon = await prisma.coupon.create({
+      data: {
+        code: normalizedCode,
+        type,
+        value: val,
+        minimumOrderValue: minOrderVal,
+        maximumDiscount: maximumDiscount ? parseFloat(maximumDiscount) : null,
+        usageLimit: usageLimit ? parseInt(usageLimit) : 1,
+        perUserLimit: perUserLimit ? parseInt(perUserLimit) : 1,
+        startsAt: startsAt ? new Date(startsAt) : null,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+        launchOnly: !!launchOnly,
+        isActive: isActive !== undefined ? !!isActive : true
+      }
+    });
+
+    return res.status(201).json(newCoupon);
+  } catch (err) {
+    console.error('Failed to create coupon:', err);
+    return res.status(500).json({ error: 'Failed to create coupon' });
+  }
+});
+
+// PATCH update coupon (admin only)
+app.patch('/api/admin/coupons/:id', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const {
+    code,
+    type,
+    value,
+    minimumOrderValue,
+    maximumDiscount,
+    usageLimit,
+    perUserLimit,
+    startsAt,
+    expiresAt,
+    launchOnly,
+    isActive,
+    isArchived
+  } = req.body;
+
+  try {
+    const existing = await prisma.coupon.findUnique({
+      where: { id }
+    });
+    if (!existing) {
+      return res.status(404).json({ error: 'Coupon not found' });
+    }
+
+    const updateData = {};
+
+    // Prevent changing code if usedCount > 0
+    if (code !== undefined) {
+      const normalizedCode = code.trim().toUpperCase();
+      if (normalizedCode !== existing.code) {
+        if (existing.usedCount > 0) {
+          return res.status(400).json({ error: 'Cannot modify coupon code after it has been used. Duplicate or schedule a new campaign instead.' });
+        }
+        updateData.code = normalizedCode;
+      }
+    }
+
+    if (type !== undefined) updateData.type = type;
+    if (value !== undefined) updateData.value = parseFloat(value);
+    if (minimumOrderValue !== undefined) updateData.minimumOrderValue = parseFloat(minimumOrderValue);
+    if (maximumDiscount !== undefined) updateData.maximumDiscount = maximumDiscount ? parseFloat(maximumDiscount) : null;
+    if (usageLimit !== undefined) updateData.usageLimit = parseInt(usageLimit);
+    if (perUserLimit !== undefined) updateData.perUserLimit = parseInt(perUserLimit);
+    if (startsAt !== undefined) updateData.startsAt = startsAt ? new Date(startsAt) : null;
+    if (expiresAt !== undefined) updateData.expiresAt = expiresAt ? new Date(expiresAt) : null;
+    if (launchOnly !== undefined) updateData.launchOnly = !!launchOnly;
+    if (isActive !== undefined) updateData.isActive = !!isActive;
+    if (isArchived !== undefined) updateData.isArchived = !!isArchived;
+
+    // Apply validations
+    const finalType = type !== undefined ? type : existing.type;
+    const finalValue = value !== undefined ? parseFloat(value) : parseFloat(existing.value);
+    const finalMinOrder = minimumOrderValue !== undefined ? parseFloat(minimumOrderValue) : parseFloat(existing.minimumOrderValue);
+    const finalStarts = startsAt !== undefined ? (startsAt ? new Date(startsAt) : null) : existing.startsAt;
+    const finalExpires = expiresAt !== undefined ? (expiresAt ? new Date(expiresAt) : null) : existing.expiresAt;
+
+    if (finalType === 'FIXED' && finalValue > finalMinOrder) {
+      return res.status(400).json({ error: 'Discount value cannot be greater than the minimum order value.' });
+    }
+    if (finalType === 'PERCENT' && finalValue > 100) {
+      return res.status(400).json({ error: 'Percentage discount cannot exceed 100%.' });
+    }
+    if (finalStarts && finalExpires && finalExpires < finalStarts) {
+      return res.status(400).json({ error: 'End date cannot be before the start date.' });
+    }
+
+    const updated = await prisma.coupon.update({
+      where: { id },
+      data: updateData
+    });
+
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error('Failed to update coupon:', err);
+    return res.status(500).json({ error: 'Failed to update coupon' });
+  }
+});
+
+// DELETE coupon (admin only)
+app.delete('/api/admin/coupons/:id', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const existing = await prisma.coupon.findUnique({
+      where: { id }
+    });
+    if (!existing) {
+      return res.status(404).json({ error: 'Coupon not found' });
+    }
+
+    if (existing.usedCount > 0) {
+      return res.status(400).json({ error: 'Cannot delete a coupon that has already been used in purchases. Please Archive it instead to preserve historical records.' });
+    }
+
+    await prisma.coupon.delete({
+      where: { id }
+    });
+
+    return res.status(200).json({ success: true, message: 'Coupon deleted successfully.' });
+  } catch (err) {
+    console.error('Failed to delete coupon:', err);
+    return res.status(500).json({ error: 'Failed to delete coupon' });
   }
 });
 
@@ -3562,39 +3808,36 @@ app.listen(PORT, '0.0.0.0', async () => {
     console.error('Failed to sync Razorpay API credentials to database StoreSetting table:', syncErr);
   }
 
-  // Synchronize Launch Campaign Coupon WELCOME100 inside database
+  // Synchronize Launch Campaign Coupon WELCOME100 inside database only if DB is empty
   try {
-    const launchStartStr = process.env.LAUNCH_START_DATE || "2026-07-12T14:30:00+05:30";
-    const launchEndStr = process.env.LAUNCH_END_DATE || "2026-07-15T14:30:00+05:30";
-    const launchStart = new Date(launchStartStr);
-    const launchEnd = new Date(launchEndStr);
+    const couponCount = await prisma.coupon.count();
+    if (couponCount === 0) {
+      console.log('[Coupon Seeder] Database has zero coupons. Seeding initial launch coupon WELCOME100...');
+      const launchStartStr = process.env.LAUNCH_START_DATE || "2026-07-12T14:30:00+05:30";
+      const launchEndStr = process.env.LAUNCH_END_DATE || "2026-07-15T14:30:00+05:30";
+      const launchStart = new Date(launchStartStr);
+      const launchEnd = new Date(launchEndStr);
 
-    await prisma.coupon.upsert({
-      where: { code: 'WELCOME100' },
-      update: {
-        value: 100,
-        minimumOrderValue: 499,
-        isActive: true,
-        launchOnly: true,
-        startsAt: launchStart,
-        expiresAt: launchEnd,
-        usageLimit: 1000
-      },
-      create: {
-        code: 'WELCOME100',
-        type: 'FIXED',
-        value: 100,
-        minimumOrderValue: 499,
-        isActive: true,
-        launchOnly: true,
-        startsAt: launchStart,
-        expiresAt: launchEnd,
-        usageLimit: 1000
-      }
-    });
-    console.log('Successfully upserted WELCOME100 coupon inside DB.');
+      await prisma.coupon.create({
+        data: {
+          code: 'WELCOME100',
+          type: 'FIXED',
+          value: 100,
+          minimumOrderValue: 499,
+          isActive: true,
+          launchOnly: true,
+          startsAt: launchStart,
+          expiresAt: launchEnd,
+          usageLimit: 1000,
+          perUserLimit: 1
+        }
+      });
+      console.log('Successfully seeded initial WELCOME100 coupon inside DB.');
+    } else {
+      console.log(`[Coupon Seeder] Coupon database already has ${couponCount} records. Seeding skipped.`);
+    }
   } catch (couponErr) {
-    console.error('Failed to upsert default coupon WELCOME100:', couponErr);
+    console.error('Failed to run initial coupon seeder:', couponErr);
   }
 
   

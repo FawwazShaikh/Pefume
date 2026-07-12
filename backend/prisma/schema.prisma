@@ -376,10 +376,12 @@ model Coupon {
   minimumOrderValue  Decimal      @default(0) @db.Decimal(10, 2)
   maximumDiscount    Decimal?     @db.Decimal(10, 2)
   isActive           Boolean      @default(true)
+  isArchived         Boolean      @default(false)
   launchOnly         Boolean      @default(false)
   startsAt           DateTime?
   expiresAt          DateTime?
   usageLimit         Int          @default(1)
+  perUserLimit       Int          @default(1)
   usedCount          Int          @default(0)
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
