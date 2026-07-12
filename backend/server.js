@@ -3611,14 +3611,15 @@ app.listen(PORT, '0.0.0.0', async () => {
   });
   console.log('====================================\n');
 
-  // Automatically expire pending orders older than 30 minutes
+  // Automatically expire pending orders older than configured minutes (defaults to 30)
   async function cleanupExpiredOrders() {
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    const expiryMinutes = parseInt(process.env.ORDER_EXPIRY_MINUTES) || 30;
+    const expiryThreshold = new Date(Date.now() - expiryMinutes * 60 * 1000);
     try {
       const expiredOrders = await prisma.order.findMany({
         where: {
           status: 'PENDING',
-          createdAt: { lt: thirtyMinutesAgo }
+          createdAt: { lt: expiryThreshold }
         }
       });
 
