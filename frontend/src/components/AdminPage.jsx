@@ -26,6 +26,11 @@ export default function AdminPage() {
   const [reviews, setReviews] = useState([]);
   const [inventoryLogs, setInventoryLogs] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
+  
+  // Coupon states
+  const [coupons, setCoupons] = useState([]);
+  const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [loadingCoupons, setLoadingCoupons] = useState(false);
 
   // Bottle-based inventory states
   const [bottles, setBottles] = useState([]);
@@ -294,6 +299,16 @@ export default function AdminPage() {
         console.error('Failed to fetch payments ledger:', payErr);
       }
 
+      // Fetch Coupons
+      try {
+        const couponRes = await fetch(`${API_BASE_URL}/api/admin/coupons`, { headers });
+        if (couponRes.ok) {
+          const couponData = await couponRes.json();
+          setCoupons(couponData);
+        }
+      } catch (couponErr) {
+        console.error('Failed to fetch coupons:', couponErr);
+      }
     } catch (err) {
       console.error('Error syncing admin console data feeds:', err);
     } finally {
@@ -1435,6 +1450,11 @@ export default function AdminPage() {
             </button>
           </li>
           <li>
+            <button onClick={() => setActiveTab('coupons')} className={`admin-sidebar-btn ${activeTab === 'coupons' ? 'active' : ''}`}>
+              <span>Coupons</span>
+            </button>
+          </li>
+          <li>
             <button onClick={() => setActiveTab('settings')} className={`admin-sidebar-btn ${activeTab === 'settings' ? 'active' : ''}`}>
               <span>Settings</span>
             </button>
@@ -1469,6 +1489,7 @@ export default function AdminPage() {
               {activeTab === 'customers' && 'Registered Collectors Profile'}
               {activeTab === 'reviews' && 'Reviews & Moderation Center'}
               {activeTab === 'settings' && 'Store Settings & Permissions'}
+              {activeTab === 'coupons' && 'Launch Coupons & Promotions'}
             </h1>
             <div className="admin-page-subtitle">Atelier Control Console | Production Live</div>
           </div>
@@ -2981,7 +3002,148 @@ export default function AdminPage() {
             </form>
           </div>
         )}
+        {/* 11. Coupons Tab */}
+        {activeTab === 'coupons' && (
+          <div style={{ display: 'grid', gridTemplateColumns: selectedCoupon ? '3fr 2fr' : '1fr', gap: '1.5rem' }}>
+            <div className="admin-card">
+              <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1.25rem', borderBottom: '1px solid #eaeaea', paddingBottom: '0.5rem' }}>
+                Active Promotional Vouchers
+              </h3>
+              
+              <div className="admin-table-wrapper">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Coupon Code</th>
+                      <th>Type</th>
+                      <th>Discount Value</th>
+                      <th>Used Count</th>
+                      <th>Active Status</th>
+                      <th>Campaign Ends</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coupons.map((coupon) => (
+                      <tr 
+                        key={coupon.id} 
+                        onClick={() => setSelectedCoupon(coupon)}
+                        style={{ cursor: 'pointer', backgroundColor: selectedCoupon?.id === coupon.id ? '#f3eedb' : 'transparent' }}
+                      >
+                        <td style={{ fontWeight: 'bold', color: '#1C1B18' }}>{coupon.code}</td>
+                        <td>
+                          <span className="admin-badge standard">
+                            {coupon.type === 'FIXED' ? '₹ Fixed' : '% Percentage'}
+                          </span>
+                        </td>
+                        <td>{coupon.type === 'FIXED' ? `₹${coupon.value}` : `${coupon.value}%`}</td>
+                        <td style={{ fontFamily: 'monospace' }}>{coupon.usedCount} / {coupon.usageLimit}</td>
+                        <td>
+                          <span className={`admin-badge ${coupon.isActive ? 'success' : 'pending'}`}>
+                            {coupon.isActive ? 'Active' : 'Disabled'}
+                          </span>
+                        </td>
+                        <td>{coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Never'}</td>
+                      </tr>
+                    ))}
+                    {coupons.length === 0 && (
+                      <tr>
+                        <td colSpan="6" style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem' }}>
+                          No coupon invitations registered in database.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
+            {/* Coupon Inspector Drawer */}
+            {selectedCoupon && (
+              <div className="admin-card" style={{ borderColor: '#8B672F', borderWidth: '1px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #eaeaea', paddingBottom: '0.5rem' }}>
+                  <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                    Voucher Inspector
+                  </h3>
+                  <button 
+                    onClick={() => setSelectedCoupon(null)}
+                    style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#9ca3af' }}
+                  >
+                    &times;
+                  </button>
+                </div>
+
+                <div style={{ fontSize: '0.75rem', lineHeight: '1.6', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #eaeaea', padding: '0.35rem 0' }}>
+                    <span style={{ color: '#9ca3af' }}>Coupon Code</span>
+                    <strong style={{ color: '#1C1B18' }}>{selectedCoupon.code}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #eaeaea', padding: '0.35rem 0' }}>
+                    <span style={{ color: '#9ca3af' }}>Created Date</span>
+                    <span>{new Date(selectedCoupon.createdAt).toLocaleDateString('en-IN')}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #eaeaea', padding: '0.35rem 0' }}>
+                    <span style={{ color: '#9ca3af' }}>Launch Only Campaign</span>
+                    <span>{selectedCoupon.launchOnly ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #eaeaea', padding: '0.35rem 0' }}>
+                    <span style={{ color: '#9ca3af' }}>Usage Limit</span>
+                    <span>{selectedCoupon.usageLimit} maximum uses</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #eaeaea', padding: '0.35rem 0' }}>
+                    <span style={{ color: '#9ca3af' }}>Minimum Order Value</span>
+                    <span>₹{selectedCoupon.minimumOrderValue}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #eaeaea', padding: '0.35rem 0' }}>
+                    <span style={{ color: '#9ca3af' }}>Starts Campaign</span>
+                    <span>{selectedCoupon.startsAt ? new Date(selectedCoupon.startsAt).toLocaleString('en-IN') : 'Immediate'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #eaeaea', padding: '0.35rem 0' }}>
+                    <span style={{ color: '#9ca3af' }}>Ends Campaign</span>
+                    <span>{selectedCoupon.expiresAt ? new Date(selectedCoupon.expiresAt).toLocaleString('en-IN') : 'Never'}</span>
+                  </div>
+
+                  <h4 style={{ margin: '1.25rem 0 0.25rem 0', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#8B672F', fontWeight: 'bold' }}>
+                    Campaign Metrics
+                  </h4>
+                  <div className="admin-table-wrapper" style={{ marginTop: '0.25rem' }}>
+                    <table className="admin-table" style={{ fontSize: '0.7rem' }}>
+                      <thead>
+                        <tr>
+                          <th>Campaign Metric</th>
+                          <th style={{ textAlign: 'right' }}>Calculated Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Total Uses (Confirmed Orders)</td>
+                          <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{selectedCoupon.metrics?.totalUses || 0}</td>
+                        </tr>
+                        <tr>
+                          <td>Total Discount Given</td>
+                          <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#b91c1c' }}>
+                            -₹{Number(selectedCoupon.metrics?.totalDiscountGiven || 0).toLocaleString('en-IN')}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Gross Revenue Generated</td>
+                          <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#10b981' }}>
+                            ₹{Number(selectedCoupon.metrics?.revenueGenerated || 0).toLocaleString('en-IN')}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Average Order Value</td>
+                          <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                            ₹{Number(selectedCoupon.metrics?.averageOrder || 0).toLocaleString('en-IN')}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       {/* --- DRAWERS AND DIALOGS --- */}

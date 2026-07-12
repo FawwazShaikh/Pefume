@@ -726,7 +726,7 @@ async function triggerOrderAlerts(orderId, customerName, items) {
 
 // POST place order
 app.post('/api/orders', requireAuth, async (req, res) => {
-  const { addressId, items, paymentMethod, notes, shippingMethod: rawShippingMethod } = req.body;
+  const { addressId, items, paymentMethod, notes, shippingMethod: rawShippingMethod, couponCode } = req.body;
 
   if (!addressId || !items || !Array.isArray(items) || items.length === 0 || !paymentMethod) {
     return res.status(400).json({ error: 'Missing required order details' });
@@ -747,12 +747,83 @@ app.post('/api/orders', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Shipping address not found' });
     }
 
-    // Calculate subtotal — prices validated against DB in the transaction below
+    // Resolve variant IDs and calculate subtotal from DB to prevent pricing fraud
     let subtotal = 0;
     for (const item of items) {
-      const price = parseFloat(item.price);
-      const qty = parseInt(item.quantity) || 1;
-      subtotal += price * qty;
+      let variantId = item.variantId;
+      if (!variantId || variantId === 'default-variant') {
+        const resolvedVariant = await prisma.productVariant.findFirst({
+          where: { productId: item.productId || item.id, size: item.size }
+        });
+        if (!resolvedVariant) {
+          return res.status(404).json({ error: `Variant not found for product ${item.name} and size ${item.size}` });
+        }
+        item.variantId = resolvedVariant.id;
+        variantId = resolvedVariant.id;
+      }
+      
+      const variant = await prisma.productVariant.findUnique({
+        where: { id: variantId }
+      });
+      if (!variant) {
+        return res.status(404).json({ error: `Variant not found: ${variantId}` });
+      }
+      
+      // Add decorative bottle price if present on frontend item
+      const bottlePrice = parseFloat(item.bottlePriceAdjustment) || 0;
+      subtotal += (parseFloat(variant.price) + bottlePrice) * item.quantity;
+      item.price = parseFloat(variant.price) + bottlePrice;
+    }
+
+    // Validate Coupon if couponCode is provided
+    let discount = 0;
+    let appliedCoupon = null;
+    if (couponCode) {
+      const normalizedCode = couponCode.trim().toUpperCase();
+      const coupon = await prisma.coupon.findUnique({
+        where: { code: normalizedCode }
+      });
+
+      if (!coupon || !coupon.isActive) {
+        return res.status(400).json({ error: 'Invitation not recognised.' });
+      }
+
+      const now = new Date();
+      if (coupon.startsAt && now < coupon.startsAt) {
+        return res.status(400).json({ error: 'This launch invitation has expired.' });
+      }
+      if (coupon.expiresAt && now > coupon.expiresAt) {
+        return res.status(400).json({ error: 'This launch invitation has expired.' });
+      }
+      if (coupon.usedCount >= coupon.usageLimit) {
+        return res.status(400).json({ error: 'This invitation has already reached its usage limit.' });
+      }
+
+      // Check launch campaign validity window
+      if (coupon.launchOnly) {
+        const launchStartStr = process.env.LAUNCH_START_DATE || "2026-07-12T14:30:00+05:30";
+        const launchEndStr = process.env.LAUNCH_END_DATE || "2026-07-15T14:30:00+05:30";
+        const launchStart = new Date(launchStartStr);
+        const launchEnd = new Date(launchEndStr);
+        if (now < launchStart || now > launchEnd) {
+          return res.status(400).json({ error: 'This launch invitation has expired.' });
+        }
+      }
+
+      if (subtotal < parseFloat(coupon.minimumOrderValue)) {
+        return res.status(400).json({ error: `Valid on orders above ₹${parseFloat(coupon.minimumOrderValue)}.` });
+      }
+
+      appliedCoupon = coupon;
+      if (coupon.type === 'FIXED') {
+        discount = parseFloat(coupon.value);
+      } else if (coupon.type === 'PERCENT') {
+        discount = (subtotal * parseFloat(coupon.value)) / 100;
+        if (coupon.maximumDiscount) {
+          discount = Math.min(discount, parseFloat(coupon.maximumDiscount));
+        }
+      }
+      discount = Math.min(discount, subtotal);
     }
 
     // Fetch store settings from DB (used for free-shipping threshold)
@@ -763,9 +834,9 @@ app.post('/api/orders', requireAuth, async (req, res) => {
     const standardCharge = storeSettings ? parseFloat(storeSettings.shippingCharges) : 100;
 
     // Compute shipping server-side — NEVER trust client-sent fee
-    const shippingFee = computeShippingFee(shippingMethod, subtotal, threshold, standardCharge);
+    const shippingFee = computeShippingFee(shippingMethod, subtotal - discount, threshold, standardCharge);
     const estimatedDelivery = computeEstimatedDelivery(shippingMethod);
-    const total = subtotal + shippingFee;
+    const total = subtotal - discount + shippingFee;
 
     // Generate unique order reference (retry up to 3 times on collision)
     let orderReference = generateOrderReference();
@@ -777,27 +848,11 @@ app.post('/api/orders', requireAuth, async (req, res) => {
 
     // Place order in transaction
     const order = await prisma.$transaction(async (tx) => {
-      // 1. Validate variant stock against BottleInventory and resolve missing variantIds
+      // Validate variant stock against BottleInventory
       for (const item of items) {
-        let variantId = item.variantId;
-        if (!variantId || variantId === 'default-variant') {
-          const variant = await tx.productVariant.findFirst({
-            where: { productId: item.productId || item.id, size: item.size }
-          });
-          if (!variant) {
-            throw new Error(`Variant not found for product ${item.name} and size ${item.size}`);
-          }
-          item.variantId = variant.id;
-          variantId = variant.id;
-        }
-
         const variant = await tx.productVariant.findUnique({
-          where: { id: variantId }
+          where: { id: item.variantId }
         });
-        if (!variant) {
-          throw new Error(`Variant not found: ${variantId}`);
-        }
-        
         const totalOpenML = await getTotalOpenML(tx, item.productId || item.id);
         const neededML = variant.volumeML * item.quantity;
         if (totalOpenML < neededML) {
@@ -806,7 +861,7 @@ app.post('/api/orders', requireAuth, async (req, res) => {
         }
       }
 
-      // 2. Create the order
+      // Create the order with coupon snapshot values
       const newOrder = await tx.order.create({
         data: {
           orderReference,
@@ -820,6 +875,11 @@ app.post('/api/orders', requireAuth, async (req, res) => {
           paymentMethod,
           status: paymentMethod === 'COD' ? 'CONFIRMED' : 'PENDING',
           notes,
+          couponId: appliedCoupon ? appliedCoupon.id : null,
+          couponCode: appliedCoupon ? appliedCoupon.code : null,
+          discountAmount: discount,
+          originalSubtotal: subtotal,
+          finalSubtotal: subtotal - discount,
           orderItems: {
             create: items.map(item => ({
               productId: item.productId || item.id,
@@ -843,8 +903,7 @@ app.post('/api/orders', requireAuth, async (req, res) => {
         }
       });
 
-      // 3. Deduct stock ONLY for COD orders (immediately confirmed).
-      //    Razorpay orders deduct upon payment verification.
+      // Deduct stock ONLY for COD orders (immediately confirmed).
       if (paymentMethod === 'COD') {
         for (const item of items) {
           const variant = await tx.productVariant.findUnique({
@@ -859,9 +918,19 @@ app.post('/api/orders', requireAuth, async (req, res) => {
             newOrder.id
           );
         }
+
+        // If coupon applied to COD order, increment used count immediately
+        if (newOrder.couponId) {
+          await tx.coupon.update({
+            where: { id: newOrder.couponId },
+            data: {
+              usedCount: { increment: 1 }
+            }
+          });
+        }
       }
 
-      // 4. Initialize Payment record
+      // Initialize Payment record
       await tx.payment.create({
         data: {
           orderId: newOrder.id,
@@ -871,7 +940,7 @@ app.post('/api/orders', requireAuth, async (req, res) => {
         }
       });
 
-      // 5. Clear user cart in DB
+      // Clear user cart in DB
       await tx.cartItem.deleteMany({
         where: { userId: dbUser.id }
       });
@@ -1083,7 +1152,15 @@ async function confirmAndProcessOrder(orderId, transactionId) {
       }
     });
 
-    // 7. Clear user cart
+    // 6.5 Increment usedCount of Coupon if one was applied
+    if (order.couponId) {
+      await tx.coupon.update({
+        where: { id: order.couponId },
+        data: {
+          usedCount: { increment: 1 }
+        }
+      });
+    }
     await tx.cartItem.deleteMany({
       where: { userId: order.userId }
     });
@@ -1952,8 +2029,152 @@ app.patch('/api/user/profile', requireAuth, async (req, res) => {
   }
 });
 
-// POST elevate user to admin with secret passcode - Removed for Security Hardening
+// POST validate launch coupon
+app.post('/api/coupons/validate', requireAuth, async (req, res) => {
+  const { code, cart } = req.body;
+  if (!code) {
+    return res.status(400).json({ valid: false, error: 'Coupon code is required' });
+  }
+  if (!cart || !Array.isArray(cart)) {
+    return res.status(400).json({ valid: false, error: 'Cart items are required' });
+  }
 
+  try {
+    const normalizedCode = code.trim().toUpperCase();
+    const coupon = await prisma.coupon.findUnique({
+      where: { code: normalizedCode }
+    });
+
+    if (!coupon || !coupon.isActive) {
+      return res.status(400).json({ valid: false, error: 'Invitation not recognised.' });
+    }
+
+    const now = new Date();
+    
+    // Check startsAt
+    if (coupon.startsAt && now < coupon.startsAt) {
+      return res.status(400).json({ valid: false, error: 'This launch invitation has expired.' });
+    }
+
+    // Check expiresAt
+    if (coupon.expiresAt && now > coupon.expiresAt) {
+      return res.status(400).json({ valid: false, error: 'This launch invitation has expired.' });
+    }
+
+    // Check usage limits
+    if (coupon.usedCount >= coupon.usageLimit) {
+      return res.status(400).json({ valid: false, error: 'This invitation has already reached its usage limit.' });
+    }
+
+    // Check launchOnly campaign dates in process.env
+    if (coupon.launchOnly) {
+      const launchStartStr = process.env.LAUNCH_START_DATE || "2026-07-12T14:30:00+05:30";
+      const launchEndStr = process.env.LAUNCH_END_DATE || "2026-07-15T14:30:00+05:30";
+      const launchStart = new Date(launchStartStr);
+      const launchEnd = new Date(launchEndStr);
+      if (now < launchStart || now > launchEnd) {
+        return res.status(400).json({ valid: false, error: 'This launch invitation has expired.' });
+      }
+    }
+
+    // Calculate subtotal from DB prices
+    let subtotal = 0;
+    for (const item of cart) {
+      const variant = await prisma.productVariant.findUnique({
+        where: { id: item.variantId }
+      });
+      if (variant) {
+        const variantPrice = parseFloat(variant.price);
+        subtotal += variantPrice * item.quantity;
+      }
+    }
+
+    const minOrderVal = parseFloat(coupon.minimumOrderValue);
+    if (subtotal < minOrderVal) {
+      return res.status(400).json({ valid: false, error: `Valid on orders above ₹${minOrderVal}.` });
+    }
+
+    // Compute discount
+    let discount = 0;
+    if (coupon.type === 'FIXED') {
+      discount = parseFloat(coupon.value);
+    } else if (coupon.type === 'PERCENT') {
+      discount = (subtotal * parseFloat(coupon.value)) / 100;
+      if (coupon.maximumDiscount) {
+        discount = Math.min(discount, parseFloat(coupon.maximumDiscount));
+      }
+    }
+    discount = Math.min(discount, subtotal); // discount cannot exceed subtotal
+
+    return res.status(200).json({
+      valid: true,
+      code: coupon.code,
+      type: coupon.type,
+      value: parseFloat(coupon.value),
+      discount,
+      minimumOrder: minOrderVal,
+      subtotal,
+      finalSubtotal: subtotal - discount,
+      message: 'Launch Invitation Applied'
+    });
+  } catch (err) {
+    console.error('Failed to validate coupon:', err);
+    return res.status(500).json({ valid: false, error: 'Internal server error during coupon validation.' });
+  }
+});
+
+// GET all coupons for admin
+app.get('/api/admin/coupons', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const coupons = await prisma.coupon.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const formatted = [];
+    for (const c of coupons) {
+      // Find orders that used this coupon and are CONFIRMED
+      const activeOrders = await prisma.order.findMany({
+        where: {
+          couponCode: c.code,
+          status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'] }
+        }
+      });
+
+      const totalUses = activeOrders.length;
+      const totalDiscountGiven = activeOrders.reduce((sum, o) => sum + (parseFloat(o.discountAmount) || 0), 0);
+      const revenueGenerated = activeOrders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+      const averageOrder = totalUses > 0 ? (revenueGenerated / totalUses) : 0;
+
+      formatted.push({
+        id: c.id,
+        code: c.code,
+        type: c.type,
+        value: parseFloat(c.value),
+        minimumOrderValue: parseFloat(c.minimumOrderValue),
+        maximumDiscount: c.maximumDiscount ? parseFloat(c.maximumDiscount) : null,
+        isActive: c.isActive,
+        launchOnly: c.launchOnly,
+        startsAt: c.startsAt,
+        expiresAt: c.expiresAt,
+        usageLimit: c.usageLimit,
+        usedCount: c.usedCount,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+        metrics: {
+          totalUses,
+          totalDiscountGiven,
+          revenueGenerated,
+          averageOrder
+        }
+      });
+    }
+
+    return res.status(200).json(formatted);
+  } catch (err) {
+    console.error('Failed to fetch coupons:', err);
+    return res.status(500).json({ error: 'Failed to fetch coupons' });
+  }
+});
 
 // ============================================================
 // ADMIN DASHBOARD & ORDERS MANAGEMENT ROUTES
@@ -1965,9 +2186,16 @@ app.get('/api/admin/dashboard', requireAuth, requireAdmin, async (req, res) => {
     const activeStatuses = ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
     const revenueRes = await prisma.order.aggregate({
       where: { status: { in: activeStatuses } },
-      _sum: { total: true }
+      _sum: { finalSubtotal: true }
     });
-    const totalRevenue = revenueRes._sum.total ? parseFloat(revenueRes._sum.total) : 0;
+    let totalRevenue = revenueRes._sum.finalSubtotal ? parseFloat(revenueRes._sum.finalSubtotal) : 0;
+    if (!revenueRes._sum.finalSubtotal) {
+      const legacyRevenueRes = await prisma.order.aggregate({
+        where: { status: { in: activeStatuses } },
+        _sum: { total: true }
+      });
+      totalRevenue = legacyRevenueRes._sum.total ? parseFloat(legacyRevenueRes._sum.total) : 0;
+    }
 
     const totalOrders = await prisma.order.count({
       where: { status: { in: activeStatuses } }
@@ -3332,6 +3560,41 @@ app.listen(PORT, '0.0.0.0', async () => {
     }
   } catch (syncErr) {
     console.error('Failed to sync Razorpay API credentials to database StoreSetting table:', syncErr);
+  }
+
+  // Synchronize Launch Campaign Coupon WELCOME100 inside database
+  try {
+    const launchStartStr = process.env.LAUNCH_START_DATE || "2026-07-12T14:30:00+05:30";
+    const launchEndStr = process.env.LAUNCH_END_DATE || "2026-07-15T14:30:00+05:30";
+    const launchStart = new Date(launchStartStr);
+    const launchEnd = new Date(launchEndStr);
+
+    await prisma.coupon.upsert({
+      where: { code: 'WELCOME100' },
+      update: {
+        value: 100,
+        minimumOrderValue: 499,
+        isActive: true,
+        launchOnly: true,
+        startsAt: launchStart,
+        expiresAt: launchEnd,
+        usageLimit: 1000
+      },
+      create: {
+        code: 'WELCOME100',
+        type: 'FIXED',
+        value: 100,
+        minimumOrderValue: 499,
+        isActive: true,
+        launchOnly: true,
+        startsAt: launchStart,
+        expiresAt: launchEnd,
+        usageLimit: 1000
+      }
+    });
+    console.log('Successfully upserted WELCOME100 coupon inside DB.');
+  } catch (couponErr) {
+    console.error('Failed to upsert default coupon WELCOME100:', couponErr);
   }
 
   

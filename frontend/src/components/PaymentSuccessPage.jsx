@@ -164,6 +164,15 @@ export default function PaymentSuccessPage() {
                   <span>Subtotal</span>
                   <span>₹{Number(order.subtotal || 0).toLocaleString('en-IN')}</span>
                 </div>
+                {order.couponCode && (
+                  <div className="flex justify-between items-start text-xs text-[#8B672F] py-1">
+                    <div className="text-left">
+                      <span className="font-bold block uppercase tracking-wider" style={{ fontSize: '0.62rem', letterSpacing: '0.05em' }}>Launch Invitation Applied</span>
+                      <span className="font-heading font-light block" style={{ fontSize: '0.72rem' }}>{order.couponCode}</span>
+                    </div>
+                    <span className="font-semibold text-right">You saved ₹{Number(order.discountAmount || 0).toLocaleString('en-IN')} on this order.</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-xs text-black/50">
                   <span>Shipping</span>
                   <span className="text-[#B08A50]">{Number(order.shippingFee || 0) === 0 ? 'Free' : `₹${Number(order.shippingFee).toLocaleString('en-IN')}`}</span>

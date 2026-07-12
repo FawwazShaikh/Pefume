@@ -709,6 +709,11 @@ export default function ProfilePage() {
                                       <div className="space-y-1 font-body text-xs text-black/65">
                                         <p>Payment Mode: <strong className="text-[#1C1B18]">{order.paymentMethod === 'COD' ? 'Cash on Delivery (COD)' : 'Razorpay Secure Checkout'}</strong></p>
                                         <p>Subtotal: ₹{Number(order.subtotal).toLocaleString('en-IN')}</p>
+                                        {order.couponCode && (
+                                          <p className="text-[#8B672F] font-semibold">
+                                            Coupon: {order.couponCode} (-₹{Number(order.discountAmount || 0).toLocaleString('en-IN')})
+                                          </p>
+                                        )}
                                         <p>Shipping: {Number(order.shippingFee) > 0 ? `₹${Number(order.shippingFee).toLocaleString('en-IN')}` : 'Free Delivery'}</p>
                                         {order.notes && <p className="mt-3 italic text-black/50">"Gift Note: {order.notes}"</p>}
                                       </div>

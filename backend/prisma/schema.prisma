@@ -188,11 +188,17 @@ model Order {
   orderReference    String?       @unique
   shippingMethod    String?
   trackingId        String?
+  couponId          String?
+  couponCode        String?
+  discountAmount    Decimal?      @db.Decimal(10, 2)
+  originalSubtotal  Decimal?      @db.Decimal(10, 2)
+  finalSubtotal     Decimal?      @db.Decimal(10, 2)
   orderItems        OrderItem[]
   address           Address       @relation(fields: [addressId], references: [id])
   user              User          @relation(fields: [userId], references: [id])
   payment           Payment?
   reviews           Review[]
+  coupon            Coupon?       @relation(fields: [couponId], references: [id])
 
   @@index([userId])
   @@index([status])
@@ -360,4 +366,30 @@ enum MovementType {
   RESTOCK
   ADJUSTMENT
   CANCELLATION
+}
+
+model Coupon {
+  id                 String       @id @default(cuid())
+  code               String       @unique
+  type               CouponType
+  value              Decimal      @db.Decimal(10, 2)
+  minimumOrderValue  Decimal      @default(0) @db.Decimal(10, 2)
+  maximumDiscount    Decimal?     @db.Decimal(10, 2)
+  isActive           Boolean      @default(true)
+  launchOnly         Boolean      @default(false)
+  startsAt           DateTime?
+  expiresAt          DateTime?
+  usageLimit         Int          @default(1)
+  usedCount          Int          @default(0)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  orders             Order[]
+
+  @@index([code])
+  @@map("coupons")
+}
+
+enum CouponType {
+  FIXED
+  PERCENT
 }

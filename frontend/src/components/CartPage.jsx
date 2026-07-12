@@ -93,6 +93,12 @@ export default function CartPage({ onBackToShop, products = [] }) {
   const [placedOrderId, setPlacedOrderId] = useState('');
   const [addressToDeleteId, setAddressToDeleteId] = useState(null);
 
+  // Coupon state variables
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState('');
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
   const isCheckoutInProgress = ['CREATING_ORDER', 'OPENING_RAZORPAY', 'VERIFYING_PAYMENT'].includes(checkoutState);
 
   const [storeSettings, setStoreSettings] = useState(null);
@@ -125,6 +131,95 @@ export default function CartPage({ onBackToShop, products = [] }) {
     }
     fetchSettings();
   }, []);
+
+  // Coupon action handlers and auto-revalidation hook
+  useEffect(() => {
+    if (!appliedCoupon) return;
+
+    const revalidate = async () => {
+      try {
+        const token = isSignedIn ? await getToken() : null;
+        const res = await fetch(`${API_BASE_URL}/api/coupons/validate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : ''
+          },
+          body: JSON.stringify({
+            code: appliedCoupon.code,
+            cart: cartItems.map(item => ({
+              variantId: item.variantId,
+              quantity: item.quantity
+            }))
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setAppliedCoupon({
+            code: data.code,
+            discount: data.discount
+          });
+          setCouponError('');
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          setAppliedCoupon(null);
+          setCouponError(errData.error || 'Invitation expired due to cart modifications.');
+        }
+      } catch (err) {
+        console.error('Failed to auto-revalidate coupon:', err);
+      }
+    };
+
+    revalidate();
+  }, [cartItems, isSignedIn]);
+
+  const handleApplyCoupon = async (e) => {
+    e.preventDefault();
+    if (!couponCode.trim()) return;
+    setCouponError('');
+    setIsValidatingCoupon(true);
+
+    try {
+      const token = isSignedIn ? await getToken() : null;
+      const res = await fetch(`${API_BASE_URL}/api/coupons/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        },
+        body: JSON.stringify({
+          code: couponCode.trim(),
+          cart: cartItems.map(item => ({
+            variantId: item.variantId,
+            quantity: item.quantity
+          }))
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setAppliedCoupon({
+          code: data.code,
+          discount: data.discount
+        });
+        setCouponError('');
+      } else {
+        setCouponError(data.error || 'Invitation not recognised.');
+      }
+    } catch (err) {
+      console.error('Failed to validate coupon:', err);
+      setCouponError('Network error. Please try again.');
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+  };
 
   // Sync and merge cart when user logs in (background synchronization work)
   useEffect(() => {
@@ -300,16 +395,25 @@ export default function CartPage({ onBackToShop, products = [] }) {
     return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   }, [cartItems]);
 
+  const discountAmount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    return appliedCoupon.discount;
+  }, [appliedCoupon]);
+
   const shipping = useMemo(() => {
     if (subtotal === 0) return 0;
     if (deliveryMethod === 'EXPRESS') return 399;
     if (deliveryMethod === 'OWNER') return 5000;
-    // STANDARD: standard charge is SHIPPING_CHARGES
+    
+    // STANDARD shipping threshold calculated on discounted subtotal
+    const effectiveSubtotal = subtotal - discountAmount;
+    if (effectiveSubtotal >= FREE_SHIPPING_THRESHOLD) return 0;
+    
     const charge = SHIPPING_CHARGES;
     return charge;
-  }, [subtotal, deliveryMethod, storeSettings]);
+  }, [subtotal, discountAmount, deliveryMethod, storeSettings, FREE_SHIPPING_THRESHOLD, SHIPPING_CHARGES]);
 
-  const grandTotal = subtotal + shipping;
+  const grandTotal = Math.max(0, subtotal - discountAmount + shipping);
 
   const renderOrderSummary = (isMobile = false) => {
     return (
@@ -336,6 +440,13 @@ export default function CartPage({ onBackToShop, products = [] }) {
             <span className="font-semibold">₹{subtotal.toLocaleString('en-IN')}</span>
           </div>
 
+          {appliedCoupon && (
+            <div className="flex justify-between items-center text-[#8B672F]">
+              <span>LAUNCH INVITATION ({appliedCoupon.code})</span>
+              <span className="font-semibold">-₹{appliedCoupon.discount.toLocaleString('en-IN')}</span>
+            </div>
+          )}
+
           <div className="flex justify-between items-center">
             <span className="text-black/50">SHIPPING</span>
             <span className="font-semibold text-[#8B672F]">
@@ -347,6 +458,69 @@ export default function CartPage({ onBackToShop, products = [] }) {
             <span className="text-black/50">ESTIMATED TAX</span>
             <span className="font-semibold text-black/40">Included</span>
           </div>
+        </div>
+
+        {/* Coupon Invitation Widget */}
+        <div className="border-t border-black/8 pt-5 mt-5 pb-5 mb-5">
+          <span className="text-[0.62rem] font-bold tracking-[2px] text-black/55 uppercase block mb-3 text-left">
+            Have a Launch Invitation?
+          </span>
+          
+          {!appliedCoupon ? (
+            <form onSubmit={handleApplyCoupon} className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Enter invitation code..."
+                value={couponCode}
+                onChange={(e) => {
+                  setCouponCode(e.target.value);
+                  setCouponError('');
+                }}
+                disabled={isValidatingCoupon}
+                className="flex-1 border border-black/10 px-3 py-2 text-xs font-body tracking-wider focus:outline-none focus:border-black/30 placeholder:text-black/30 bg-transparent uppercase"
+              />
+              <button
+                type="submit"
+                disabled={isValidatingCoupon || !couponCode.trim()}
+                className="px-4 py-2 bg-[#1c1b18] hover:bg-black text-[#fefcf9] text-[0.65rem] font-bold tracking-widest uppercase transition-colors disabled:opacity-50"
+              >
+                {isValidatingCoupon ? 'Checking...' : 'Apply'}
+              </button>
+            </form>
+          ) : (
+            <div className="flex justify-between items-start text-left">
+              <div>
+                <div className="text-[0.68rem] font-bold text-[#8B672F] flex items-center gap-1.5 uppercase tracking-wider mb-0.5">
+                  <span className="text-xs">✓</span> Launch Invitation Applied
+                </div>
+                <div className="font-heading text-base font-light text-[#1c1b18] tracking-wider mb-0.5">
+                  {appliedCoupon.code}
+                </div>
+                <div className="text-[0.65rem] text-black/55 font-body">
+                  ₹{appliedCoupon.discount} credited to your order
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleRemoveCoupon}
+                className="text-[0.62rem] font-bold tracking-widest text-[#B08A50] hover:text-[#1c1b18] uppercase transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          )}
+
+          {couponError && (
+            <p className="text-[0.65rem] text-[#B08A50] mt-2 font-body font-medium italic text-left">
+              {couponError}
+            </p>
+          )}
+          
+          {!appliedCoupon && !couponError && (
+            <p className="text-[0.62rem] text-black/40 mt-1.5 font-body leading-relaxed text-left">
+              Have an exclusive launch invitation? Enter it here before checkout.
+            </p>
+          )}
         </div>
 
 
@@ -581,6 +755,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
           items,
           paymentMethod,
           shippingMethod: deliveryMethod,
+          couponCode: appliedCoupon ? appliedCoupon.code : undefined,
           // Append bottle selections to order notes so admin can see packaging preferences
           notes: [
             notes,
