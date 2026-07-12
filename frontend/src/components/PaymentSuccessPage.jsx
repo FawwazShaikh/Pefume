@@ -128,7 +128,13 @@ export default function PaymentSuccessPage() {
                   <div key={item.id} className="flex justify-between items-center">
                     <div>
                       <span className="text-xs font-semibold text-[#1C1B18] block">{item.productName}</span>
-                      <span className="text-[0.65rem] text-black/40">{item.size} · Qty {item.quantity}</span>
+                      <span className="text-[0.65rem] text-black/40 block">{item.size} · Qty {item.quantity}</span>
+                      {item.bottleName && (
+                        <span className="text-[0.62rem] text-[#8B672F] font-bold uppercase tracking-wider block mt-0.5">
+                          <i className="fa-solid fa-spray-can-sparkles mr-1" aria-hidden="true" />
+                          {item.bottleName}
+                        </span>
+                      )}
                     </div>
                     <span className="text-xs font-semibold">₹{(Number(item.priceAtPurchase) * item.quantity).toLocaleString('en-IN')}</span>
                   </div>

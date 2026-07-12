@@ -723,6 +723,12 @@ export default function ProfilePage() {
                                           <div>
                                             <p className="font-bold text-[#1C1B18]">{item.productName}</p>
                                             <span className="text-[0.68rem] text-black/45 block mt-0.5">Size: {item.size} • Qty: {item.quantity}</span>
+                                            {item.bottleName && (
+                                              <span className="text-[0.65rem] text-[#8B672F] font-bold uppercase tracking-wider block mt-0.5">
+                                                <i className="fa-solid fa-spray-can-sparkles mr-1" aria-hidden="true" />
+                                                {item.bottleName}
+                                              </span>
+                                            )}
                                           </div>
                                           <span className="font-semibold text-[#1C1B18]">₹{Number(item.priceAtPurchase).toLocaleString('en-IN')}</span>
                                         </div>

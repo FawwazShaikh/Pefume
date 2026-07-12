@@ -3353,6 +3353,11 @@ export default function AdminPage() {
                     <div>
                       <strong>{item.productName}</strong><br />
                       <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>Size: {item.size} | Qty: {item.quantity}</span>
+                      {item.bottleName && (
+                        <div style={{ fontSize: '0.7rem', color: '#8B672F', fontWeight: 'bold', marginTop: '2px' }}>
+                          Bottle: {item.bottleName}
+                        </div>
+                      )}
                     </div>
                     <span style={{ fontFamily: 'monospace' }}>₹{(parseFloat(item.priceAtPurchase) * item.quantity).toLocaleString('en-IN')}</span>
                   </div>

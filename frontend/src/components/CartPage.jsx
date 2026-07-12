@@ -559,7 +559,14 @@ export default function CartPage({ onBackToShop, products = [] }) {
           name: item.name,
           size: item.size,
           price: item.price,
-          quantity: item.quantity
+          quantity: item.quantity,
+          // Snapshot values
+          bottleId: item.bottleId || null,
+          bottleName: item.bottleName || null,
+          bottleColor: item.bottleColor || null,
+          bottleImage: item.bottleImage || null,
+          bottlePriceAdjustment: item.bottlePrice || 0,
+          bottleSku: item.bottleSku || null
         };
       });
 

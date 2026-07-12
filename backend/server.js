@@ -827,7 +827,14 @@ app.post('/api/orders', requireAuth, async (req, res) => {
               productName: item.name,
               size: item.size,
               priceAtPurchase: parseFloat(item.price),
-              quantity: parseInt(item.quantity)
+              quantity: parseInt(item.quantity),
+              // Storing bottle snapshot
+              bottleId: item.bottleId || null,
+              bottleName: item.bottleName || null,
+              bottleColor: item.bottleColor || null,
+              bottleImage: item.bottleImage || null,
+              bottlePriceAdjustment: item.bottlePriceAdjustment ? parseFloat(item.bottlePriceAdjustment) : 0,
+              bottleSku: item.bottleSku || null
             }))
           }
         },
@@ -1026,7 +1033,7 @@ app.get('/api/orders/track/:reference', async (req, res) => {
 async function confirmAndProcessOrder(orderId, transactionId) {
   return await prisma.$transaction(async (tx) => {
     // 1. Acquire row-level write lock on the order row to prevent concurrency races
-    await tx.$executeRaw`SELECT id FROM orders WHERE id = ${orderId} FOR UPDATE`;
+    await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId} FOR UPDATE`;
 
     // 2. Fetch order including items, payment, and user details
     const order = await tx.order.findUnique({
@@ -1289,57 +1296,99 @@ app.post('/api/webhooks/razorpay', async (req, res) => {
     }
 
     const event = req.body.event;
-    console.log(`Razorpay webhook event received: ${event}`);
-
+    
     // Ignore other webhook events gracefully
     if (event !== 'payment.captured' && event !== 'order.paid') {
       return res.status(200).json({ status: 'ignored', reason: 'unhandled_event' });
     }
 
     const payload = req.body.payload;
-    const paymentObj = payload.payment?.entity;
-    const rzpOrderId = paymentObj?.order_id;
-    const transactionId = paymentObj?.id;
+    let rzpOrderId = null;
+    let transactionId = null;
 
-    if (rzpOrderId) {
-      // Find Order and its linked Payment
-      const order = await prisma.order.findFirst({
-        where: { razorpayOrderId: rzpOrderId },
-        include: { payment: true }
-      });
-
-      if (order && order.payment) {
-        try {
-          const result = await confirmAndProcessOrder(order.id, transactionId || order.payment.transactionId);
-          if (result && !result.alreadyConfirmed) {
-            triggerOrderAlerts(result.order.id, result.order.user?.name || 'Collector', result.order.orderItems).catch(err => {
-              console.error('Failed to trigger order alerts in background:', err);
-            });
-            console.log(`Order ${order.id} confirmed via webhook event ${event}.`);
-          }
-        } catch (stockErr) {
-          if (stockErr.message && stockErr.message.includes('Insufficient stock')) {
-            console.error(`Insufficient stock during webhook confirmation for order ${order.id}:`, stockErr.message);
-            await prisma.$transaction(async (tx) => {
-              await tx.order.update({
-                where: { id: order.id },
-                data: { status: 'CANCELLED' }
-              });
-              await tx.payment.update({
-                where: { orderId: order.id },
-                data: { status: 'FAILED' }
-              });
-            }, { timeout: 10000 });
-            console.log(`Order ${order.id} cancelled via webhook due to insufficient stock.`);
-          } else {
-            console.error(`Unexpected error during webhook order confirmation:`, stockErr);
-            return res.status(500).json({ error: 'Order confirmation failed' });
-          }
-        }
+    if (event === 'payment.captured') {
+      const paymentObj = payload.payment?.entity;
+      rzpOrderId = paymentObj?.order_id;
+      transactionId = paymentObj?.id;
+    } else if (event === 'order.paid') {
+      const orderObj = payload.order?.entity;
+      rzpOrderId = orderObj?.id;
+      // Look for a payment ID nested inside payments list if available
+      if (payload.payments && payload.payments.length > 0) {
+        transactionId = payload.payments[0].id;
       }
     }
 
-    return res.status(200).json({ status: 'ok' });
+    console.log('\n==================================================');
+    console.log('            RAZORPAY WEBHOOK RECEIVED             ');
+    console.log('==================================================');
+    console.log(`Event: ${event}`);
+    console.log(`Razorpay Order: ${rzpOrderId || 'N/A'}`);
+    console.log(`Payment: ${transactionId || 'N/A'}`);
+
+    if (!rzpOrderId) {
+      console.warn('Result: FAILURE (Could not extract Razorpay Order ID from payload)');
+      console.log('==================================================\n');
+      return res.status(400).json({ error: 'Could not extract Razorpay Order ID from payload' });
+    }
+
+    // Find Order and its linked Payment
+    const order = await prisma.order.findFirst({
+      where: { razorpayOrderId: rzpOrderId },
+      include: { payment: true }
+    });
+
+    if (!order) {
+      console.warn(`Result: FAILURE (No matching website order found for Razorpay Order ID ${rzpOrderId})`);
+      console.log('==================================================\n');
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    if (!order.payment) {
+      console.warn(`Result: FAILURE (Website order ${order.id} is missing linked payment record)`);
+      console.log('==================================================\n');
+      return res.status(404).json({ error: 'Linked payment record not found' });
+    }
+
+    console.log(`Matched Website Order: ${order.id}`);
+    console.log(`Current Status: ${order.status}`);
+    console.log('Processing: YES');
+
+    try {
+      const result = await confirmAndProcessOrder(order.id, transactionId || order.payment.transactionId || 'N/A');
+      if (result) {
+        if (result.alreadyConfirmed) {
+          console.log('Result: SUCCESS (Order was already CONFIRMED)');
+        } else {
+          // Trigger alerts/notifications OUTSIDE of the transaction to prevent database lock starvation
+          triggerOrderAlerts(result.order.id, result.order.user?.name || 'Collector', result.order.orderItems).catch(err => {
+            console.error('Failed to trigger order alerts in background:', err);
+          });
+          console.log('Result: CONFIRMED');
+        }
+      }
+      console.log('==================================================\n');
+      return res.status(200).json({ status: 'ok' });
+    } catch (stockErr) {
+      if (stockErr.message && stockErr.message.includes('Insufficient stock')) {
+        console.error(`Result: FAILURE (Insufficient stock for order ${order.id}: ${stockErr.message})`);
+        await prisma.$transaction(async (tx) => {
+          await tx.order.update({
+            where: { id: order.id },
+            data: { status: 'CANCELLED' }
+          });
+          await tx.payment.update({
+            where: { orderId: order.id },
+            data: { status: 'FAILED' }
+          });
+        }, { timeout: 10000 });
+        console.log(`Order ${order.id} cancelled due to stock depletion.`);
+      } else {
+        console.error(`Result: FAILURE (Unexpected error during order confirmation: ${stockErr.message})`);
+      }
+      console.log('==================================================\n');
+      return res.status(500).json({ error: 'Order confirmation failed' });
+    }
   } catch (err) {
     console.error('Error handling Razorpay webhook:', err);
     return res.status(500).json({ error: 'Webhook processing error' });

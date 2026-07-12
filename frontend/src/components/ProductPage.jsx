@@ -634,8 +634,12 @@ export default function ProductPage({ product: initialProduct, products = [], on
         ? {
           ...selectedOption,
           price: selectedOption.price + bottleAdditionalPrice,
+          bottleId: selectedBottleObj ? selectedBottleObj.id : null,
           bottleName: selectedBottleObj ? selectedBottleObj.name : null,
+          bottleColor: selectedBottleObj ? (selectedBottleObj.name.includes('Black') ? 'Black' : selectedBottleObj.name.includes('Gold') ? 'Gold' : 'Default') : null,
+          bottleImage: selectedBottleObj ? selectedBottleObj.image : null,
           bottlePrice: bottleAdditionalPrice,
+          bottleSku: selectedBottleObj ? `${selectedOption.sku || 'DE'}-${selectedBottleObj.id.toUpperCase()}` : null,
         }
         : selectedOption;
 
