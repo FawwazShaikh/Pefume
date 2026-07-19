@@ -77,6 +77,9 @@ export const addToCart = async (product, sizeOption, quantity = 1, token = null)
 
   const itemKey = (sizeOption.variantId || getItemKey(product.id, sizeOption.size)) + 
     (sizeOption.bottleId ? '_' + sizeOption.bottleId : (sizeOption.bottleName ? '_' + sizeOption.bottleName : ''));
+  if (CartStore.getMutatingItems().has(itemKey)) {
+    return { success: false, reason: 'IN_PROGRESS', message: 'Item mutation already in progress.' };
+  }
   CartStore.startMutation(itemKey);
 
   const cart = [...CartStore.getState()];

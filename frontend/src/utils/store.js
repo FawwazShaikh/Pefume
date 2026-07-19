@@ -163,6 +163,12 @@ export const CartStore = {
         }
         const mappedCart = dbCartItems.map(item => {
           const prod = item.variant?.product || {};
+          const variantPrice = item.variant ? parseFloat(item.variant.price) : 0;
+          const bottlePriceAdj = item.bottlePriceAdjustment !== null && item.bottlePriceAdjustment !== undefined
+            ? parseFloat(item.bottlePriceAdjustment)
+            : 0;
+          const unitPrice = variantPrice + bottlePriceAdj;
+
           return {
             id: prod.id,
             productId: prod.id,
@@ -172,9 +178,26 @@ export const CartStore = {
             brand: prod.brand,
             image: (prod.images && prod.images[0]?.imageUrl) || prod.image || '',
             size: item.variant?.size || 'Default Size',
-            price: item.variant ? parseFloat(item.variant.price) : 0,
+            variantPrice: variantPrice,
+            unitPrice: unitPrice,
+            price: unitPrice, // For backward compatibility with total calculations
             quantity: item.quantity,
-            label: ''
+            label: '',
+            bottleId: item.bottleId || null,
+            bottleName: item.bottleName || null,
+            bottleColor: item.bottleColor || null,
+            bottleImage: item.bottleImage || null,
+            bottlePrice: bottlePriceAdj,
+            bottlePriceAdjustment: bottlePriceAdj,
+            bottleSku: item.bottleSku || null,
+            bottle: item.bottleName ? {
+              id: item.bottleId,
+              name: item.bottleName,
+              color: item.bottleColor,
+              image: item.bottleImage,
+              priceAdjustment: bottlePriceAdj,
+              sku: item.bottleSku
+            } : null
           };
         });
         if (syncVersion !== cartSessionVersion) {
@@ -195,13 +218,6 @@ export const CartStore = {
     if (!token) return;
     const mergeVersion = cartSessionVersion;
     const localCart = [...cartState];
-
-    // If guest cart is empty, simply sync the database cart down to local
-    if (localCart.length === 0) {
-      await this.sync(token);
-      return;
-    }
-
 
     // If guest cart is empty, simply sync the database cart down to local
     if (localCart.length === 0) {

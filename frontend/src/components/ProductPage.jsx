@@ -608,6 +608,8 @@ export default function ProductPage({ product: initialProduct, products = [], on
 
   // Handle Add to Cart
   const handleAddToCart = async () => {
+    if (isAdding) return;
+
     if (selectedQty <= 0) {
       showToast('Please select at least one item.', 'error');
       return;
