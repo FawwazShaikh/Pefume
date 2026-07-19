@@ -377,16 +377,16 @@ export default function ProductPage({ product: initialProduct, products = [], on
   const existingCartItem = useMemo(() => {
     if (!product || !selectedOption) return null;
     const sizeLabel = selectedOption.size || 'Default Size';
+    const currentBottleName = selectedBottleObj ? selectedBottleObj.name : null;
+    const currentBottleId = selectedBottleObj ? selectedBottleObj.id : null;
     return cartItems.find(item => {
-      if (item.variantId && selectedOption.variantId && item.variantId === selectedOption.variantId) {
-        // Also match bottle if present
-        const itemBottle = item.bottleName || null;
-        const currentBottle = selectedBottleObj ? selectedBottleObj.name : null;
-        return itemBottle === currentBottle;
-      }
-      const itemProdId = item.productId || item.id;
-      const currProdId = product.id || product.productId;
-      return itemProdId === currProdId && item.size === sizeLabel;
+      const matchVariant = (item.variantId && selectedOption.variantId && item.variantId === selectedOption.variantId) ||
+        ((item.productId || item.id) === (product.id || product.productId) && item.size === sizeLabel);
+      if (!matchVariant) return false;
+      const itemBottleId = item.bottleId || (item.bottle && item.bottle.id) || null;
+      if (currentBottleId || itemBottleId) return itemBottleId === currentBottleId;
+      const itemBottleName = item.bottleName || (item.bottle && item.bottle.name) || null;
+      return itemBottleName === currentBottleName;
     });
   }, [cartItems, product, selectedOption, selectedBottleObj]);
 
@@ -629,17 +629,30 @@ export default function ProductPage({ product: initialProduct, products = [], on
       const token = isSignedIn ? await getToken() : null;
       let result;
 
+      const variantPrice = selectedOption ? selectedOption.price : product.price;
+      const unitPrice = variantPrice + bottleAdditionalPrice;
+
       // Build the sizeOption with bottle metadata baked in
       const sizeOptionWithBottle = selectedOption
         ? {
           ...selectedOption,
-          price: selectedOption.price + bottleAdditionalPrice,
+          variantPrice: variantPrice,
+          unitPrice: unitPrice,
+          price: unitPrice,
           bottleId: selectedBottleObj ? selectedBottleObj.id : null,
           bottleName: selectedBottleObj ? selectedBottleObj.name : null,
           bottleColor: selectedBottleObj ? (selectedBottleObj.name.includes('Black') ? 'Black' : selectedBottleObj.name.includes('Gold') ? 'Gold' : 'Default') : null,
           bottleImage: selectedBottleObj ? selectedBottleObj.image : null,
           bottlePrice: bottleAdditionalPrice,
+          bottlePriceAdjustment: bottleAdditionalPrice,
           bottleSku: selectedBottleObj ? `${selectedOption.sku || 'DE'}-${selectedBottleObj.id.toUpperCase()}` : null,
+          bottle: selectedBottleObj ? {
+            id: selectedBottleObj.id,
+            name: selectedBottleObj.name,
+            image: selectedBottleObj.image,
+            priceAdjustment: bottleAdditionalPrice,
+            sku: `${selectedOption.sku || 'DE'}-${selectedBottleObj.id.toUpperCase()}`
+          } : null
         }
         : selectedOption;
 
@@ -647,7 +660,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
       if (existingCartItem && existingCartItem.quantity === selectedQty) {
         result = { success: true, reason: 'NO_OP' };
       } else if (existingCartItem) {
-        result = await updateQuantity(selectedOption.variantId || product.id, selectedOption.size, selectedQty, token);
+        result = await updateQuantity(existingCartItem.variantId || existingCartItem.id, existingCartItem.size, selectedQty, token);
       } else {
         result = await addToCart(product, sizeOptionWithBottle, selectedQty, token);
       }

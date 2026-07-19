@@ -202,6 +202,13 @@ export const CartStore = {
       return;
     }
 
+
+    // If guest cart is empty, simply sync the database cart down to local
+    if (localCart.length === 0) {
+      await this.sync(token);
+      return;
+    }
+
     try {
       // 1. Fetch remote cart to compare
       const res = await fetch(`${API_BASE_URL}/api/cart`, {
@@ -217,13 +224,15 @@ export const CartStore = {
 
       const remoteCart = dbCartItems.map(item => ({
         variantId: item.variantId,
+        bottleId: item.bottleId,
+        bottleName: item.bottleName,
         quantity: item.quantity,
         dbCartItemId: item.id
       }));
 
-      // Check if carts are identical (same variantIds and same quantities)
+      // Check if carts are identical (same variantIds, same bottles, and same quantities)
       const isIdentical = localCart.length === remoteCart.length && localCart.every(localItem => {
-        const remoteItem = remoteCart.find(r => r.variantId === localItem.variantId);
+        const remoteItem = remoteCart.find(r => r.variantId === localItem.variantId && (r.bottleId === localItem.bottleId || r.bottleName === localItem.bottleName));
         return remoteItem && remoteItem.quantity === localItem.quantity;
       });
 
@@ -231,6 +240,12 @@ export const CartStore = {
         // Load the server cart directly into cache without alerting the user
         const mappedCart = dbCartItems.map(item => {
           const prod = item.variant?.product || {};
+          const variantPrice = item.variant ? parseFloat(item.variant.price) : 0;
+          const bottlePriceAdj = item.bottlePriceAdjustment !== null && item.bottlePriceAdjustment !== undefined
+            ? parseFloat(item.bottlePriceAdjustment)
+            : 0;
+          const unitPrice = variantPrice + bottlePriceAdj;
+
           return {
             id: prod.id,
             productId: prod.id,
@@ -240,9 +255,26 @@ export const CartStore = {
             brand: prod.brand,
             image: (prod.images && prod.images[0]?.imageUrl) || prod.image || '',
             size: item.variant?.size || 'Default Size',
-            price: item.variant ? parseFloat(item.variant.price) : 0,
+            variantPrice: variantPrice,
+            unitPrice: unitPrice,
+            price: unitPrice,
             quantity: item.quantity,
-            label: ''
+            label: '',
+            bottleId: item.bottleId || null,
+            bottleName: item.bottleName || null,
+            bottleColor: item.bottleColor || null,
+            bottleImage: item.bottleImage || null,
+            bottlePrice: bottlePriceAdj,
+            bottlePriceAdjustment: bottlePriceAdj,
+            bottleSku: item.bottleSku || null,
+            bottle: item.bottleName ? {
+              id: item.bottleId,
+              name: item.bottleName,
+              color: item.bottleColor,
+              image: item.bottleImage,
+              priceAdjustment: bottlePriceAdj,
+              sku: item.bottleSku
+            } : null
           };
         });
         if (mergeVersion !== cartSessionVersion) {
@@ -260,11 +292,11 @@ export const CartStore = {
           return;
         }
         if (!localItem.variantId) continue;
-        const remoteItem = remoteCart.find(r => r.variantId === localItem.variantId);
+        const remoteItem = remoteCart.find(r => r.variantId === localItem.variantId && (r.bottleId === localItem.bottleId || r.bottleName === localItem.bottleName));
         
         let newQty = localItem.quantity;
         if (remoteItem) {
-          // Sum quantities for matching variantId matches
+          // Sum quantities for matching variantId and bottle matches
           newQty = localItem.quantity + remoteItem.quantity;
         }
 
@@ -275,7 +307,16 @@ export const CartStore = {
         const method = remoteItem ? 'PATCH' : 'POST';
         const bodyObj = remoteItem 
           ? { quantity: newQty } 
-          : { variantId: localItem.variantId, quantity: newQty };
+          : {
+              variantId: localItem.variantId,
+              quantity: newQty,
+              bottleId: localItem.bottleId || null,
+              bottleName: localItem.bottleName || null,
+              bottleColor: localItem.bottleColor || null,
+              bottleImage: localItem.bottleImage || null,
+              bottlePriceAdjustment: localItem.bottlePriceAdjustment || localItem.bottlePrice || 0,
+              bottleSku: localItem.bottleSku || null
+            };
 
         const uploadRes = await fetch(endpoint, {
           method,

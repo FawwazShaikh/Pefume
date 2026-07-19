@@ -744,20 +744,21 @@ export default function CartPage({ onBackToShop, products = [] }) {
           }
           throw new Error(`Variant ID missing for cart item: ${item.name} (${item.size})`);
         }
+        const bottlePriceAdj = Number(item.bottlePriceAdjustment !== undefined && item.bottlePriceAdjustment !== null ? item.bottlePriceAdjustment : (item.bottlePrice || 0));
         return {
           productId: item.productId || item.id,
           variantId: item.variantId,
           name: item.name,
           size: item.size,
-          price: item.price,
+          price: item.unitPrice || item.price,
           quantity: item.quantity,
           // Snapshot values
-          bottleId: item.bottleId || null,
-          bottleName: item.bottleName || null,
-          bottleColor: item.bottleColor || null,
-          bottleImage: item.bottleImage || null,
-          bottlePriceAdjustment: item.bottlePrice || 0,
-          bottleSku: item.bottleSku || null
+          bottleId: item.bottleId || (item.bottle && item.bottle.id) || null,
+          bottleName: item.bottleName || (item.bottle && item.bottle.name) || null,
+          bottleColor: item.bottleColor || (item.bottle && item.bottle.color) || null,
+          bottleImage: item.bottleImage || (item.bottle && item.bottle.image) || null,
+          bottlePriceAdjustment: bottlePriceAdj,
+          bottleSku: item.bottleSku || (item.bottle && item.bottle.sku) || null
         };
       });
 
@@ -1219,7 +1220,8 @@ export default function CartPage({ onBackToShop, products = [] }) {
 
                 <div className="bag-items-list divide-y divide-black/8">
                   {cartItems.map((item) => {
-                    const itemKey = `${item.id}-${item.size}`;
+                    const bottleSubKey = item.bottleId || item.bottleName || '';
+                    const itemKey = `${item.id}-${item.size}${bottleSubKey ? '-' + bottleSubKey : ''}`;
                     const fullProduct = products.find(p => p.id === item.productId || p.id === item.id);
                     const gallery = fullProduct?.images || [item.image];
                     const activeImgIdx = galleryIndexMap[itemKey] || 0;
@@ -1231,7 +1233,8 @@ export default function CartPage({ onBackToShop, products = [] }) {
 
                     const itemMutating = mutatingItems.has(item.variantId) || 
                                          mutatingItems.has((item.variantId || item.id) + '_' + item.size) ||
-                                         mutatingItems.has(item.id + '_' + item.size);
+                                         mutatingItems.has(item.id + '_' + item.size) ||
+                                         mutatingItems.has(itemKey);
 
                     return (
                       <div key={itemKey} className="product-row py-6 first:pt-0">

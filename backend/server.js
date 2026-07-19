@@ -3129,16 +3129,17 @@ app.get('/api/cart', requireAuth, async (req, res) => {
       }
     });
     const formatted = cartItems.map(item => {
-      if (item.variant) {
-        return {
-          ...item,
-          variant: {
-            ...item.variant,
-            price: parseFloat(item.variant.price)
-          }
-        };
-      }
-      return item;
+      const bPriceAdj = item.bottlePriceAdjustment !== null && item.bottlePriceAdjustment !== undefined
+        ? parseFloat(item.bottlePriceAdjustment)
+        : 0;
+      return {
+        ...item,
+        bottlePriceAdjustment: bPriceAdj,
+        variant: item.variant ? {
+          ...item.variant,
+          price: parseFloat(item.variant.price)
+        } : undefined
+      };
     });
     return res.status(200).json(formatted);
   } catch (err) {
@@ -3149,11 +3150,12 @@ app.get('/api/cart', requireAuth, async (req, res) => {
 
 // POST add item to cart
 app.post('/api/cart', requireAuth, async (req, res) => {
-  const { variantId, quantity } = req.body;
+  const { variantId, quantity, bottleId, bottleName, bottleColor, bottleImage, bottlePriceAdjustment, bottleSku } = req.body;
   if (!variantId) {
     return res.status(400).json({ error: 'Missing variantId' });
   }
   const qty = parseInt(quantity) || 1;
+  const bPriceAdj = bottlePriceAdjustment !== undefined && bottlePriceAdjustment !== null ? parseFloat(bottlePriceAdjustment) : 0;
   try {
     const dbUser = await getOrCreateDbUser(req.auth.userId);
     
@@ -3165,14 +3167,14 @@ app.post('/api/cart', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Variant not found' });
     }
 
-    // Find if exists
-    const existing = await prisma.cartItem.findUnique({
-      where: {
-        userId_variantId: {
-          userId: dbUser.id,
-          variantId
-        }
-      }
+    // Find if existing item matches userId, variantId AND bottleId/bottleName
+    const userItems = await prisma.cartItem.findMany({
+      where: { userId: dbUser.id, variantId }
+    });
+    const existing = userItems.find(i => {
+      if (bottleId) return i.bottleId === bottleId;
+      if (bottleName) return i.bottleName === bottleName;
+      return !i.bottleId && !i.bottleName;
     });
 
     const newQuantity = existing ? (existing.quantity + qty) : qty;
@@ -3189,13 +3191,22 @@ app.post('/api/cart', requireAuth, async (req, res) => {
     if (existing) {
       const updated = await prisma.cartItem.update({
         where: { id: existing.id },
-        data: { quantity: existing.quantity + qty },
+        data: {
+          quantity: existing.quantity + qty,
+          bottleId: bottleId || existing.bottleId,
+          bottleName: bottleName || existing.bottleName,
+          bottleColor: bottleColor || existing.bottleColor,
+          bottleImage: bottleImage || existing.bottleImage,
+          bottlePriceAdjustment: bPriceAdj || existing.bottlePriceAdjustment,
+          bottleSku: bottleSku || existing.bottleSku
+        },
         include: {
           variant: true
         }
       });
       return res.status(200).json({
         ...updated,
+        bottlePriceAdjustment: updated.bottlePriceAdjustment ? parseFloat(updated.bottlePriceAdjustment) : 0,
         variant: updated.variant ? { ...updated.variant, price: parseFloat(updated.variant.price) } : undefined
       });
     }
@@ -3204,7 +3215,13 @@ app.post('/api/cart', requireAuth, async (req, res) => {
       data: {
         userId: dbUser.id,
         variantId,
-        quantity: qty
+        quantity: qty,
+        bottleId: bottleId || null,
+        bottleName: bottleName || null,
+        bottleColor: bottleColor || null,
+        bottleImage: bottleImage || null,
+        bottlePriceAdjustment: bPriceAdj,
+        bottleSku: bottleSku || null
       },
       include: {
         variant: true
@@ -3212,6 +3229,7 @@ app.post('/api/cart', requireAuth, async (req, res) => {
     });
     return res.status(201).json({
       ...newItem,
+      bottlePriceAdjustment: newItem.bottlePriceAdjustment ? parseFloat(newItem.bottlePriceAdjustment) : 0,
       variant: newItem.variant ? { ...newItem.variant, price: parseFloat(newItem.variant.price) } : undefined
     });
   } catch (err) {

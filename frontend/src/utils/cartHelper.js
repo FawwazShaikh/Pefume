@@ -75,19 +75,23 @@ export const addToCart = async (product, sizeOption, quantity = 1, token = null)
     }
   }
 
-  const itemKey = sizeOption.variantId || getItemKey(product.id, sizeOption.size);
+  const itemKey = (sizeOption.variantId || getItemKey(product.id, sizeOption.size)) + 
+    (sizeOption.bottleId ? '_' + sizeOption.bottleId : (sizeOption.bottleName ? '_' + sizeOption.bottleName : ''));
   CartStore.startMutation(itemKey);
 
   const cart = [...CartStore.getState()];
   const sizeLabel = sizeOption.size || 'Default Size';
   
   const existingItemIndex = cart.findIndex(item => {
-    if (item.variantId && sizeOption.variantId && item.variantId === sizeOption.variantId) {
-      return true;
-    }
-    const itemProdId = item.productId || item.id;
-    const currProdId = product.id || product.productId;
-    return itemProdId === currProdId && item.size === sizeLabel;
+    const matchVariant = (item.variantId && sizeOption.variantId && item.variantId === sizeOption.variantId) ||
+      ((item.productId || item.id) === (product.id || product.productId) && item.size === sizeLabel);
+    if (!matchVariant) return false;
+    const itemBottleId = item.bottleId || (item.bottle && item.bottle.id) || null;
+    const targetBottleId = sizeOption.bottleId || (sizeOption.bottle && sizeOption.bottle.id) || null;
+    if (targetBottleId || itemBottleId) return targetBottleId === itemBottleId;
+    const itemBottleName = item.bottleName || (item.bottle && item.bottle.name) || null;
+    const targetBottleName = sizeOption.bottleName || (sizeOption.bottle && sizeOption.bottle.name) || null;
+    return targetBottleName === itemBottleName;
   });
 
   const oldQty = existingItemIndex > -1 ? cart[existingItemIndex].quantity : 0;
@@ -95,6 +99,10 @@ export const addToCart = async (product, sizeOption, quantity = 1, token = null)
 
   // Exact snapshot for rollback: deep clone before mutation
   const oldItem = existingItemIndex > -1 ? JSON.parse(JSON.stringify(cart[existingItemIndex])) : null;
+
+  const variantPrice = sizeOption.variantPrice || (sizeOption.price !== undefined && sizeOption.bottlePrice !== undefined ? sizeOption.price - sizeOption.bottlePrice : (sizeOption.price || product.price || 0));
+  const bottlePriceAdj = sizeOption.bottlePriceAdjustment || sizeOption.bottlePrice || 0;
+  const unitPrice = sizeOption.unitPrice || (variantPrice + bottlePriceAdj);
 
   if (existingItemIndex > -1) {
     cart[existingItemIndex].quantity += quantity;
@@ -107,16 +115,27 @@ export const addToCart = async (product, sizeOption, quantity = 1, token = null)
       brand: product.brand,
       image: product.image || (product.images && product.images[0]) || '',
       size: sizeLabel,
-      price: sizeOption.price || product.price,
+      variantPrice: variantPrice,
+      unitPrice: unitPrice,
+      price: unitPrice,
       quantity: quantity,
       label: sizeOption.label || '',
-      // Bottle packaging selection (optional — only present for 5ml and 10ml sizes)
+      // Bottle packaging selection (optional — present for 5ml and 10ml sizes)
       bottleId: sizeOption.bottleId || null,
       bottleName: sizeOption.bottleName || null,
       bottleColor: sizeOption.bottleColor || null,
       bottleImage: sizeOption.bottleImage || null,
-      bottlePrice: sizeOption.bottlePrice || 0,
+      bottlePrice: bottlePriceAdj,
+      bottlePriceAdjustment: bottlePriceAdj,
       bottleSku: sizeOption.bottleSku || null,
+      bottle: sizeOption.bottleName ? {
+        id: sizeOption.bottleId,
+        name: sizeOption.bottleName,
+        color: sizeOption.bottleColor,
+        image: sizeOption.bottleImage,
+        priceAdjustment: bottlePriceAdj,
+        sku: sizeOption.bottleSku
+      } : null
     });
   }
   
@@ -134,7 +153,13 @@ export const addToCart = async (product, sizeOption, quantity = 1, token = null)
         },
         body: JSON.stringify({
           variantId: sizeOption.variantId,
-          quantity
+          quantity,
+          bottleId: sizeOption.bottleId || null,
+          bottleName: sizeOption.bottleName || null,
+          bottleColor: sizeOption.bottleColor || null,
+          bottleImage: sizeOption.bottleImage || null,
+          bottlePriceAdjustment: bottlePriceAdj,
+          bottleSku: sizeOption.bottleSku || null
         })
       });
 
@@ -153,7 +178,15 @@ export const addToCart = async (product, sizeOption, quantity = 1, token = null)
             brand: product.brand,
             image: product.image || (product.images && (product.images[0]?.imageUrl || product.images[0])) || '',
             size: sizeLabel,
-            price: sizeOption.price || product.price,
+            variantPrice: variantPrice,
+            unitPrice: unitPrice,
+            price: unitPrice,
+            bottleId: sizeOption.bottleId || null,
+            bottleName: sizeOption.bottleName || null,
+            bottleColor: sizeOption.bottleColor || null,
+            bottleImage: sizeOption.bottleImage || null,
+            bottlePrice: bottlePriceAdj,
+            bottlePriceAdjustment: bottlePriceAdj,
             quantity: newQty
           }
         }));
