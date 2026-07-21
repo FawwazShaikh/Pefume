@@ -9,31 +9,9 @@ import { WishlistStore, CartStore } from '../utils/store.js';
 import { API_BASE_URL, sanitizeImageUrl } from '../utils/config.js';
 import { SALE_START_DATE, SALE_END_DATE, computeDisplayMrp, getCampaignPhase, CAMPAIGN_PHASE } from '../utils/launchPricing.js';
 import { useLaunchCountdown } from '../hooks/useLaunchCountdown.js';
+import { getBottleCatalog, preloadBottleQueue } from '../utils/bottleService.js';
 
-// ── Bottle Options (frontend-only, packaging choice) ────────────────────────
-// Drop image files into: frontend/public/bottles/
-// Supported formats: .webp (preferred), .png, .jpg
-const BOTTLE_OPTIONS = {
-  '5ml': [
-    { id: 'classic-mini-black', name: 'Classic Mini Spray (Black)', additionalPrice: 0, image: '/decant_images/bottle_5ml_black.webp' },
-    { id: 'classic-mini-gold', name: 'Classic Mini Spray (Gold)', additionalPrice: 0, image: '/decant_images/bottle_5ml_gold.webp' },
-  ],
-  '10ml': [
-    { id: 'metal-atomizer-black', name: 'Classic Metal Atomizer (Black)', additionalPrice: 0, image: '/decant_images/bottle_10ml_black.webp' },
-    { id: 'metal-atomizer-gold', name: 'Classic Metal Atomizer (Gold)', additionalPrice: 0, image: '/decant_images/bottle_10ml_gold.webp' },
-    { id: 'premium-metal-atomizer', name: 'Premium Classic Metal Atomizer', additionalPrice: 55, image: '/decant_images/bottle_10ml_premium.webp' },
-    { id: 'travel-safe', name: 'Travel-Safe', additionalPrice: 199, image: '/decant_images/bottle_10ml_travel.webp' },
-  ],
-};
-
-// Derive which bottle key ('5ml' | '10ml' | null) a size string maps to
-function getBottleKey(sizeStr) {
-  if (!sizeStr) return null;
-  const s = sizeStr.toLowerCase();
-  if (s.includes('5ml')) return '5ml';
-  if (s.includes('10ml')) return '10ml';
-  return null;
-}
+// Dynamic bottle options managed via central bottle catalog service
 
 // ── PriceBlock ───────────────────────────────────────────────────────────────
 // Defined at module level (outside ProductPage) so it is a stable reference
@@ -164,7 +142,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
   const [loading, setLoading] = useState(!!slug && !initialProduct);
 
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
-  // selectedBottle holds the bottle option id, or null when no bottle applies
+  const [availableBottles, setAvailableBottles] = useState([]);
   const [selectedBottle, setSelectedBottle] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [cartItems, setCartItems] = useState(() => getCart());
@@ -348,30 +326,46 @@ export default function ProductPage({ product: initialProduct, products = [], on
     return product.sizes[selectedSizeIndex] || product.sizes[0];
   }, [product, selectedSizeIndex]);
 
-  // Which bottle list applies for the currently selected size
-  const bottleKey = useMemo(() => {
-    if (!selectedOption) return null;
-    return getBottleKey(selectedOption.size);
-  }, [selectedOption]);
-
-  // Auto-select first bottle when size changes to one that has bottles
+  // Fetch dynamic bottle catalog options whenever selected size or product changes
   useEffect(() => {
-    if (bottleKey && BOTTLE_OPTIONS[bottleKey]) {
-      setSelectedBottle(BOTTLE_OPTIONS[bottleKey][0].id);
-    } else {
-      setSelectedBottle(null);
+    let isMounted = true;
+    async function loadBottles() {
+      if (!selectedOption) {
+        if (isMounted) { setAvailableBottles([]); setSelectedBottle(null); }
+        return;
+      }
+      const bottles = await getBottleCatalog(product?.id, selectedOption.size);
+      if (isMounted) {
+        setAvailableBottles(bottles);
+        if (bottles.length > 0) {
+          const defaultBtl = bottles.find(b => b.isDefault) || bottles[0];
+          setSelectedBottle(defaultBtl.id);
+          preloadBottleQueue(bottles, defaultBtl.id);
+        } else {
+          setSelectedBottle(null);
+        }
+      }
     }
-  }, [bottleKey]);
+    loadBottles();
+    return () => { isMounted = false; };
+  }, [selectedOption, product?.id]);
 
-  // The currently selected bottle object
+  // Preload selected + next 2 visible bottle images on selection change
+  useEffect(() => {
+    if (availableBottles.length > 0 && selectedBottle) {
+      preloadBottleQueue(availableBottles, selectedBottle);
+    }
+  }, [selectedBottle, availableBottles]);
+
+  // Currently selected bottle object
   const selectedBottleObj = useMemo(() => {
-    if (!bottleKey || !selectedBottle) return null;
-    return (BOTTLE_OPTIONS[bottleKey] || []).find(b => b.id === selectedBottle) || null;
-  }, [bottleKey, selectedBottle]);
+    if (!selectedBottle || availableBottles.length === 0) return null;
+    return availableBottles.find(b => b.id === selectedBottle) || null;
+  }, [availableBottles, selectedBottle]);
 
-  // Additional price from the chosen bottle
+  // Additional price from chosen bottle
   const bottleAdditionalPrice = useMemo(() => {
-    return selectedBottleObj ? selectedBottleObj.additionalPrice : 0;
+    return selectedBottleObj ? selectedBottleObj.priceAdjustment : 0;
   }, [selectedBottleObj]);
 
   const existingCartItem = useMemo(() => {
@@ -643,17 +637,20 @@ export default function ProductPage({ product: initialProduct, products = [], on
           price: unitPrice,
           bottleId: selectedBottleObj ? selectedBottleObj.id : null,
           bottleName: selectedBottleObj ? selectedBottleObj.name : null,
-          bottleColor: selectedBottleObj ? (selectedBottleObj.name.includes('Black') ? 'Black' : selectedBottleObj.name.includes('Gold') ? 'Gold' : 'Default') : null,
-          bottleImage: selectedBottleObj ? selectedBottleObj.image : null,
+          bottleColor: selectedBottleObj ? selectedBottleObj.finish : null,
+          bottleImage: selectedBottleObj ? selectedBottleObj.imageUrl : null,
           bottlePrice: bottleAdditionalPrice,
           bottlePriceAdjustment: bottleAdditionalPrice,
-          bottleSku: selectedBottleObj ? `${selectedOption.sku || 'DE'}-${selectedBottleObj.id.toUpperCase()}` : null,
+          bottleSku: selectedBottleObj ? selectedBottleObj.sku : null,
+          bottleCategory: selectedBottleObj ? selectedBottleObj.category : null,
           bottle: selectedBottleObj ? {
             id: selectedBottleObj.id,
             name: selectedBottleObj.name,
-            image: selectedBottleObj.image,
+            finish: selectedBottleObj.finish,
+            category: selectedBottleObj.category,
+            image: selectedBottleObj.imageUrl,
             priceAdjustment: bottleAdditionalPrice,
-            sku: `${selectedOption.sku || 'DE'}-${selectedBottleObj.id.toUpperCase()}`
+            sku: selectedBottleObj.sku
           } : null
         }
         : selectedOption;
@@ -1182,19 +1179,19 @@ export default function ProductPage({ product: initialProduct, products = [], on
                 </div>
               </div>
 
-              {/* ── Bottle Selector (only for 5ml and 10ml) ── */}
-              {bottleKey && BOTTLE_OPTIONS[bottleKey] && (
+              {/* ── Bottle Selector ── */}
+              {availableBottles.length > 0 && (
                 <div>
                   <span className="pdp-field-label">
-                    {bottleKey === '5ml' ? '5ML' : '10ML'} — Choose Your Bottle
+                    {selectedOption?.size?.toUpperCase()} — Choose Your Bottle Packaging
                   </span>
                   <div
                     className="pdp-bottle-grid"
                     role="group"
-                    aria-label={`Choose your ${bottleKey} bottle`}
-                    data-cols={BOTTLE_OPTIONS[bottleKey].length}
+                    aria-label={`Choose your ${selectedOption?.size} bottle`}
+                    data-cols={Math.min(availableBottles.length, 4)}
                   >
-                    {BOTTLE_OPTIONS[bottleKey].map((bottle) => {
+                    {availableBottles.map((bottle) => {
                       const isActive = selectedBottle === bottle.id;
                       return (
                         <button
@@ -1202,15 +1199,15 @@ export default function ProductPage({ product: initialProduct, products = [], on
                           id={`bottle-option-${bottle.id}`}
                           onClick={() => setSelectedBottle(bottle.id)}
                           disabled={isAdding || isItemMutating}
-                          aria-label={`${bottle.name}${bottle.additionalPrice > 0 ? `, +₹${bottle.additionalPrice}` : ', included'}`}
+                          aria-label={`${bottle.name} - ${bottle.finish}${bottle.priceAdjustment > 0 ? `, +₹${bottle.priceAdjustment}` : ', included'}`}
                           aria-pressed={isActive}
                           className={`pdp-bottle-card${isActive ? ' pdp-bottle-card--active' : ''}`}
                         >
                           <div className="pdp-bottle-img-wrap" aria-hidden="true">
-                            {bottle.image ? (
+                            {bottle.imageUrl ? (
                               <img
-                                src={bottle.image}
-                                alt={bottle.name}
+                                src={bottle.imageUrl}
+                                alt={`${bottle.name} ${bottle.finish}`}
                                 loading="lazy"
                                 className="pdp-bottle-img"
                                 draggable={false}
@@ -1222,8 +1219,9 @@ export default function ProductPage({ product: initialProduct, products = [], on
                             )}
                           </div>
                           <span className="pdp-bottle-card__name">{bottle.name}</span>
+                          <span className="pdp-bottle-card__finish">{bottle.finish}</span>
                           <span className="pdp-bottle-card__price">
-                            {bottle.additionalPrice === 0 ? '+₹0' : `+₹${bottle.additionalPrice}`}
+                            {bottle.badge ? bottle.badge : bottle.priceAdjustment === 0 ? 'Included' : `+₹${bottle.priceAdjustment}`}
                           </span>
                         </button>
                       );
@@ -1233,7 +1231,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
               )}
 
               {/* Vial Spray (decants only, only when no bottle selector) */}
-              {product.category === 'decants' && !bottleKey && (
+              {product.category === 'decants' && availableBottles.length === 0 && (
                 <div>
                   <span className="pdp-field-label">Vial Spray Setup</span>
                   <div className="pdp-vial-card">

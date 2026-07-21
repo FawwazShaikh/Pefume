@@ -74,6 +74,7 @@ model Product {
   variants    ProductVariant[]
   category    Category?         @relation(fields: [categoryId], references: [id])
   reviews     Review[]
+  allowedBottles ProductAllowedBottle[]
 
   @@index([slug])
   @@index([name])
@@ -168,6 +169,7 @@ model CartItem {
   bottleImage           String?
   bottlePriceAdjustment Decimal?       @db.Decimal(10, 2)
   bottleSku             String?
+  bottleCategory        String?
   createdAt             DateTime       @default(now())
   user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   variant               ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
@@ -230,6 +232,7 @@ model OrderItem {
   bottleImage           String?
   bottlePriceAdjustment Decimal? @db.Decimal(10, 2)
   bottleSku             String?
+  bottleCategory        String?
 
   order           Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product         Product        @relation(fields: [productId], references: [id])
@@ -399,4 +402,63 @@ model Coupon {
 enum CouponType {
   FIXED
   PERCENT
+}
+
+enum BottleCategory {
+  CLASSIC_MINI
+  TRAVEL_SAFE
+  CLASSIC_METAL
+  PREMIUM
+  LUXURY
+}
+
+model BottleCatalog {
+  id                  String                   @id @default(cuid())
+  sku                 String                   @unique
+  name                String
+  finish              String
+  category            BottleCategory           @default(CLASSIC_MINI)
+  imageKey            String
+  priceAdjustment     Decimal                  @default(0) @db.Decimal(10, 2)
+  badge               String?
+  sortOrder           Int                      @default(0)
+  isActive            Boolean                  @default(true)
+  isDefault           Boolean                  @default(false)
+  stock               Int                      @default(100)
+  lowStockThreshold   Int                      @default(10)
+  trackInventory      Boolean                  @default(true)
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  sizeAvailabilities  BottleSizeAvailability[]
+  productRestrictions ProductAllowedBottle[]
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("bottle_catalog")
+}
+
+model BottleSizeAvailability {
+  id        String        @id @default(cuid())
+  bottleId  String
+  size      String
+  enabled   Boolean       @default(true)
+  bottle    BottleCatalog @relation(fields: [bottleId], references: [id], onDelete: Cascade)
+
+  @@unique([bottleId, size])
+  @@index([bottleId])
+  @@map("bottle_size_availabilities")
+}
+
+model ProductAllowedBottle {
+  id        String        @id @default(cuid())
+  productId String
+  bottleId  String
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  bottle    BottleCatalog @relation(fields: [bottleId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, bottleId])
+  @@index([productId])
+  @@index([bottleId])
+  @@map("product_allowed_bottles")
 }

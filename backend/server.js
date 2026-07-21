@@ -9,7 +9,7 @@ import { prisma, verifyDatabaseSchema } from './lib/prisma.js';
 import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import { deductFromBottle, restoreToBottle, getTotalOpenML, recomputeVariantStock } from './lib/bottleInventory.js';
-import { sendLowStockAlert, sendNewOrderAlert } from './lib/emailService.js';
+import { sendLowStockAlert, sendNewOrderAlert, sendCustomerOrderConfirmation, sendTestEmail } from './lib/emailService.js';
 
 // Load environment variables
 dotenv.config();
@@ -635,8 +635,227 @@ const setDefaultAddressHandler = async (req, res) => {
     return res.status(500).json({ error: 'Failed to set default address' });
   }
 };
-app.patch('/api/addresses/:id/default', requireAuth, setDefaultAddressHandler);
-app.patch('/api/user/addresses/:id/default', requireAuth, setDefaultAddressHandler);
+// ============================================================
+// BOTTLE CATALOG ROUTES
+// ============================================================
+
+// GET public bottle options (filtered by size and product restrictions if provided)
+app.get('/api/bottles', async (req, res) => {
+  const { productId, size } = req.query;
+
+  try {
+    const bottles = await prisma.bottleCatalog.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      include: {
+        sizeAvailabilities: true,
+        productRestrictions: true
+      }
+    });
+
+    let filtered = bottles;
+    if (size) {
+      const targetSize = size.toLowerCase().trim();
+      filtered = filtered.filter(b => {
+        const matchingSize = b.sizeAvailabilities.find(sa => sa.size.toLowerCase() === targetSize);
+        return matchingSize ? matchingSize.enabled : true;
+      });
+    }
+
+    if (productId) {
+      const allowedCount = await prisma.productAllowedBottle.count({
+        where: { productId }
+      });
+
+      if (allowedCount > 0) {
+        filtered = filtered.filter(b => {
+          return b.productRestrictions.some(pr => pr.productId === productId);
+        });
+      }
+    }
+
+    const formatted = filtered.map(b => ({
+      id: b.id,
+      sku: b.sku,
+      name: b.name,
+      finish: b.finish,
+      category: b.category,
+      imageKey: b.imageKey,
+      priceAdjustment: parseFloat(b.priceAdjustment),
+      badge: b.badge,
+      sortOrder: b.sortOrder,
+      isActive: b.isActive,
+      isDefault: b.isDefault,
+      stock: b.stock,
+      lowStockThreshold: b.lowStockThreshold,
+      trackInventory: b.trackInventory,
+      availableSizes: b.sizeAvailabilities.filter(sa => sa.enabled).map(sa => sa.size)
+    }));
+
+    return res.status(200).json(formatted);
+  } catch (err) {
+    console.error('Failed to fetch bottle catalog:', err);
+    return res.status(500).json({ error: 'Failed to fetch bottle catalog' });
+  }
+});
+
+// GET admin bottle catalog
+app.get('/api/admin/bottles/catalog', requireAuth, async (req, res) => {
+  try {
+    const bottles = await prisma.bottleCatalog.findMany({
+      orderBy: { sortOrder: 'asc' },
+      include: {
+        sizeAvailabilities: true,
+        productRestrictions: {
+          include: { product: { select: { id: true, name: true } } }
+        }
+      }
+    });
+
+    const formatted = bottles.map(b => ({
+      ...b,
+      priceAdjustment: parseFloat(b.priceAdjustment),
+      availableSizes: b.sizeAvailabilities.filter(sa => sa.enabled).map(sa => sa.size),
+      sizeMatrix: b.sizeAvailabilities.reduce((acc, sa) => {
+        acc[sa.size] = sa.enabled;
+        return acc;
+      }, {})
+    }));
+
+    return res.status(200).json(formatted);
+  } catch (err) {
+    console.error('Failed to fetch admin bottle catalog:', err);
+    return res.status(500).json({ error: 'Failed to fetch admin bottle catalog' });
+  }
+});
+
+// POST create admin bottle catalog item
+app.post('/api/admin/bottles/catalog', requireAuth, async (req, res) => {
+  const { sku, name, finish, category, imageKey, priceAdjustment, badge, sortOrder, isActive, isDefault, stock, lowStockThreshold, trackInventory, sizes } = req.body;
+
+  if (!sku || !name || !finish || !imageKey) {
+    return res.status(400).json({ error: 'Missing required bottle attributes (sku, name, finish, imageKey)' });
+  }
+
+  try {
+    const bottle = await prisma.bottleCatalog.create({
+      data: {
+        sku: sku.trim().toUpperCase(),
+        name: name.trim(),
+        finish: finish.trim(),
+        category: category || 'CLASSIC_MINI',
+        imageKey: imageKey.trim(),
+        priceAdjustment: priceAdjustment !== undefined ? parseFloat(priceAdjustment) : 0,
+        badge: badge ? badge.trim() : null,
+        sortOrder: sortOrder !== undefined ? parseInt(sortOrder) : 0,
+        isActive: isActive !== undefined ? !!isActive : true,
+        isDefault: isDefault !== undefined ? !!isDefault : false,
+        stock: stock !== undefined ? parseInt(stock) : 100,
+        lowStockThreshold: lowStockThreshold !== undefined ? parseInt(lowStockThreshold) : 10,
+        trackInventory: trackInventory !== undefined ? !!trackInventory : true
+      }
+    });
+
+    const allSizes = ['5ml', '10ml', '20ml', '30ml'];
+    const enabledList = Array.isArray(sizes) ? sizes : allSizes;
+    for (const size of allSizes) {
+      await prisma.bottleSizeAvailability.create({
+        data: {
+          bottleId: bottle.id,
+          size,
+          enabled: enabledList.includes(size)
+        }
+      });
+    }
+
+    return res.status(201).json(bottle);
+  } catch (err) {
+    console.error('Failed to create bottle catalog item:', err);
+    return res.status(500).json({ error: err.message || 'Failed to create bottle catalog item' });
+  }
+});
+
+// PATCH update admin bottle catalog item
+app.patch('/api/admin/bottles/catalog/:id', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { sku, name, finish, category, imageKey, priceAdjustment, badge, sortOrder, isActive, isDefault, stock, lowStockThreshold, trackInventory, sizes } = req.body;
+
+  try {
+    const updateData = {};
+    if (sku !== undefined) updateData.sku = sku.trim().toUpperCase();
+    if (name !== undefined) updateData.name = name.trim();
+    if (finish !== undefined) updateData.finish = finish.trim();
+    if (category !== undefined) updateData.category = category;
+    if (imageKey !== undefined) updateData.imageKey = imageKey.trim();
+    if (priceAdjustment !== undefined) updateData.priceAdjustment = parseFloat(priceAdjustment);
+    if (badge !== undefined) updateData.badge = badge ? badge.trim() : null;
+    if (sortOrder !== undefined) updateData.sortOrder = parseInt(sortOrder);
+    if (isActive !== undefined) updateData.isActive = !!isActive;
+    if (isDefault !== undefined) updateData.isDefault = !!isDefault;
+    if (stock !== undefined) updateData.stock = parseInt(stock);
+    if (lowStockThreshold !== undefined) updateData.lowStockThreshold = parseInt(lowStockThreshold);
+    if (trackInventory !== undefined) updateData.trackInventory = !!trackInventory;
+
+    const updated = await prisma.bottleCatalog.update({
+      where: { id },
+      data: updateData
+    });
+
+    if (Array.isArray(sizes)) {
+      const allSizes = ['5ml', '10ml', '20ml', '30ml'];
+      for (const size of allSizes) {
+        const isEnabled = sizes.includes(size);
+        await prisma.bottleSizeAvailability.upsert({
+          where: { bottleId_size: { bottleId: id, size } },
+          update: { enabled: isEnabled },
+          create: { bottleId: id, size, enabled: isEnabled }
+        });
+      }
+    }
+
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error('Failed to update bottle catalog item:', err);
+    return res.status(500).json({ error: err.message || 'Failed to update bottle catalog item' });
+  }
+});
+
+// PATCH reorder bottle catalog items
+app.patch('/api/admin/bottles/catalog-reorder', requireAuth, async (req, res) => {
+  const { orderedIds } = req.body;
+  if (!Array.isArray(orderedIds)) {
+    return res.status(400).json({ error: 'orderedIds array required' });
+  }
+
+  try {
+    for (let index = 0; index < orderedIds.length; index++) {
+      const bottleId = orderedIds[index];
+      await prisma.bottleCatalog.update({
+        where: { id: bottleId },
+        data: { sortOrder: (index + 1) * 10 }
+      });
+    }
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('Failed to reorder bottle catalog:', err);
+    return res.status(500).json({ error: 'Failed to reorder bottles' });
+  }
+});
+
+// DELETE archive bottle catalog item
+app.delete('/api/admin/bottles/catalog/:id', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.bottleCatalog.update({
+      where: { id },
+      data: { isActive: false }
+    });
+    return res.status(200).json({ success: true, message: 'Bottle archived successfully' });
+  } catch (err) {
+    console.error('Failed to delete bottle catalog item:', err);
+    return res.status(500).json({ error: 'Failed to delete bottle catalog item' });
+  }
+});
 
 // ============================================================
 // ORDER MANAGEMENT ROUTES
@@ -724,11 +943,17 @@ async function triggerOrderAlerts(orderId, customerName, items) {
   try {
     const orderWithDetails = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { orderItems: true }
+      include: { orderItems: true, user: true, address: true }
     });
     if (orderWithDetails) {
-      // Send new order email alert
+      // 1. Send new order alert to store owner / admin
       await sendNewOrderAlert(orderWithDetails, customerName);
+
+      // 2. Send order confirmation to customer
+      const customerEmail = orderWithDetails.user?.email || orderWithDetails.address?.email;
+      if (customerEmail) {
+        await sendCustomerOrderConfirmation(orderWithDetails, customerEmail);
+      }
     }
 
     // Check low stock on all ordered products' active bottles
@@ -752,6 +977,22 @@ async function triggerOrderAlerts(orderId, customerName, items) {
     console.error('Error running triggerOrderAlerts background alerts:', err);
   }
 }
+
+// POST trigger test email (admin only)
+app.post('/api/admin/test-email', requireAuth, async (req, res) => {
+  const { recipientEmail } = req.body;
+  try {
+    const result = await sendTestEmail(recipientEmail);
+    return res.status(200).json({
+      success: true,
+      message: `Test email dispatched to ${result.recipient}`,
+      messageId: result.messageId
+    });
+  } catch (err) {
+    console.error('Test email failed:', err);
+    return res.status(500).json({ error: err.message || 'Failed to dispatch test email.' });
+  }
+});
 
 // POST place order
 app.post('/api/orders', requireAuth, async (req, res) => {

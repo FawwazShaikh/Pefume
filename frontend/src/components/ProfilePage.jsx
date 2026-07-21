@@ -725,8 +725,9 @@ export default function ProfilePage() {
                                     <h5 className="text-[0.65rem] font-bold uppercase tracking-wider text-[#1C1B18] mb-3">Scent Selections</h5>
                                     <div className="space-y-3">
                                       {order.orderItems?.map(item => {
-                                        const bottleName = item.bottleName;
-                                        const bottleColor = item.bottleColor;
+                                        const rawBottleName = item.bottleName || '';
+                                        const bottleName = rawBottleName.replace(/\s*\([^)]*\)/g, '').trim();
+                                        const bottleColor = item.bottleColor || item.bottleFinish;
                                         const bottlePriceAdj = Number(item.bottlePriceAdjustment || 0);
                                         const bottleText = bottleName 
                                           ? `${bottleName}${bottleColor ? ` (${bottleColor})` : ''}` 

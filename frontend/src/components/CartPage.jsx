@@ -1283,7 +1283,7 @@ export default function CartPage({ onBackToShop, products = [] }) {
                                {item.bottleName && (
                                  <div className="pt-0.5 space-y-0.5 text-center md:text-left">
                                    <span className="text-[0.68rem] text-[#8B672F] font-semibold block">
-                                     Bottle: {item.bottleName}{item.bottleColor ? ` (${item.bottleColor})` : ''}
+                                     Bottle: {(item.bottleName || '').replace(/\s*\([^)]*\)/g, '').trim()}{(item.bottleColor || item.bottleFinish) ? ` (${item.bottleColor || item.bottleFinish})` : ''}
                                    </span>
                                    {Number(item.bottlePrice || item.bottlePriceAdjustment || 0) > 0 ? (
                                      <span className="text-[0.62rem] text-[#8B672F] font-bold uppercase tracking-wider block">

@@ -195,10 +195,11 @@ export default function MiniBag({ products = [], onCloseMiniBag }) {
               <h4 className="added-item-name">{addedItem.name}</h4>
               {(() => {
                 let size = addedItem.size || '';
-                let bottleName = addedItem.bottleName || addedItem.bottleType || '';
-                let bottleColor = addedItem.bottleColor || '';
+                let rawBottleName = addedItem.bottleName || addedItem.bottleType || '';
+                let cleanBottleName = rawBottleName.replace(/\s*\([^)]*\)/g, '').trim();
+                let bottleColor = addedItem.bottleColor || addedItem.bottleFinish || '';
                 let bottlePriceAdj = Number(addedItem.bottlePrice || addedItem.bottlePriceAdjustment || 0);
-                let bottleText = bottleName ? `${bottleName}${bottleColor ? ` (${bottleColor})` : ''}` : '';
+                let bottleText = cleanBottleName ? `${cleanBottleName}${bottleColor ? ` (${bottleColor})` : ''}` : '';
                 
                 return (
                   <>

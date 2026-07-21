@@ -6,6 +6,7 @@ import { clearCart } from '../utils/cartHelper.js';
 import { CartStore } from '../utils/store.js';
 import './AdminPage.css';
 import { API_BASE_URL, sanitizeImageUrl } from '../utils/config.js';
+import { getBottleImageUrl } from '../utils/bottleResolver.js';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function AdminPage() {
   const [reviews, setReviews] = useState([]);
   const [inventoryLogs, setInventoryLogs] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
-  
+
   // Coupon states
   const [coupons, setCoupons] = useState([]);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
@@ -53,6 +54,31 @@ export default function AdminPage() {
     isActive: true
   });
 
+  // Central Bottle Catalog states
+  const [bottleCatalog, setBottleCatalog] = useState([]);
+  const [bottleCatalogSearch, setBottleCatalogSearch] = useState('');
+  const [bottleCategoryFilter, setBottleCategoryFilter] = useState('ALL');
+  const [showBottleCatalogModal, setShowBottleCatalogModal] = useState(false);
+  const [editingCatalogBottle, setEditingCatalogBottle] = useState(null);
+  const [bottleCatalogFormError, setBottleCatalogFormError] = useState('');
+  const [isSavingBottleCatalog, setIsSavingBottleCatalog] = useState(false);
+  const [bottleCatalogForm, setBottleCatalogForm] = useState({
+    sku: '',
+    name: '',
+    finish: '',
+    category: 'CLASSIC_MINI',
+    imageKey: '',
+    priceAdjustment: '0',
+    badge: 'Included',
+    sortOrder: '10',
+    isActive: true,
+    isDefault: false,
+    stock: '100',
+    lowStockThreshold: '10',
+    trackInventory: true,
+    sizes: ['5ml', '10ml', '20ml', '30ml']
+  });
+
   // Bottle-based inventory states
   const [bottles, setBottles] = useState([]);
   const [recentMovements, setRecentMovements] = useState([]);
@@ -74,6 +100,9 @@ export default function AdminPage() {
 
   // Settings states
   const [settingsTab, setSettingsTab] = useState('store');
+  const [testEmailRecipient, setTestEmailRecipient] = useState('');
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState(null);
   const [storeSettings, setStoreSettings] = useState({
     storeName: 'Decant Atelier',
     supportEmail: 'concierge@decantatelier.com',
@@ -266,6 +295,17 @@ export default function AdminPage() {
         console.error('Failed to fetch bottles:', err);
       }
 
+      // Fetch Central Bottle Catalog
+      try {
+        const catalogRes = await fetch(`${API_BASE_URL}/api/admin/bottles/catalog`, { headers });
+        if (catalogRes.ok) {
+          const catalogData = await catalogRes.json();
+          setBottleCatalog(catalogData);
+        }
+      } catch (err) {
+        console.error('Failed to fetch central bottle catalog:', err);
+      }
+
       // Fetch Recent Movements
       try {
         const movementRes = await fetch(`${API_BASE_URL}/api/admin/movements/recent`, { headers });
@@ -375,8 +415,8 @@ export default function AdminPage() {
     try {
       const headers = await getAdminHeaders();
       const method = editingProduct ? 'PATCH' : 'POST';
-      const url = editingProduct 
-        ? `${API_BASE_URL}/api/products/${editingProduct.id}` 
+      const url = editingProduct
+        ? `${API_BASE_URL}/api/products/${editingProduct.id}`
         : `${API_BASE_URL}/api/products`;
 
       const payload = {
@@ -532,17 +572,17 @@ export default function AdminPage() {
       featured: false,
       isActive: true,
       categoryId: prod.categoryId || '',
-      images: prod.images && prod.images.length > 0 
-        ? prod.images.map(img => ({ imageUrl: img.imageUrl, altText: img.altText || '', position: img.position })) 
+      images: prod.images && prod.images.length > 0
+        ? prod.images.map(img => ({ imageUrl: img.imageUrl, altText: img.altText || '', position: img.position }))
         : [{ imageUrl: '', altText: '', position: 0 }],
-      variants: prod.variants && prod.variants.length > 0 
-        ? prod.variants.map(v => ({ size: v.size, price: v.price.toString(), stock: v.stock.toString(), sku: `${v.sku}-COPY`, lowStockThreshold: v.lowStockThreshold || 5, isActive: true })) 
+      variants: prod.variants && prod.variants.length > 0
+        ? prod.variants.map(v => ({ size: v.size, price: v.price.toString(), stock: v.stock.toString(), sku: `${v.sku}-COPY`, lowStockThreshold: v.lowStockThreshold || 5, isActive: true }))
         : [
-            { size: '5ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
-            { size: '10ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
-            { size: '20ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
-            { size: '30ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true }
-          ]
+          { size: '5ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+          { size: '10ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+          { size: '20ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+          { size: '30ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true }
+        ]
     });
     setErrorMsg('');
     setShowProductModal(true);
@@ -670,7 +710,7 @@ export default function AdminPage() {
       showToast('All open bottles are currently above their low-stock thresholds.', 'success');
       return;
     }
-    
+
     setLoadingData(true);
     try {
       const headers = await getAdminHeaders();
@@ -764,7 +804,7 @@ export default function AdminPage() {
       showToast('Security Protocol: You must keep at least one administrator to avoid lockout.', 'warning');
       return;
     }
-    
+
     setLoadingData(true);
     try {
       const headers = await getAdminHeaders();
@@ -795,7 +835,7 @@ export default function AdminPage() {
     try {
       const headers = await getAdminHeaders();
       const isEditing = !!editingCoupon;
-      const url = isEditing 
+      const url = isEditing
         ? `${API_BASE_URL}/api/admin/coupons/${editingCoupon.id}`
         : `${API_BASE_URL}/api/admin/coupons`;
       const method = isEditing ? 'PATCH' : 'POST';
@@ -953,7 +993,226 @@ export default function AdminPage() {
     setShowCouponModal(true);
   };
 
+  // Central Bottle Catalog handlers
+  const filteredBottleCatalogData = useMemo(() => {
+    return bottleCatalog.filter(b => {
+      const matchCategory = bottleCategoryFilter === 'ALL' || b.category === bottleCategoryFilter;
+      const q = bottleCatalogSearch.toLowerCase().trim();
+      const matchSearch = !q || (
+        b.name.toLowerCase().includes(q) ||
+        b.finish.toLowerCase().includes(q) ||
+        b.category.toLowerCase().includes(q) ||
+        b.sku.toLowerCase().includes(q) ||
+        b.imageKey.toLowerCase().includes(q)
+      );
+      return matchCategory && matchSearch;
+    });
+  }, [bottleCatalog, bottleCategoryFilter, bottleCatalogSearch]);
+
+  const startCreateCatalogBottle = () => {
+    setEditingCatalogBottle(null);
+    setBottleCatalogForm({
+      sku: `BTL-NEW-${Math.floor(100 + Math.random() * 900)}`,
+      name: '',
+      finish: '',
+      category: 'CLASSIC_MINI',
+      imageKey: '',
+      priceAdjustment: '0',
+      badge: 'Included',
+      sortOrder: (bottleCatalog.length + 1) * 10,
+      isActive: true,
+      isDefault: false,
+      stock: '100',
+      lowStockThreshold: '10',
+      trackInventory: true,
+      sizes: ['5ml', '10ml', '20ml', '30ml']
+    });
+    setBottleCatalogFormError('');
+    setShowBottleCatalogModal(true);
+  };
+
+  const startEditCatalogBottle = (bottle) => {
+    setEditingCatalogBottle(bottle);
+    setBottleCatalogForm({
+      sku: bottle.sku,
+      name: bottle.name,
+      finish: bottle.finish,
+      category: bottle.category,
+      imageKey: bottle.imageKey,
+      priceAdjustment: bottle.priceAdjustment.toString(),
+      badge: bottle.badge || '',
+      sortOrder: bottle.sortOrder.toString(),
+      isActive: bottle.isActive,
+      isDefault: bottle.isDefault,
+      stock: (bottle.stock !== undefined ? bottle.stock : 100).toString(),
+      lowStockThreshold: (bottle.lowStockThreshold !== undefined ? bottle.lowStockThreshold : 10).toString(),
+      trackInventory: bottle.trackInventory !== undefined ? bottle.trackInventory : true,
+      sizes: bottle.availableSizes || ['5ml', '10ml', '20ml', '30ml']
+    });
+    setBottleCatalogFormError('');
+    setShowBottleCatalogModal(true);
+  };
+
+  const startDuplicateCatalogBottle = (bottle) => {
+    setEditingCatalogBottle(null);
+    setBottleCatalogForm({
+      sku: `${bottle.sku}-COPY`,
+      name: `${bottle.name} (Copy)`,
+      finish: bottle.finish,
+      category: bottle.category,
+      imageKey: bottle.imageKey,
+      priceAdjustment: bottle.priceAdjustment.toString(),
+      badge: bottle.badge || '',
+      sortOrder: (bottleCatalog.length + 1) * 10,
+      isActive: true,
+      isDefault: false,
+      stock: (bottle.stock !== undefined ? bottle.stock : 100).toString(),
+      lowStockThreshold: (bottle.lowStockThreshold !== undefined ? bottle.lowStockThreshold : 10).toString(),
+      trackInventory: bottle.trackInventory !== undefined ? bottle.trackInventory : true,
+      sizes: bottle.availableSizes || ['5ml', '10ml', '20ml', '30ml']
+    });
+    setBottleCatalogFormError('');
+    setShowBottleCatalogModal(true);
+  };
+
+  const handleSaveCatalogBottle = async (e) => {
+    e.preventDefault();
+    setBottleCatalogFormError('');
+    setIsSavingBottleCatalog(true);
+    try {
+      const headers = await getAdminHeaders();
+      const isEditing = !!editingCatalogBottle;
+      const url = isEditing
+        ? `${API_BASE_URL}/api/admin/bottles/catalog/${editingCatalogBottle.id}`
+        : `${API_BASE_URL}/api/admin/bottles/catalog`;
+      const method = isEditing ? 'PATCH' : 'POST';
+
+      const payload = {
+        sku: bottleCatalogForm.sku,
+        name: bottleCatalogForm.name,
+        finish: bottleCatalogForm.finish,
+        category: bottleCatalogForm.category,
+        imageKey: bottleCatalogForm.imageKey,
+        priceAdjustment: parseFloat(bottleCatalogForm.priceAdjustment) || 0,
+        badge: bottleCatalogForm.badge || null,
+        sortOrder: parseInt(bottleCatalogForm.sortOrder) || 10,
+        isActive: !!bottleCatalogForm.isActive,
+        isDefault: !!bottleCatalogForm.isDefault,
+        stock: parseInt(bottleCatalogForm.stock) || 0,
+        lowStockThreshold: parseInt(bottleCatalogForm.lowStockThreshold) || 10,
+        trackInventory: !!bottleCatalogForm.trackInventory,
+        sizes: bottleCatalogForm.sizes
+      };
+
+      const res = await fetch(url, { method, headers, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(isEditing ? 'Bottle option updated successfully.' : 'New bottle option created.', 'success');
+        setShowBottleCatalogModal(false);
+        setEditingCatalogBottle(null);
+        fetchCoreData();
+      } else {
+        setBottleCatalogFormError(data.error || 'Failed to save bottle option.');
+      }
+    } catch (err) {
+      console.error('Error saving bottle option:', err);
+      setBottleCatalogFormError('Network error. Please try again.');
+    } finally {
+      setIsSavingBottleCatalog(false);
+    }
+  };
+
+  const handleToggleCatalogBottleActive = async (bottle) => {
+    try {
+      const headers = await getAdminHeaders();
+      const res = await fetch(`${API_BASE_URL}/api/admin/bottles/catalog/${bottle.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ isActive: !bottle.isActive })
+      });
+      if (res.ok) {
+        showToast(!bottle.isActive ? 'Bottle option enabled.' : 'Bottle option disabled.', 'success');
+        fetchCoreData();
+      }
+    } catch (err) {
+      console.error('Error toggling bottle status:', err);
+    }
+  };
+
+  const handleReorderCatalogBottle = async (bottle, direction) => {
+    const list = [...filteredBottleCatalogData];
+    const idx = list.findIndex(b => b.id === bottle.id);
+    if (idx === -1) return;
+
+    const targetIdx = direction === 'UP' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= list.length) return;
+
+    const temp = list[idx];
+    list[idx] = list[targetIdx];
+    list[targetIdx] = temp;
+
+    const orderedIds = list.map(b => b.id);
+    try {
+      const headers = await getAdminHeaders();
+      const res = await fetch(`${API_BASE_URL}/api/admin/bottles/catalog-reorder`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ orderedIds })
+      });
+      if (res.ok) {
+        fetchCoreData();
+      }
+    } catch (err) {
+      console.error('Failed to reorder bottles:', err);
+    }
+  };
+
+  const handleArchiveCatalogBottle = async (bottleId) => {
+    if (!window.confirm('Archive this bottle option? It will no longer appear for decant selections.')) return;
+    try {
+      const headers = await getAdminHeaders();
+      const res = await fetch(`${API_BASE_URL}/api/admin/bottles/catalog/${bottleId}`, {
+        method: 'DELETE',
+        headers
+      });
+      if (res.ok) {
+        showToast('Bottle option archived.', 'success');
+        fetchCoreData();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // Product edit modal opener
+  const handleSendTestEmail = async (e) => {
+    if (e) e.preventDefault();
+    setIsSendingTestEmail(true);
+    setTestEmailResult(null);
+    try {
+      const headers = await getAdminHeaders();
+      const res = await fetch(`${API_BASE_URL}/api/admin/test-email`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ recipientEmail: testEmailRecipient || undefined })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTestEmailResult({ success: true, message: data.message, messageId: data.messageId });
+        showToast(data.message, 'success');
+      } else {
+        setTestEmailResult({ success: false, error: data.error || 'Failed to send test email.' });
+        showToast(data.error || 'Test email failed.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      setTestEmailResult({ success: false, error: 'Network error connecting to backend server.' });
+      showToast('Network error.', 'error');
+    } finally {
+      setIsSendingTestEmail(false);
+    }
+  };
+
   const startEditProduct = async (prod) => {
     setEditingProduct(prod);
     setProductForm({
@@ -964,17 +1223,17 @@ export default function AdminPage() {
       featured: !!prod.featured,
       isActive: prod.isActive !== undefined ? prod.isActive : true,
       categoryId: prod.categoryId || '',
-      images: prod.images && prod.images.length > 0 
-        ? prod.images.map(img => ({ imageUrl: img.imageUrl, altText: img.altText || '', position: img.position })) 
+      images: prod.images && prod.images.length > 0
+        ? prod.images.map(img => ({ imageUrl: img.imageUrl, altText: img.altText || '', position: img.position }))
         : [{ imageUrl: '', altText: '', position: 0 }],
-      variants: prod.variants && prod.variants.length > 0 
-        ? prod.variants.map(v => ({ size: v.size, price: v.price.toString(), stock: v.stock.toString(), sku: v.sku || '', lowStockThreshold: v.lowStockThreshold || 5, isActive: v.isActive })) 
+      variants: prod.variants && prod.variants.length > 0
+        ? prod.variants.map(v => ({ size: v.size, price: v.price.toString(), stock: v.stock.toString(), sku: v.sku || '', lowStockThreshold: v.lowStockThreshold || 5, isActive: v.isActive }))
         : [
-            { size: '5ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
-            { size: '10ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
-            { size: '20ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
-            { size: '30ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true }
-          ]
+          { size: '5ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+          { size: '10ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+          { size: '20ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true },
+          { size: '30ml Decant', price: '', stock: '20', sku: '', lowStockThreshold: 5, isActive: true }
+        ]
     });
     setErrorMsg('');
     setShowProductModal(true);
@@ -1018,7 +1277,7 @@ export default function AdminPage() {
   };
 
   const updateImageField = (idx, field, val) => {
-    const updated = productForm.images.map((img, i) => 
+    const updated = productForm.images.map((img, i) =>
       i === idx ? { ...img, [field]: val } : img
     );
     setProductForm({ ...productForm, images: updated });
@@ -1039,7 +1298,7 @@ export default function AdminPage() {
   };
 
   const updateVariantField = (idx, field, val) => {
-    const updated = productForm.variants.map((v, i) => 
+    const updated = productForm.variants.map((v, i) =>
       i === idx ? { ...v, [field]: val } : v
     );
     setProductForm({ ...productForm, variants: updated });
@@ -1082,7 +1341,7 @@ export default function AdminPage() {
     if (dashboardTimeframe === '24H') limitMs = 24 * 60 * 60 * 1000;
     else if (dashboardTimeframe === '7D') limitMs = 7 * 24 * 60 * 60 * 1000;
     else if (dashboardTimeframe === '30D') limitMs = 30 * 24 * 60 * 60 * 1000;
-    
+
     const cutoff = now - limitMs;
     return orders.filter(o => {
       const orderTime = new Date(o.createdAt).getTime();
@@ -1093,21 +1352,21 @@ export default function AdminPage() {
   // Product sales velocity chart calculations
   const productSalesChart = useMemo(() => {
     if (!selectedProductAnalytics) return null;
-    
+
     const pointsCount = 7;
     const now = new Date();
     const bucketMs = 7 * 24 * 60 * 60 * 1000;
-    
+
     const buckets = Array.from({ length: pointsCount }).map((_, idx) => {
       const start = new Date(now.getTime() - (pointsCount - 1 - idx) * bucketMs);
       const end = new Date(start.getTime() + bucketMs);
       return { start, end, count: 0 };
     });
-    
+
     orders.forEach(o => {
       if (o.status === 'CANCELLED') return;
       const oTime = new Date(o.createdAt).getTime();
-      
+
       o.orderItems.forEach(item => {
         if (item.productId === selectedProductAnalytics.id) {
           buckets.forEach(b => {
@@ -1118,26 +1377,26 @@ export default function AdminPage() {
         }
       });
     });
-    
+
     const maxCount = Math.max(...buckets.map(b => b.count), 2);
-    
+
     const points = buckets.map((b, idx) => {
       const x = 10 + idx * 60;
       const y = 70 - (b.count / maxCount) * 55;
       return { x, y };
     });
-    
+
     const makeDPath = (pts) => {
       if (pts.length === 0) return '';
       return `M ${pts[0].x} ${pts[0].y} ` + pts.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
     };
-    
+
     const makeDAreaPath = (pts) => {
       if (pts.length === 0) return '';
       const line = makeDPath(pts);
-      return `${line} L ${pts[pts.length-1].x} 80 L ${pts[0].x} 80 Z`;
+      return `${line} L ${pts[pts.length - 1].x} 80 L ${pts[0].x} 80 Z`;
     };
-    
+
     return {
       linePath: makeDPath(points),
       areaPath: makeDAreaPath(points),
@@ -1158,7 +1417,7 @@ export default function AdminPage() {
     const list = categories.filter(c => {
       return c.name?.toLowerCase().includes(categorySearch.toLowerCase()) || c.slug?.toLowerCase().includes(categorySearch.toLowerCase());
     });
-    
+
     const { field, direction } = categorySort;
     if (field === 'productCount') {
       const sorted = [...list];
@@ -1175,11 +1434,11 @@ export default function AdminPage() {
   const filteredBottles = useMemo(() => {
     const list = bottles.filter(b => {
       const productName = b.product?.name || '';
-      const matchesSearch = productName.toLowerCase().includes(inventorySearch.toLowerCase()) || 
-                            b.bottleLabel?.toLowerCase().includes(inventorySearch.toLowerCase()) ||
-                            b.supplier?.toLowerCase().includes(inventorySearch.toLowerCase()) ||
-                            b.batchNumber?.toLowerCase().includes(inventorySearch.toLowerCase());
-      
+      const matchesSearch = productName.toLowerCase().includes(inventorySearch.toLowerCase()) ||
+        b.bottleLabel?.toLowerCase().includes(inventorySearch.toLowerCase()) ||
+        b.supplier?.toLowerCase().includes(inventorySearch.toLowerCase()) ||
+        b.batchNumber?.toLowerCase().includes(inventorySearch.toLowerCase());
+
       let matchesFilter = true;
       if (inventoryFilter === 'LOW_STOCK') matchesFilter = b.status === 'OPEN' && b.remainingML <= b.lowStockThresholdML;
       else if (inventoryFilter === 'OUT_OF_STOCK') matchesFilter = b.status === 'EMPTY' || b.remainingML === 0;
@@ -1216,7 +1475,7 @@ export default function AdminPage() {
       }
       return matchesSearch && matchesStatus;
     });
-    
+
     const { field, direction } = orderSort;
     if (field === 'customer') {
       const sorted = [...list];
@@ -1232,19 +1491,19 @@ export default function AdminPage() {
 
   const paymentsData = useMemo(() => {
     const list = payments.filter(p => {
-      const matchesSearch = (p.id || '').toLowerCase().includes(paymentSearch.toLowerCase()) || 
-                            (p.orderId || '').toLowerCase().includes(paymentSearch.toLowerCase()) || 
-                            (p.customerName || '').toLowerCase().includes(paymentSearch.toLowerCase()) || 
-                            (p.customerEmail || '').toLowerCase().includes(paymentSearch.toLowerCase()) ||
-                            (p.customerPhone || '').toLowerCase().includes(paymentSearch.toLowerCase()) ||
-                            (p.transactionId || '').toLowerCase().includes(paymentSearch.toLowerCase());
+      const matchesSearch = (p.id || '').toLowerCase().includes(paymentSearch.toLowerCase()) ||
+        (p.orderId || '').toLowerCase().includes(paymentSearch.toLowerCase()) ||
+        (p.customerName || '').toLowerCase().includes(paymentSearch.toLowerCase()) ||
+        (p.customerEmail || '').toLowerCase().includes(paymentSearch.toLowerCase()) ||
+        (p.customerPhone || '').toLowerCase().includes(paymentSearch.toLowerCase()) ||
+        (p.transactionId || '').toLowerCase().includes(paymentSearch.toLowerCase());
       let matchesFilter = true;
       if (paymentFilter === 'FAILED') matchesFilter = p.status === 'FAILED';
       else if (paymentFilter === 'PENDING_COD') matchesFilter = p.status === 'PENDING' && p.provider === 'COD';
       else if (paymentFilter === 'SUCCESS') matchesFilter = p.status === 'SUCCESS';
       return matchesSearch && matchesFilter;
     });
-    
+
     return sortData(list, paymentSort, 'paidDate');
   }, [payments, paymentFilter, paymentSearch, paymentSort]);
 
@@ -1264,9 +1523,9 @@ export default function AdminPage() {
     });
 
     const filtered = list.filter(c => {
-      return (c.name || '').toLowerCase().includes(customerSearch.toLowerCase()) || 
-             (c.email || '').toLowerCase().includes(customerSearch.toLowerCase()) || 
-             (c.phone || '').toLowerCase().includes(customerSearch.toLowerCase());
+      return (c.name || '').toLowerCase().includes(customerSearch.toLowerCase()) ||
+        (c.email || '').toLowerCase().includes(customerSearch.toLowerCase()) ||
+        (c.phone || '').toLowerCase().includes(customerSearch.toLowerCase());
     });
 
     return sortData(filtered, customerSort, 'totalSpent');
@@ -1275,11 +1534,11 @@ export default function AdminPage() {
   const filteredReviewsData = useMemo(() => {
     const list = reviews.filter(r => {
       const matchesSearch = r.productName?.toLowerCase().includes(reviewSearch.toLowerCase()) || r.customerName?.toLowerCase().includes(reviewSearch.toLowerCase()) || r.comment?.toLowerCase().includes(reviewSearch.toLowerCase());
-      
+
       let matchesFilter = true;
       if (reviewFilter === 'APPROVED') matchesFilter = r.approved;
       else if (reviewFilter === 'PENDING') matchesFilter = !r.approved;
-      
+
       return matchesSearch && matchesFilter;
     });
     return sortData(list, reviewSort, 'productName');
@@ -1296,7 +1555,7 @@ export default function AdminPage() {
       star: parseInt(star),
       count: counts[star],
       percentage: Math.round((counts[star] / total) * 100)
-    })).sort((a,b) => b.star - a.star);
+    })).sort((a, b) => b.star - a.star);
   }, [reviews]);
 
   // Dynamic category sales performance breakdown
@@ -1321,7 +1580,7 @@ export default function AdminPage() {
     return result.map(c => ({
       ...c,
       percentage: Math.round((c.revenue / maxRevenue) * 100)
-    })).sort((a,b) => b.revenue - a.revenue);
+    })).sort((a, b) => b.revenue - a.revenue);
   }, [filteredOrdersForStats, categories, products]);
 
   // Dynamic KPI Aggregations
@@ -1338,7 +1597,7 @@ export default function AdminPage() {
       if (o.status === 'CANCELLED') return;
       const orderDate = new Date(o.createdAt);
       const totalAmount = parseFloat(o.total) || 0;
-      
+
       if (orderDate.toDateString() === todayStr) {
         revToday += totalAmount;
         ordsToday += 1;
@@ -1351,7 +1610,7 @@ export default function AdminPage() {
       }
     });
 
-    const lowStockCount = dashboardStats 
+    const lowStockCount = dashboardStats
       ? (dashboardStats.lowStockVariants ? dashboardStats.lowStockVariants.length : 0)
       : bottles.filter(b => b.status === 'OPEN' && b.remainingML <= b.lowStockThresholdML).length;
 
@@ -1363,7 +1622,7 @@ export default function AdminPage() {
       totalCustomers: dashboardStats ? (dashboardStats.totalUsers || 0) : customersData.length,
       totalProducts: products.length,
       lowStockVariants: lowStockCount,
-      aov: dashboardStats 
+      aov: dashboardStats
         ? (dashboardStats.totalOrders > 0 ? (dashboardStats.totalRevenue || 0) / dashboardStats.totalOrders : 0)
         : (filteredOrdersForStats.length > 0 ? (revMonth / filteredOrdersForStats.length) : 0)
     };
@@ -1373,7 +1632,7 @@ export default function AdminPage() {
     // We will generate 7 points
     const pointsCount = 7;
     const now = new Date();
-    
+
     // Determine time buckets based on dashboardTimeframe
     let bucketMs = 24 * 60 * 60 * 1000; // default 1 day buckets for 7 days
     if (dashboardTimeframe === '24H') {
@@ -1383,13 +1642,13 @@ export default function AdminPage() {
     } else if (dashboardTimeframe === 'ALL') {
       bucketMs = 30 * 24 * 60 * 60 * 1000; // 30 days buckets
     }
-    
+
     const buckets = Array.from({ length: pointsCount }).map((_, idx) => {
       const start = new Date(now.getTime() - (pointsCount - 1 - idx) * bucketMs);
       const end = new Date(start.getTime() + bucketMs);
       return { start, end, revenue: 0, count: 0, label: start.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) };
     });
-    
+
     // Populate buckets
     orders.forEach(o => {
       if (o.status === 'CANCELLED') return;
@@ -1401,34 +1660,34 @@ export default function AdminPage() {
         }
       });
     });
-    
+
     // Scale points to fit a viewBox of 500x120
     const maxRev = Math.max(...buckets.map(b => b.revenue), 1000);
     const maxCount = Math.max(...buckets.map(b => b.count), 5);
-    
+
     const revPoints = buckets.map((b, idx) => {
       const x = 10 + idx * 80; // 10 to 490
       const y = 110 - (b.revenue / maxRev) * 90; // y goes from 110 (min) to 20 (max)
       return { x, y };
     });
-    
+
     const countPoints = buckets.map((b, idx) => {
       const x = 10 + idx * 80;
       const y = 110 - (b.count / maxCount) * 90;
       return { x, y };
     });
-    
+
     const makeDPath = (pts) => {
       if (pts.length === 0) return '';
       return `M ${pts[0].x} ${pts[0].y} ` + pts.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
     };
-    
+
     const makeDAreaPath = (pts) => {
       if (pts.length === 0) return '';
       const line = makeDPath(pts);
-      return `${line} L ${pts[pts.length-1].x} 120 L ${pts[0].x} 120 Z`;
+      return `${line} L ${pts[pts.length - 1].x} 120 L ${pts[0].x} 120 Z`;
     };
-    
+
     return {
       revenueLine: makeDPath(revPoints),
       revenueArea: makeDAreaPath(revPoints),
@@ -1609,8 +1868,13 @@ export default function AdminPage() {
           </li>
           <li>
             <button onClick={() => setActiveTab('inventory')} className={`admin-sidebar-btn ${activeTab === 'inventory' ? 'active' : ''}`}>
-              <span>Inventory</span>
+              <span>Bulk Inventory</span>
               {KPI.lowStockVariants > 0 && <span className="admin-badge pending">{KPI.lowStockVariants}</span>}
+            </button>
+          </li>
+          <li>
+            <button onClick={() => setActiveTab('bottle_catalog')} className={`admin-sidebar-btn ${activeTab === 'bottle_catalog' ? 'active' : ''}`}>
+              <span>Bottle Manager</span>
             </button>
           </li>
           <li>
@@ -1672,7 +1936,7 @@ export default function AdminPage() {
 
       {/* Main Content Area */}
       <main className="admin-content">
-        
+
         {/* Header Title Banner */}
         <header className="admin-page-header">
           <div>
@@ -2002,7 +2266,7 @@ export default function AdminPage() {
                           </td>
                           <td>
                             <div style={{ display: 'flex', gap: '0.35rem' }}>
-                              <button 
+                              <button
                                 onClick={async () => {
                                   try {
                                     const headers = await getAdminHeaders();
@@ -2020,8 +2284,8 @@ export default function AdminPage() {
                                   } catch (err) {
                                     console.error(err);
                                   }
-                                }} 
-                                className="admin-btn" 
+                                }}
+                                className="admin-btn"
                                 style={{ padding: '0.2rem 0.4rem', fontSize: '0.62rem', backgroundColor: '#10b981', borderColor: '#10b981', color: 'white', cursor: 'pointer' }}
                                 title="Top up to full capacity"
                               >
@@ -2284,7 +2548,7 @@ export default function AdminPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem' }}>
             <div className="admin-card">
               <h3 className="admin-card-title">Fragrance Catalog Categories</h3>
-              
+
               <div className="admin-filters-bar" style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
                 <input
                   type="text"
@@ -2431,7 +2695,7 @@ export default function AdminPage() {
                 Bulk Top-up Low Stock
               </button>
 
-              <button 
+              <button
                 onClick={() => {
                   setEditingBottle(null);
                   setBottleForm({
@@ -2447,7 +2711,7 @@ export default function AdminPage() {
                     notes: ''
                   });
                   setShowBottleModal(true);
-                }} 
+                }}
                 className="admin-btn"
               >
                 + Register Scent Bottle
@@ -2572,6 +2836,151 @@ export default function AdminPage() {
                   {filteredBottles.length === 0 && (
                     <tr>
                       <td colSpan="6" style={{ color: '#9ca3af', textAlign: 'center', padding: '2.5rem' }}>No inventory bottles registered. Click "+ Register Scent Bottle" to get started.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Bottle Manager View */}
+        {activeTab === 'bottle_catalog' && (
+          <div className="admin-card">
+            <div className="admin-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div>
+                <h3 className="admin-card-title">Bottle Catalog Manager</h3>
+                <p className="admin-card-subtitle">Manage spray bottle options, finishes, prices, inventory stock, and size availabilities.</p>
+              </div>
+              <button onClick={startCreateCatalogBottle} className="admin-btn-primary">
+                + Add Bottle Option
+              </button>
+            </div>
+
+            <div className="admin-filters-bar">
+              <input
+                type="text"
+                placeholder="Search bottles by name, finish, category, SKU..."
+                className="admin-input admin-search-input"
+                value={bottleCatalogSearch}
+                onChange={(e) => setBottleCatalogSearch(e.target.value)}
+              />
+              <select
+                className="admin-select"
+                style={{ width: 'auto' }}
+                value={bottleCategoryFilter}
+                onChange={(e) => setBottleCategoryFilter(e.target.value)}
+              >
+                <option value="ALL">All Categories</option>
+                <option value="CLASSIC_MINI">Classic Mini</option>
+                <option value="CLASSIC_METAL">Classic Metal</option>
+                <option value="TRAVEL_SAFE">Travel Safe</option>
+                <option value="PREMIUM">Premium</option>
+                <option value="LUXURY">Luxury</option>
+              </select>
+            </div>
+
+            <div className="admin-table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '60px' }}>Image</th>
+                    <th>Name & SKU</th>
+                    <th>Finish</th>
+                    <th>Category</th>
+                    <th>Badge / Price</th>
+                    <th>Enabled Sizes</th>
+                    <th>Stock Level</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: 'center' }}>Sort</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBottleCatalogData.map((bottle, idx) => {
+                    const imgUrl = getBottleImageUrl(bottle.imageKey);
+                    return (
+                      <tr key={bottle.id}>
+                        <td>
+                          <div style={{ width: '40px', height: '40px', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.1)', background: '#f9f9f9' }}>
+                            <img src={imgUrl} alt={bottle.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 'bold' }}>{bottle.name}</div>
+                          <div style={{ fontSize: '0.7rem', color: '#9ca3af', fontFamily: 'monospace' }}>SKU: {bottle.sku}</div>
+                        </td>
+                        <td>{bottle.finish}</td>
+                        <td>
+                          <span className="admin-badge standard">{bottle.category}</span>
+                        </td>
+                        <td>
+                          <span style={{ fontWeight: 'bold', color: bottle.priceAdjustment > 0 ? '#8B672F' : '#10b981' }}>
+                            {bottle.badge ? bottle.badge : (bottle.priceAdjustment === 0 ? 'Included' : `+₹${bottle.priceAdjustment}`)}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            {(bottle.availableSizes || []).map(s => (
+                              <span key={s} style={{ fontSize: '0.65rem', background: '#e5e7eb', padding: '2px 6px', borderRadius: '3px', fontWeight: 'bold' }}>{s}</span>
+                            ))}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 'bold' }}>{bottle.stock} units</div>
+                          <div style={{ fontSize: '0.68rem', color: bottle.stock <= bottle.lowStockThreshold ? '#dc2626' : '#6b7280' }}>
+                            Threshold: {bottle.lowStockThreshold}
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`admin-badge ${bottle.isActive ? 'success' : 'cancelled'}`}>
+                            {bottle.isActive ? 'Active' : 'Disabled'}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '2px', justifyContent: 'center' }}>
+                            <button
+                              onClick={() => handleReorderCatalogBottle(bottle, 'UP')}
+                              disabled={idx === 0}
+                              style={{ padding: '2px 6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                              title="Move Up"
+                            >
+                              ▲
+                            </button>
+                            <button
+                              onClick={() => handleReorderCatalogBottle(bottle, 'DOWN')}
+                              disabled={idx === filteredBottleCatalogData.length - 1}
+                              style={{ padding: '2px 6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                              title="Move Down"
+                            >
+                              ▼
+                            </button>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                            <button onClick={() => startEditCatalogBottle(bottle)} className="admin-btn-secondary" style={{ padding: '0.35rem 0.65rem', fontSize: '0.7rem' }}>
+                              Edit
+                            </button>
+                            <button onClick={() => startDuplicateCatalogBottle(bottle)} className="admin-btn-secondary" style={{ padding: '0.35rem 0.65rem', fontSize: '0.7rem' }}>
+                              Duplicate
+                            </button>
+                            <button onClick={() => handleToggleCatalogBottleActive(bottle)} className="admin-btn-secondary" style={{ padding: '0.35rem 0.65rem', fontSize: '0.7rem' }}>
+                              {bottle.isActive ? 'Disable' : 'Enable'}
+                            </button>
+                            <button onClick={() => handleArchiveCatalogBottle(bottle.id)} className="admin-btn-secondary" style={{ padding: '0.35rem 0.65rem', fontSize: '0.7rem', color: '#dc2626' }}>
+                              Archive
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filteredBottleCatalogData.length === 0 && (
+                    <tr>
+                      <td colSpan="10" style={{ color: '#9ca3af', textAlign: 'center', padding: '2.5rem' }}>
+                        No bottle options found matching filters.
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -3043,6 +3452,7 @@ export default function AdminPage() {
               <button onClick={() => setSettingsTab('shipping')} className={`admin-settings-tab ${settingsTab === 'shipping' ? 'active' : ''}`}>Shipping rules</button>
               <button onClick={() => setSettingsTab('payment')} className={`admin-settings-tab ${settingsTab === 'payment' ? 'active' : ''}`}>Gateway credentials</button>
               <button onClick={() => setSettingsTab('user')} className={`admin-settings-tab ${settingsTab === 'user' ? 'active' : ''}`}>User management & permissions</button>
+              <button onClick={() => setSettingsTab('email')} className={`admin-settings-tab ${settingsTab === 'email' ? 'active' : ''}`}>Email & SMTP Test</button>
             </nav>
 
             <form onSubmit={handleSaveSettings} style={{ maxWidth: '35rem' }}>
@@ -3151,7 +3561,7 @@ export default function AdminPage() {
                       </tbody>
                     </table>
                   </div>
-                  
+
                   <h4 style={{ margin: '1.5rem 0 1rem 0', fontSize: '0.85rem' }}>Promote Registrants to Administrator</h4>
                   <div className="admin-table-wrapper">
                     <table className="admin-table">
@@ -3197,6 +3607,52 @@ export default function AdminPage() {
                   </div>
                 </div>
               )}
+
+              {settingsTab === 'email' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 'bold' }}>SMTP Diagnostic & Live Test Email</h4>
+                    <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                      Dispatch an immediate test email to verify your SMTP server connection (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`) and confirm inbox delivery.
+                    </p>
+                  </div>
+
+                  <div className="admin-form-group">
+                    <label className="admin-label">Recipient Email Address</label>
+                    <input
+                      type="email"
+                      className="admin-input"
+                      placeholder="Enter target email address (or leave blank for default ALERT_EMAIL)"
+                      value={testEmailRecipient}
+                      onChange={(e) => setTestEmailRecipient(e.target.value)}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSendTestEmail}
+                    disabled={isSendingTestEmail}
+                    className="admin-btn"
+                  >
+                    {isSendingTestEmail ? 'Dispatching Test Email...' : 'Send Live Test Email'}
+                  </button>
+
+                  {testEmailResult && (
+                    <div className={`admin-alert ${testEmailResult.success ? 'success' : 'error'}`} style={{ marginTop: '0.5rem' }}>
+                      {testEmailResult.success ? (
+                        <div>
+                          <strong>{testEmailResult.message}</strong>
+                          {testEmailResult.messageId && <div style={{ fontSize: '0.7rem', opacity: 0.8, marginTop: '2px', fontFamily: 'monospace' }}>Message ID: {testEmailResult.messageId}</div>}
+                        </div>
+                      ) : (
+                        <div>
+                          <strong>Error:</strong> {testEmailResult.error}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </form>
           </div>
         )}
@@ -3206,15 +3662,15 @@ export default function AdminPage() {
             {/* Header controls bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: '280px' }}>
-                <input 
-                  type="text" 
-                  placeholder="Search coupons by code..." 
+                <input
+                  type="text"
+                  placeholder="Search coupons by code..."
                   value={couponSearchQuery}
                   onChange={(e) => setCouponSearchQuery(e.target.value)}
                   className="admin-input"
                   style={{ maxWidth: '300px' }}
                 />
-                <select 
+                <select
                   value={couponStatusFilter}
                   onChange={(e) => setCouponStatusFilter(e.target.value)}
                   className="admin-select"
@@ -3229,7 +3685,7 @@ export default function AdminPage() {
                   <option value="LAUNCH">Launch Campaigns</option>
                 </select>
               </div>
-              <button 
+              <button
                 onClick={() => {
                   setEditingCoupon(null);
                   setCouponForm({
@@ -3259,7 +3715,7 @@ export default function AdminPage() {
                 <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1.25rem', borderBottom: '1px solid #eaeaea', paddingBottom: '0.5rem' }}>
                   Promotional Vouchers Ledger
                 </h3>
-                
+
                 <div className="admin-table-wrapper">
                   <table className="admin-table">
                     <thead>
@@ -3276,7 +3732,7 @@ export default function AdminPage() {
                     <tbody>
                       {coupons.filter(c => {
                         if (couponSearchQuery && !c.code.toUpperCase().includes(couponSearchQuery.trim().toUpperCase())) return false;
-                        
+
                         // Status calculations
                         if (c.isArchived) {
                           if (couponStatusFilter === 'ARCHIVED') return true;
@@ -3301,14 +3757,14 @@ export default function AdminPage() {
                         if (couponStatusFilter === 'SCHEDULED' && (!isSched || !c.isActive || c.isArchived)) return false;
                         if (couponStatusFilter === 'EXPIRED' && (!isExp || c.isArchived)) return false;
                         if (couponStatusFilter === 'LAUNCH' && !c.launchOnly) return false;
-                        
+
                         return true;
                       }).map((coupon) => {
                         // Calculate display status
                         let statusText = 'Active';
                         let statusColor = '#10b981';
                         let statusDot = '🟢';
-                        
+
                         if (coupon.isArchived) {
                           statusText = 'Archived';
                           statusColor = '#6b7280';
@@ -3331,8 +3787,8 @@ export default function AdminPage() {
                         }
 
                         return (
-                          <tr 
-                            key={coupon.id} 
+                          <tr
+                            key={coupon.id}
                             onClick={() => setSelectedCoupon(coupon)}
                             style={{ cursor: 'pointer', backgroundColor: selectedCoupon?.id === coupon.id ? '#f3eedb' : 'transparent' }}
                           >
@@ -3344,13 +3800,13 @@ export default function AdminPage() {
                             </td>
                             <td style={{ fontWeight: 'semibold' }}>{coupon.type === 'FIXED' ? `₹${coupon.value}` : `${coupon.value}%`}</td>
                             <td>
-                              <span 
-                                className="admin-badge" 
-                                style={{ 
-                                  backgroundColor: `${statusColor}15`, 
-                                  color: statusColor, 
-                                  borderColor: `${statusColor}30`, 
-                                  borderWidth: '1px', 
+                              <span
+                                className="admin-badge"
+                                style={{
+                                  backgroundColor: `${statusColor}15`,
+                                  color: statusColor,
+                                  borderColor: `${statusColor}30`,
+                                  borderWidth: '1px',
                                   borderStyle: 'solid',
                                   padding: '0.15rem 0.4rem',
                                   borderRadius: '2px',
@@ -3390,7 +3846,7 @@ export default function AdminPage() {
                     <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
                       Voucher Inspector: {selectedCoupon.code}
                     </h3>
-                    <button 
+                    <button
                       onClick={() => setSelectedCoupon(null)}
                       style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#9ca3af' }}
                     >
@@ -3474,7 +3930,7 @@ export default function AdminPage() {
 
                     {/* Action buttons drawer footer */}
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
-                      <button 
+                      <button
                         onClick={() => {
                           setEditingCoupon(selectedCoupon);
                           setCouponForm({
@@ -3498,8 +3954,8 @@ export default function AdminPage() {
                       >
                         Edit
                       </button>
-                      
-                      <button 
+
+                      <button
                         onClick={() => handleToggleCouponActive(selectedCoupon)}
                         className="admin-btn"
                         style={{ flex: 1, padding: '0.35rem 0', fontSize: '0.7rem' }}
@@ -3507,7 +3963,7 @@ export default function AdminPage() {
                         {selectedCoupon.isActive ? 'Disable' : 'Enable'}
                       </button>
 
-                      <button 
+                      <button
                         onClick={() => handleDuplicateCoupon(selectedCoupon)}
                         className="admin-btn"
                         style={{ flex: 1, padding: '0.35rem 0', fontSize: '0.7rem' }}
@@ -3516,7 +3972,7 @@ export default function AdminPage() {
                       </button>
 
                       {!selectedCoupon.isArchived && (
-                        <button 
+                        <button
                           onClick={() => handleArchiveCoupon(selectedCoupon.id)}
                           className="admin-btn-danger"
                           style={{ flex: 1, padding: '0.35rem 0', fontSize: '0.7rem', backgroundColor: '#f59e0b', borderColor: '#f59e0b' }}
@@ -3525,7 +3981,7 @@ export default function AdminPage() {
                         </button>
                       )}
 
-                      <button 
+                      <button
                         onClick={() => handleDeleteCoupon(selectedCoupon.id)}
                         className="admin-btn-danger"
                         style={{ flex: 1, padding: '0.35rem 0', fontSize: '0.7rem' }}
@@ -3549,11 +4005,11 @@ export default function AdminPage() {
               <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--admin-text-primary)', margin: 0 }}>
                 {editingCoupon ? `Edit Coupon: ${editingCoupon.code}` : 'Create New Coupon'}
               </h3>
-              <button 
+              <button
                 onClick={() => {
                   setShowCouponModal(false);
                   setEditingCoupon(null);
-                }} 
+                }}
                 className="admin-drawer-close"
               >
                 &times;
@@ -3570,13 +4026,13 @@ export default function AdminPage() {
               <div className="admin-grid-2">
                 <div className="admin-form-group">
                   <label className="admin-label">Coupon Code</label>
-                  <input 
-                    type="text" 
-                    required 
+                  <input
+                    type="text"
+                    required
                     placeholder="e.g., WELCOME100"
-                    className="admin-input" 
-                    value={couponForm.code} 
-                    onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value })} 
+                    className="admin-input"
+                    value={couponForm.code}
+                    onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value })}
                     disabled={editingCoupon && editingCoupon.usedCount > 0}
                     style={{ textTransform: 'uppercase' }}
                   />
@@ -3586,10 +4042,10 @@ export default function AdminPage() {
                     </span>
                   )}
                 </div>
-                
+
                 <div className="admin-form-group">
                   <label className="admin-label">Discount Type</label>
-                  <select 
+                  <select
                     className="admin-select"
                     value={couponForm.type}
                     onChange={(e) => setCouponForm({ ...couponForm, type: e.target.value })}
@@ -3603,36 +4059,36 @@ export default function AdminPage() {
               <div className="admin-grid-3">
                 <div className="admin-form-group">
                   <label className="admin-label">Discount Value</label>
-                  <input 
-                    type="number" 
-                    required 
+                  <input
+                    type="number"
+                    required
                     min="1"
-                    className="admin-input" 
-                    value={couponForm.value} 
-                    onChange={(e) => setCouponForm({ ...couponForm, value: e.target.value })} 
+                    className="admin-input"
+                    value={couponForm.value}
+                    onChange={(e) => setCouponForm({ ...couponForm, value: e.target.value })}
                   />
                 </div>
 
                 <div className="admin-form-group">
                   <label className="admin-label">Minimum Order (₹)</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     min="0"
-                    className="admin-input" 
-                    value={couponForm.minimumOrderValue} 
-                    onChange={(e) => setCouponForm({ ...couponForm, minimumOrderValue: e.target.value })} 
+                    className="admin-input"
+                    value={couponForm.minimumOrderValue}
+                    onChange={(e) => setCouponForm({ ...couponForm, minimumOrderValue: e.target.value })}
                   />
                 </div>
 
                 <div className="admin-form-group">
                   <label className="admin-label">Max Discount (₹, Optional)</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     min="0"
                     placeholder="Unlimited"
-                    className="admin-input" 
-                    value={couponForm.maximumDiscount} 
-                    onChange={(e) => setCouponForm({ ...couponForm, maximumDiscount: e.target.value })} 
+                    className="admin-input"
+                    value={couponForm.maximumDiscount}
+                    onChange={(e) => setCouponForm({ ...couponForm, maximumDiscount: e.target.value })}
                     disabled={couponForm.type !== 'PERCENT'}
                   />
                 </div>
@@ -3641,25 +4097,25 @@ export default function AdminPage() {
               <div className="admin-grid-2">
                 <div className="admin-form-group">
                   <label className="admin-label">Usage Limit (Total)</label>
-                  <input 
-                    type="number" 
-                    required 
+                  <input
+                    type="number"
+                    required
                     min="1"
-                    className="admin-input" 
-                    value={couponForm.usageLimit} 
-                    onChange={(e) => setCouponForm({ ...couponForm, usageLimit: e.target.value })} 
+                    className="admin-input"
+                    value={couponForm.usageLimit}
+                    onChange={(e) => setCouponForm({ ...couponForm, usageLimit: e.target.value })}
                   />
                 </div>
 
                 <div className="admin-form-group">
                   <label className="admin-label">Per User Limit</label>
-                  <input 
-                    type="number" 
-                    required 
+                  <input
+                    type="number"
+                    required
                     min="1"
-                    className="admin-input" 
-                    value={couponForm.perUserLimit} 
-                    onChange={(e) => setCouponForm({ ...couponForm, perUserLimit: e.target.value })} 
+                    className="admin-input"
+                    value={couponForm.perUserLimit}
+                    onChange={(e) => setCouponForm({ ...couponForm, perUserLimit: e.target.value })}
                   />
                 </div>
               </div>
@@ -3667,43 +4123,43 @@ export default function AdminPage() {
               <div className="admin-grid-2">
                 <div className="admin-form-group">
                   <label className="admin-label">Starts Campaign (Optional)</label>
-                  <input 
-                    type="datetime-local" 
-                    className="admin-input" 
-                    value={couponForm.startsAt} 
-                    onChange={(e) => setCouponForm({ ...couponForm, startsAt: e.target.value })} 
+                  <input
+                    type="datetime-local"
+                    className="admin-input"
+                    value={couponForm.startsAt}
+                    onChange={(e) => setCouponForm({ ...couponForm, startsAt: e.target.value })}
                   />
                 </div>
 
                 <div className="admin-form-group">
                   <label className="admin-label">Ends Campaign (Optional)</label>
-                  <input 
-                    type="datetime-local" 
-                    className="admin-input" 
-                    value={couponForm.expiresAt} 
-                    onChange={(e) => setCouponForm({ ...couponForm, expiresAt: e.target.value })} 
+                  <input
+                    type="datetime-local"
+                    className="admin-input"
+                    value={couponForm.expiresAt}
+                    onChange={(e) => setCouponForm({ ...couponForm, expiresAt: e.target.value })}
                   />
                 </div>
               </div>
 
               <div className="admin-grid-2" style={{ marginTop: '0.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     id="coupon-active-chk"
-                    checked={couponForm.isActive} 
-                    onChange={(e) => setCouponForm({ ...couponForm, isActive: e.target.checked })} 
+                    checked={couponForm.isActive}
+                    onChange={(e) => setCouponForm({ ...couponForm, isActive: e.target.checked })}
                     style={{ width: 'auto', cursor: 'pointer' }}
                   />
                   <label htmlFor="coupon-active-chk" style={{ cursor: 'pointer', fontWeight: 600 }}>Active Status (Enable immediately)</label>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     id="coupon-launch-chk"
-                    checked={couponForm.launchOnly} 
-                    onChange={(e) => setCouponForm({ ...couponForm, launchOnly: e.target.checked })} 
+                    checked={couponForm.launchOnly}
+                    onChange={(e) => setCouponForm({ ...couponForm, launchOnly: e.target.checked })}
                     style={{ width: 'auto', cursor: 'pointer' }}
                   />
                   <label htmlFor="coupon-launch-chk" style={{ cursor: 'pointer', fontWeight: 600 }}>Launch Only (Restrict to launch window)</label>
@@ -3711,19 +4167,19 @@ export default function AdminPage() {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid var(--admin-border)', paddingTop: '1rem' }}>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => {
                     setShowCouponModal(false);
                     setEditingCoupon(null);
-                  }} 
+                  }}
                   className="admin-btn"
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
-                  disabled={isSavingCoupon} 
+                <button
+                  type="submit"
+                  disabled={isSavingCoupon}
                   className="admin-btn-primary"
                 >
                   {isSavingCoupon ? 'Saving...' : 'Save Coupon'}
@@ -3854,7 +4310,7 @@ export default function AdminPage() {
               <h3 className="admin-drawer-title">Product Insights</h3>
               <button onClick={() => setSelectedProductAnalytics(null)} className="admin-drawer-close">&times;</button>
             </div>
-            
+
             <div>
               <h2 style={{ fontSize: '1.25rem', margin: '0 0 0.25rem 0', color: 'var(--admin-text-primary)' }}>{selectedProductAnalytics.name}</h2>
               <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>Brand House: <strong>{selectedProductAnalytics.brand}</strong> | Category: {selectedProductAnalytics.category || 'N/A'}</div>
@@ -4026,7 +4482,7 @@ export default function AdminPage() {
                           Mark Delivered
                         </button>
                       )}
-                      
+
                       <button
                         onClick={() => {
                           if (window.confirm('Are you sure you want to cancel this order?')) {
@@ -4100,18 +4556,18 @@ export default function AdminPage() {
                   const bottleName = item.bottleName;
                   const bottleColor = item.bottleColor;
                   const bottlePriceAdj = Number(item.bottlePriceAdjustment || 0);
-                  const bottleText = bottleName 
-                    ? `${bottleName}${bottleColor ? ` (${bottleColor})` : ''}` 
+                  const bottleText = bottleName
+                    ? `${bottleName}${bottleColor ? ` (${bottleColor})` : ''}`
                     : null;
 
                   return (
                     <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', fontSize: '0.8rem', borderBottom: '1px solid #f3f4f6', paddingBottom: '0.5rem', paddingTop: '0.25rem', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                         {item.bottleImage && (
-                          <img 
-                            src={sanitizeImageUrl(item.bottleImage)} 
-                            alt={item.bottleName || 'Bottle'} 
-                            style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--admin-border)', flexShrink: 0, marginTop: '2px' }} 
+                          <img
+                            src={sanitizeImageUrl(item.bottleImage)}
+                            alt={item.bottleName || 'Bottle'}
+                            style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--admin-border)', flexShrink: 0, marginTop: '2px' }}
                           />
                         )}
                         <div>
@@ -4461,6 +4917,194 @@ export default function AdminPage() {
             </div>
 
             <button onClick={() => setSelectedBottleMovements(null)} className="admin-btn" style={{ marginTop: '1rem', width: '100%' }}>Close Audit Trail</button>
+          </div>
+        </div>
+      )}
+
+      {/* Central Bottle Catalog Inspector Modal */}
+      {showBottleCatalogModal && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal-container" style={{ maxWidth: '38rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--admin-border)' }}>
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--admin-text-primary)', margin: 0 }}>
+                  {editingCatalogBottle ? `Bottle Inspector: ${editingCatalogBottle.name} (${editingCatalogBottle.finish})` : 'New Bottle Option'}
+                </h3>
+                <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>Manage bottle catalog option, pricing, finish, sizes, and stock limits.</span>
+              </div>
+              <button onClick={() => { setShowBottleCatalogModal(false); setEditingCatalogBottle(null); }} className="admin-drawer-close">&times;</button>
+            </div>
+
+            {bottleCatalogFormError && (
+              <div className="admin-alert error" style={{ marginBottom: '1rem' }}>{bottleCatalogFormError}</div>
+            )}
+
+            <form onSubmit={handleSaveCatalogBottle} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="admin-form-row font-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="admin-form-group">
+                  <label className="admin-label">SKU *</label>
+                  <input
+                    type="text" required
+                    className="admin-input"
+                    placeholder="e.g. BTL-TS-SLV"
+                    value={bottleCatalogForm.sku}
+                    onChange={(e) => setBottleCatalogForm({ ...bottleCatalogForm, sku: e.target.value })}
+                  />
+                </div>
+                <div className="admin-form-group">
+                  <label className="admin-label">Category *</label>
+                  <select
+                    className="admin-select"
+                    value={bottleCatalogForm.category}
+                    onChange={(e) => setBottleCatalogForm({ ...bottleCatalogForm, category: e.target.value })}
+                  >
+                    <option value="CLASSIC_MINI">Classic Mini</option>
+                    <option value="CLASSIC_METAL">Classic Metal</option>
+                    <option value="TRAVEL_SAFE">Travel Safe</option>
+                    <option value="PREMIUM">Premium</option>
+                    <option value="LUXURY">Luxury</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="admin-form-row font-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="admin-form-group">
+                  <label className="admin-label">Bottle Name *</label>
+                  <input
+                    type="text" required
+                    className="admin-input"
+                    placeholder="e.g. Travel Safe Atomizer"
+                    value={bottleCatalogForm.name}
+                    onChange={(e) => setBottleCatalogForm({ ...bottleCatalogForm, name: e.target.value })}
+                  />
+                </div>
+                <div className="admin-form-group">
+                  <label className="admin-label">Finish / Color *</label>
+                  <input
+                    type="text" required
+                    className="admin-input"
+                    placeholder="e.g. Gunmetal Silver"
+                    value={bottleCatalogForm.finish}
+                    onChange={(e) => setBottleCatalogForm({ ...bottleCatalogForm, finish: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="admin-form-row font-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                <div className="admin-form-group">
+                  <label className="admin-label">Image Key *</label>
+                  <input
+                    type="text" required
+                    className="admin-input"
+                    placeholder="e.g. travel_safe_silver"
+                    value={bottleCatalogForm.imageKey}
+                    onChange={(e) => setBottleCatalogForm({ ...bottleCatalogForm, imageKey: e.target.value })}
+                  />
+                </div>
+                <div className="admin-form-group">
+                  <label className="admin-label">Price Upgrade (₹)</label>
+                  <input
+                    type="number" step="1"
+                    className="admin-input"
+                    placeholder="0 for free, 199"
+                    value={bottleCatalogForm.priceAdjustment}
+                    onChange={(e) => setBottleCatalogForm({ ...bottleCatalogForm, priceAdjustment: e.target.value })}
+                  />
+                </div>
+                <div className="admin-form-group">
+                  <label className="admin-label">Badge Label</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="e.g. Included, Upgrade, Limited"
+                    value={bottleCatalogForm.badge}
+                    onChange={(e) => setBottleCatalogForm({ ...bottleCatalogForm, badge: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="admin-form-row font-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                <div className="admin-form-group">
+                  <label className="admin-label">Stock Level</label>
+                  <input
+                    type="number"
+                    className="admin-input"
+                    value={bottleCatalogForm.stock}
+                    onChange={(e) => setBottleCatalogForm({ ...bottleCatalogForm, stock: e.target.value })}
+                  />
+                </div>
+                <div className="admin-form-group">
+                  <label className="admin-label">Low Stock Alarm</label>
+                  <input
+                    type="number"
+                    className="admin-input"
+                    value={bottleCatalogForm.lowStockThreshold}
+                    onChange={(e) => setBottleCatalogForm({ ...bottleCatalogForm, lowStockThreshold: e.target.value })}
+                  />
+                </div>
+                <div className="admin-form-group">
+                  <label className="admin-label">Sort Order</label>
+                  <input
+                    type="number"
+                    className="admin-input"
+                    value={bottleCatalogForm.sortOrder}
+                    onChange={(e) => setBottleCatalogForm({ ...bottleCatalogForm, sortOrder: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="admin-form-group">
+                <label className="admin-label" style={{ marginBottom: '0.5rem' }}>Enabled Decant Sizes *</label>
+                <div style={{ display: 'flex', gap: '1.25rem' }}>
+                  {['5ml', '10ml', '20ml', '30ml'].map(s => {
+                    const checked = bottleCatalogForm.sizes.includes(s);
+                    return (
+                      <label key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '600' }}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setBottleCatalogForm({ ...bottleCatalogForm, sizes: [...bottleCatalogForm.sizes, s] });
+                            } else {
+                              setBottleCatalogForm({ ...bottleCatalogForm, sizes: bottleCatalogForm.sizes.filter(x => x !== s) });
+                            }
+                          }}
+                        />
+                        {s}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  <input
+                    type="checkbox"
+                    checked={bottleCatalogForm.isActive}
+                    onChange={(e) => setBottleCatalogForm({ ...bottleCatalogForm, isActive: e.target.checked })}
+                  />
+                  Active (Visible to Collectors)
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  <input
+                    type="checkbox"
+                    checked={bottleCatalogForm.isDefault}
+                    onChange={(e) => setBottleCatalogForm({ ...bottleCatalogForm, isDefault: e.target.checked })}
+                  />
+                  Default Selection
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                <button type="button" onClick={() => { setShowBottleCatalogModal(false); setEditingCatalogBottle(null); }} className="admin-btn-secondary" style={{ flexGrow: 1 }}>Cancel</button>
+                <button type="submit" disabled={isSavingBottleCatalog} className="admin-btn" style={{ flexGrow: 1 }}>
+                  {isSavingBottleCatalog ? 'Saving...' : (editingCatalogBottle ? 'Save Changes' : 'Create Bottle Option')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
