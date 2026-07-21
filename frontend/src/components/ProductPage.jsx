@@ -1228,7 +1228,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                           <span className="pdp-bottle-card__name">{(bottle.name || '').replace(/Atomizer|Spray|\([^)]*\)/gi, '').trim() || bottle.name}</span>
                           <span className="pdp-bottle-card__finish">{bottle.finish}</span>
                           <span className="pdp-bottle-pill-badge">
-                            {bottle.badge ? bottle.badge : bottle.priceAdjustment === 0 ? 'Included' : `+₹${bottle.priceAdjustment}`}
+                            {bottle.priceAdjustment > 0 ? `+₹${bottle.priceAdjustment}` : (bottle.badge || 'Included')}
                           </span>
                         </button>
                       );
