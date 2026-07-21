@@ -1161,9 +1161,9 @@ export default function ProductPage({ product: initialProduct, products = [], on
             {/* ── Configuration Card ── */}
             <div className="pdp-config-card">
 
-              {/* Size Selector */}
+              {/* 1. Size Selector */}
               <div>
-                <span className="pdp-field-label">Select Size</span>
+                <span className="pdp-field-label">1. Select Size</span>
                 <div className="pdp-sizes-wrap" role="group" aria-label="Select fragrance size">
                   {product.sizes.map((sz, idx) => {
                     const isSelected = selectedSizeIndex === idx;
@@ -1186,12 +1186,18 @@ export default function ProductPage({ product: initialProduct, products = [], on
                 </div>
               </div>
 
-              {/* ── Bottle Selector ── */}
-              {availableBottles.length > 0 && (
+              {/* ── 2. Bottle Selector (5ml and 10ml) ── */}
+              {availableBottles.length > 0 ? (
                 <div>
-                  <span className="pdp-field-label">
-                    {selectedOption?.size?.toUpperCase()} — Choose Your Bottle Packaging
-                  </span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <span className="pdp-field-label" style={{ margin: 0 }}>
+                      2. Choose Your Bottle Packaging
+                    </span>
+                    <span style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8B672F', background: 'rgba(139,103,47,0.08)', padding: '2px 8px', borderRadius: '12px' }}>
+                      Available Bottle Styles
+                    </span>
+                  </div>
+
                   <div
                     className="pdp-bottle-grid"
                     role="group"
@@ -1200,6 +1206,7 @@ export default function ProductPage({ product: initialProduct, products = [], on
                   >
                     {availableBottles.map((bottle) => {
                       const isActive = selectedBottle === bottle.id;
+                      const isLimited = bottle.badge === 'Limited Edition';
                       return (
                         <button
                           key={bottle.id}
@@ -1210,6 +1217,14 @@ export default function ProductPage({ product: initialProduct, products = [], on
                           aria-pressed={isActive}
                           className={`pdp-bottle-card${isActive ? ' pdp-bottle-card--active' : ''}`}
                         >
+                          {isActive && (
+                            <span className="pdp-bottle-card__check">
+                              <i className="fa-solid fa-check" />
+                            </span>
+                          )}
+                          {isLimited && (
+                            <span className="pdp-bottle-card__corner-badge">LIMITED</span>
+                          )}
                           <div className="pdp-bottle-img-wrap" aria-hidden="true">
                             {bottle.imageUrl ? (
                               <img
@@ -1228,102 +1243,170 @@ export default function ProductPage({ product: initialProduct, products = [], on
                           <span className="pdp-bottle-card__name">{(bottle.name || '').replace(/Atomizer|Spray|\([^)]*\)/gi, '').trim() || bottle.name}</span>
                           <span className="pdp-bottle-card__finish">{bottle.finish}</span>
                           <span className="pdp-bottle-pill-badge">
-                            {bottle.priceAdjustment > 0 ? `+₹${bottle.priceAdjustment}` : (bottle.badge || 'Included')}
+                            {bottle.priceAdjustment > 0 ? `+ ₹${bottle.priceAdjustment}` : 'Included'}
                           </span>
                         </button>
                       );
                     })}
                   </div>
                 </div>
-              )}
-
-              {/* Vial Spray (decants only, only when no bottle selector) */}
-              {product.category === 'decants' && availableBottles.length === 0 && (
-                <div>
-                  <span className="pdp-field-label">Vial Spray Setup</span>
-                  <div className="pdp-vial-card">
-                    <span className="pdp-vial-name">Classic Glass Micro-Spray</span>
-                    <span className="pdp-vial-price">Included</span>
-                  </div>
+              ) : (
+                <div style={{ background: '#F9F7F2', border: '1px solid rgba(28,27,24,0.08)', padding: '0.875rem 1rem', borderRadius: '8px' }}>
+                  <span className="pdp-field-label" style={{ marginBottom: '0.25rem' }}>2. Packaging Info</span>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <i className="fa-solid fa-gem" style={{ color: '#8B672F', fontSize: '0.75rem' }} />
+                    Premium glass atomizer packaging included with 20ml and 30ml decants.
+                  </p>
                 </div>
               )}
 
-              {/* ── Inventory & Quantity ── */}
+              {/* ── Compact Trust Chips Bar ── */}
+              <div className="pdp-info-chips-bar">
+                <div className="pdp-info-chip">
+                  <i className="fa-solid fa-shield-halved" />
+                  <span>Leak Proof</span>
+                </div>
+                <div className="pdp-info-chip">
+                  <i className="fa-solid fa-plane-up" />
+                  <span>Travel Friendly</span>
+                </div>
+                <div className="pdp-info-chip">
+                  <i className="fa-solid fa-gem" />
+                  <span>Premium Quality Glass</span>
+                </div>
+                <div className="pdp-info-chip">
+                  <i className="fa-solid fa-heart" />
+                  <span>Hand-Filled with Care</span>
+                </div>
+              </div>
+
+              {/* ── 3. Quantity & Checkout Premium Purchase Card ── */}
               {(() => {
                 const currentStock = selectedOption ? (selectedOption.stock || 0) : 0;
-                const LOW_STOCK_THRESHOLD = 5;
-                const isLowStock = currentStock > 0 && currentStock <= LOW_STOCK_THRESHOLD;
-                const stockStatus = currentStock <= 0 ? 'out-of-stock' : isLowStock ? 'low-stock' : 'in-stock';
+                const isOutOfStock = currentStock <= 0;
+                const sizeLabel = selectedOption?.size?.replace(' Decant', '').replace(' Retail Bottle', '').toUpperCase() || '';
+                const bottleFinish = selectedBottleObj ? selectedBottleObj.finish : '';
+                const basePrice = selectedOption ? selectedOption.price : 0;
+                const adjustment = bottlePriceAdjustment;
+                const unitPrice = basePrice + adjustment;
+                const totalPrice = unitPrice * selectedQty;
+
                 return (
-                  <div className="pdp-inventory-row">
-                    {/* Availability */}
-                    <div className="pdp-availability">
-                      <span className="pdp-field-label" style={{ marginBottom: 0 }}>Availability</span>
-                      <span className={`pdp-avail-badge pdp-avail-badge--${stockStatus}`} role="status">
-                        <i className={`fas ${stockStatus === 'in-stock' ? 'fa-circle-check' : stockStatus === 'low-stock' ? 'fa-triangle-exclamation' : 'fa-circle-xmark'}`} aria-hidden="true" />
-                        {stockStatus === 'in-stock' ? 'In Stock' : stockStatus === 'low-stock' ? 'Low Stock' : 'Out of Stock'}
-                      </span>
-                    </div>
-
-                    {/* Available Quantity */}
-                    <div className="pdp-available-quantity" style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                      <span className="pdp-field-label" style={{ marginBottom: 0 }}>Available Quantity</span>
-                      <span className="pdp-stock-count" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1C1B18', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                        {currentStock} {currentStock === 1 ? 'unit' : 'units'}
-                      </span>
-                    </div>
-
-                    {/* Quantity Stepper — only when in stock */}
-                    {currentStock > 0 && (
-                      <div className="pdp-qty-group">
-                        <span className="pdp-field-label" style={{ marginBottom: 0 }}>Quantity</span>
-                        <div className="pdp-qty-stepper" role="group" aria-label="Quantity selector">
-                          <button
-                            onClick={handleDecrease}
-                            disabled={selectedQty <= 1 || isAdding}
-                            className="pdp-qty-btn"
-                            aria-label="Decrease quantity"
-                          >
-                            <i className="fas fa-minus" style={{ fontSize: '0.7rem', pointerEvents: 'none' }} aria-hidden="true" />
-                          </button>
-                          <span className="pdp-qty-value" aria-live="polite" aria-label={`Quantity: ${selectedQty}`}>
-                            {selectedQty}
-                          </span>
-                          <button
-                            onClick={handleIncrease}
-                            disabled={isAdding || selectedQty >= currentStock}
-                            className="pdp-qty-btn"
-                            aria-label="Increase quantity"
-                          >
-                            <i className="fas fa-plus" style={{ fontSize: '0.7rem', pointerEvents: 'none' }} aria-hidden="true" />
-                          </button>
+                  <div className="pdp-purchase-card">
+                    <span className="pdp-field-label" style={{ margin: 0 }}>3. Quantity & Checkout</span>
+                    
+                    <div className="pdp-purchase-card-grid">
+                      {/* Selection Summary */}
+                      <div className="pdp-purchase-selection">
+                        {selectedBottleObj?.imageUrl ? (
+                          <img src={selectedBottleObj.imageUrl} alt={bottleFinish} className="pdp-purchase-thumb" />
+                        ) : (
+                          <div className="pdp-purchase-thumb" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <i className="fa-solid fa-flask" style={{ color: '#8B672F', fontSize: '0.9rem' }} />
+                          </div>
+                        )}
+                        <div className="pdp-purchase-meta">
+                          <span className="pdp-purchase-meta__label">Selected</span>
+                          <span className="pdp-purchase-meta__value">{sizeLabel}{bottleFinish ? ` • ${bottleFinish}` : ''}</span>
                         </div>
                       </div>
-                    )}
+
+                      {/* Total Price & Upgrade Difference */}
+                      <div className="pdp-purchase-price-block">
+                        <span className="pdp-purchase-meta__label">Total Price</span>
+                        <div className="pdp-purchase-price-main">
+                          <span className="pdp-purchase-price-amount">₹{totalPrice.toLocaleString('en-IN')}</span>
+                          {adjustment > 0 && (
+                            <span className="pdp-purchase-price-upgrade">
+                              (+₹{(adjustment * selectedQty).toLocaleString('en-IN')})
+                            </span>
+                          )}
+                        </div>
+                        <span className="pdp-purchase-price-caption">(Tax included)</span>
+                      </div>
+
+                      {/* Quantity Stepper */}
+                      {!isOutOfStock && (
+                        <div className="pdp-qty-group" style={{ margin: 0 }}>
+                          <span className="pdp-purchase-meta__label">Quantity</span>
+                          <div className="pdp-qty-stepper" style={{ height: '42px', width: '110px' }} role="group" aria-label="Quantity selector">
+                            <button
+                              onClick={handleDecrease}
+                              disabled={selectedQty <= 1 || isAdding}
+                              className="pdp-qty-btn"
+                              aria-label="Decrease quantity"
+                            >
+                              <i className="fas fa-minus" style={{ fontSize: '0.65rem' }} />
+                            </button>
+                            <span className="pdp-qty-value" style={{ fontSize: '0.8rem' }}>
+                              {selectedQty}
+                            </span>
+                            <button
+                              onClick={handleIncrease}
+                              disabled={isAdding || selectedQty >= currentStock}
+                              className="pdp-qty-btn"
+                              aria-label="Increase quantity"
+                            >
+                              <i className="fas fa-plus" style={{ fontSize: '0.65rem' }} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Add to Cart CTA */}
+                      <button
+                        onClick={handleAddToCart}
+                        disabled={isAdding || !selectedOption || isOutOfStock}
+                        className="pdp-add-to-bag"
+                        style={{ minHeight: '46px', padding: '0.75rem 1.25rem' }}
+                      >
+                        {isAdding || isItemMutating ? (
+                          <>
+                            <i className="fas fa-spinner fa-spin" style={{ fontSize: '0.8rem' }} />
+                            <span>Adding…</span>
+                          </>
+                        ) : isOutOfStock ? (
+                          <span>Out of Stock</span>
+                        ) : (
+                          <>
+                            <i className="fa-solid fa-bag-shopping" style={{ fontSize: '0.8rem' }} />
+                            <span>Add to Bag</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 );
               })()}
-
-              {/* ── Add to Bag CTA ── */}
-              <button
-                onClick={handleAddToCart}
-                disabled={isAdding || !selectedOption || selectedOption.stock <= 0}
-                aria-label={!selectedOption || selectedOption.stock <= 0 ? 'Out of stock — unable to add to bag' : 'Add to bag'}
-                aria-busy={isAdding}
-                className="pdp-add-to-bag"
-              >
-                {isAdding || isItemMutating ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin" aria-hidden="true" style={{ fontSize: '0.85rem' }} />
-                    <span>Adding to Bag…</span>
-                  </>
-                ) : !selectedOption || selectedOption.stock <= 0 ? (
-                  <span>Out of Stock</span>
-                ) : (
-                  <span>Add to Bag</span>
-                )}
-              </button>
             </div>
+
+            {/* ── Sticky Bottom Purchase Bar ── */}
+            {selectedOption && (
+              <div className="pdp-sticky-bar">
+                <div className="pdp-sticky-bar__left">
+                  {selectedBottleObj?.imageUrl && (
+                    <img src={selectedBottleObj.imageUrl} alt="" style={{ width: '28px', height: '32px', objectFit: 'contain', background: '#F7F3ED', borderRadius: '4px', padding: '1px' }} />
+                  )}
+                  <div className="pdp-sticky-bar__info">
+                    <span className="pdp-sticky-bar__title">
+                      {selectedOption.size?.replace(' Decant', '').toUpperCase()} {selectedBottleObj?.finish ? `• ${selectedBottleObj.finish}` : ''}
+                    </span>
+                    <span className="pdp-sticky-bar__price">
+                      ₹{((selectedOption.price + bottlePriceAdjustment) * selectedQty).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isAdding || selectedOption.stock <= 0}
+                  className="pdp-sticky-bar__cta"
+                >
+                  <i className="fa-solid fa-bag-shopping" />
+                  <span>{isAdding ? 'Adding…' : 'Add to Bag'}</span>
+                </button>
+              </div>
+            )}
 
             {/* ── Scent Profile Card ── */}
             {product.pyramid && (

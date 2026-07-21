@@ -1970,6 +1970,261 @@ html {
   border-color: #8B672F;
 }
 
+/* ── Selected Checkmark & Corner Badge ── */
+.pdp-bottle-card__check {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #8B672F;
+  color: #FFFFFF;
+  font-size: 0.525rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(139, 103, 47, 0.35);
+  z-index: 2;
+}
+
+.pdp-bottle-card__corner-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.45rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #DC2626;
+  color: #FFFFFF;
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 1.2;
+  z-index: 2;
+}
+
+/* ── Info Chips Bar ── */
+.pdp-info-chips-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0.75rem 0.5rem;
+  background: #FFFFFF;
+  border: 1px solid rgba(28, 27, 24, 0.08);
+  border-radius: 8px;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .pdp-info-chips-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem 0.25rem;
+  }
+}
+
+.pdp-info-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(28, 27, 24, 0.75);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.pdp-info-chip i {
+  color: #8B672F;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+/* ── Premium Purchase Card ── */
+.pdp-purchase-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(139, 103, 47, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(139, 103, 47, 0.06);
+  margin-top: 0.5rem;
+}
+
+.pdp-purchase-card-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1.4fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .pdp-purchase-card-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pdp-purchase-card-grid {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+  }
+}
+
+.pdp-purchase-selection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pdp-purchase-thumb {
+  width: 42px;
+  height: 48px;
+  border-radius: 6px;
+  background: #F7F3ED;
+  border: 1px solid rgba(28, 27, 24, 0.08);
+  object-fit: contain;
+  padding: 2px;
+}
+
+.pdp-purchase-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pdp-purchase-meta__label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.525rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(28, 27, 24, 0.45);
+}
+
+.pdp-purchase-meta__value {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #1C1B18;
+}
+
+.pdp-purchase-price-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pdp-purchase-price-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.pdp-purchase-price-amount {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #1C1B18;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.pdp-purchase-price-upgrade {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #8B672F;
+}
+
+.pdp-purchase-price-caption {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.58rem;
+  color: rgba(28, 27, 24, 0.50);
+}
+
+/* ── Sticky Bottom Mobile Purchase Bar ── */
+.pdp-sticky-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 120;
+  background: #FFFFFF;
+  border-top: 1.5px solid rgba(139, 103, 47, 0.3);
+  padding: 0.65rem 1rem;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  backdrop-filter: blur(8px);
+}
+
+.pdp-sticky-bar__left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.pdp-sticky-bar__info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.pdp-sticky-bar__title {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #1C1B18;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pdp-sticky-bar__price {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #8B672F;
+  line-height: 1;
+}
+
+.pdp-sticky-bar__cta {
+  flex-shrink: 0;
+  padding: 0.65rem 1.25rem;
+  min-height: 42px;
+  border-radius: 6px;
+  background: #1C1B18;
+  color: #FEFCF9;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 2px 8px rgba(28, 27, 24, 0.15);
+}
+
+.pdp-sticky-bar__cta:hover {
+  background: #8B672F;
+}
+
 /* Legacy class aliases kept for compatibility */
 .pdp-bottle-info {
   display: flex;
